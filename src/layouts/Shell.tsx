@@ -248,7 +248,7 @@ export function Shell() {
         density={density}
         font={font}
         lang={lang}
-        onSet={(key, value) => setTweak(key as Parameters<typeof setTweak>[0], value as never)}
+        onSet={(key, value) => setTweak(key as 'theme' | 'mode' | 'density' | 'font' | 'lang', value)}
         defaultOpen={false}
       />
 

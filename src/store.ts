@@ -37,10 +37,7 @@ interface AppState {
 
   setAuth: (token: string | null, me: Me | null) => void;
   logout: () => void;
-  setTweak: <K extends 'theme' | 'mode' | 'density' | 'font' | 'lang'>(
-    key: K,
-    value: AppState[K],
-  ) => void;
+  setTweak: (key: 'theme' | 'mode' | 'density' | 'font' | 'lang', value: string) => void;
   setCmdK: (open: boolean) => void;
 }
 
@@ -110,14 +107,14 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   setTweak: (key, value) => {
-    const map: Record<typeof key, string> = LS;
+    const lsKey = (LS as Record<string, string>)[key];
     try {
-      localStorage.setItem(map[key], value as string);
+      localStorage.setItem(lsKey, value);
     } catch {
       /* ignore */
     }
-    document.documentElement.setAttribute(`data-${key}`, value as string);
-    set({ [key]: value } as Pick<AppState, typeof key>);
+    document.documentElement.setAttribute(`data-${key}`, value);
+    set({ [key]: value } as Pick<AppState, 'theme' | 'mode' | 'density' | 'font' | 'lang'>);
   },
 
   setCmdK: (open) => set({ cmdkOpen: open }),
