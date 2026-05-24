@@ -46,7 +46,7 @@ function TenantDrawer({ tenant, onClose }: TenantDrawerProps) {
       title={
         <>
           <TlnIcon name="users" size={16} style={{ color: 'var(--acc)' }} />
-          {t('nav.tenants')} {tenant.name}
+          {t('tenants.drawer.titlePrefix')} {tenant.name}
         </>
       }
       footer={

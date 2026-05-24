@@ -267,6 +267,7 @@ export const STRINGS: Record<string, { en: string; zh: string }> = {
   'tenants.colQuota':      { en: 'Quota · vCPU · Mem · Disk', zh: '配额使用 · vCPU · 内存 · 磁盘' },
   'tenants.colCreated':    { en: 'Created', zh: '创建' },
   'tenants.suspended':     { en: 'Suspended', zh: '已暂停' },
+  'tenants.drawer.titlePrefix': { en: 'Workspace', zh: '空间' },
   'tenants.drawer.quota':  { en: 'Quota', zh: '配额' },
   'tenants.drawer.members':{ en: 'Members', zh: '成员' },
   'tenants.drawer.security':{ en: 'Security', zh: '安全' },
