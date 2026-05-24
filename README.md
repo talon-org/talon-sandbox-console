@@ -19,7 +19,7 @@ pnpm install
 pnpm dev
 ```
 
-Open <http://localhost:5173>.
+Open <http://localhost:5274>.
 
 API base resolves to `/api` (same-origin) in production, expected to be reverse
 proxied to the Talon Sandbox API. Override locally with `VITE_API_BASE` in

@@ -12,9 +12,11 @@
   "dependencies": {
     "@talon-sandbox/react": "^0.1.0",
     "@talon-sandbox/tokens": "^0.1.0",
+    "@xterm/addon-fit": "^0.11.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.0",
+    "xterm": "^5.3.0",
     "zustand": "^4.5.4"
   },
   "devDependencies": {
