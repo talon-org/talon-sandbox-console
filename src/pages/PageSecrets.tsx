@@ -113,7 +113,7 @@ function CreateSecretDrawer({ open, onClose }: CreateSecretDrawerProps) {
         <div className="form-field">
           <label className="ff-label" htmlFor="sec-scope">Scope</label>
           <Select id="sec-scope" value={scope} onChange={e => setScope(e.target.value)}>
-            <option value="tenant">Tenant · acme</option>
+            <option value="tenant">{t('secrets.scopeTenant')}</option>
             <option value="sandbox">Specific sandbox…</option>
           </Select>
           <div className="ff-hint">{t('secrets.create.scopeHint')}</div>
