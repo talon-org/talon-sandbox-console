@@ -1,7 +1,7 @@
 /* PageDashboard — 1:1 port of page-dashboard.jsx prototype.
  * 4 metric cards · sandbox states bar · recent activity · running list
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, Card, Button, ProgressBar, SandboxStateBar, DEFAULT_STATE_COLORS } from '@talon-sandbox/react';
 import { useApp } from '../store';
@@ -90,7 +90,13 @@ const STATE_ORDER: SandboxState[] = ['running', 'pulling-image', 'provisioning',
 
 // ── StatesOverview ────────────────────────────────────────────────────────────
 function StatesOverview() {
-  const counts = MOCK_METRICS.statesByCount;
+  // Derived from MOCK_SANDBOXES so switching to real data only requires
+  // replacing MOCK_SANDBOXES with useSandboxes() — no logic change needed.
+  const counts = useMemo(() => {
+    const acc: Record<string, number> = { running: 0, 'pulling-image': 0, provisioning: 0, idle: 0, paused: 0, failed: 0, terminating: 0, evicted: 0 };
+    for (const s of MOCK_SANDBOXES) acc[s.state] = (acc[s.state] ?? 0) + 1;
+    return acc;
+  }, []);
   return (
     <div>
       <SandboxStateBar counts={counts} />
