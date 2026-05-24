@@ -120,18 +120,20 @@ export function PageLogin() {
         {/* tab toggle */}
         <div className="login-tabs" role="tablist">
           <button
+            id="tab-email"
             role="tab"
-            aria-pressed={tab === 'password'}
             aria-selected={tab === 'password'}
+            aria-controls="tabpanel-email"
             onClick={() => setTab('password')}
           >
             <TlnIcon name="user" size={13} />
             {t('login.tab.email')}
           </button>
           <button
+            id="tab-apikey"
             role="tab"
-            aria-pressed={tab === 'apikey'}
             aria-selected={tab === 'apikey'}
+            aria-controls="tabpanel-apikey"
             onClick={() => setTab('apikey')}
           >
             <TlnIcon name="key" size={13} />
@@ -141,7 +143,12 @@ export function PageLogin() {
 
         <form className="login-fields" onSubmit={submit} noValidate>
           {tab === 'password' ? (
-            <>
+            <div
+              id="tabpanel-email"
+              role="tabpanel"
+              aria-labelledby="tab-email"
+              style={{ display: 'contents' }}
+            >
               {/* email field */}
               <div className="login-field">
                 <div className="lf-label-row">
@@ -176,25 +183,32 @@ export function PageLogin() {
                   required
                 />
               </div>
-            </>
+            </div>
           ) : (
             /* api-key field */
-            <div className="login-field">
-              <div className="lf-label-row">
-                <label className="lf-label" htmlFor="login-apikey">{t('login.apikey')}</label>
+            <div
+              id="tabpanel-apikey"
+              role="tabpanel"
+              aria-labelledby="tab-apikey"
+              style={{ display: 'contents' }}
+            >
+              <div className="login-field">
+                <div className="lf-label-row">
+                  <label className="lf-label" htmlFor="login-apikey">{t('login.apikey')}</label>
+                </div>
+                <Input
+                  id="login-apikey"
+                  type="password"
+                  mono
+                  autoComplete="off"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  prefix={<TlnIcon name="key" size={14} style={{ color: 'var(--fg-3)' }} />}
+                  placeholder="tlk_•••••••••••••••••••••••••"
+                  required
+                />
+                <div className="lf-hint">{t('login.apikey.hint')}</div>
               </div>
-              <Input
-                id="login-apikey"
-                type="password"
-                mono
-                autoComplete="off"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                prefix={<TlnIcon name="key" size={14} style={{ color: 'var(--fg-3)' }} />}
-                placeholder="tlk_•••••••••••••••••••••••••"
-                required
-              />
-              <div className="lf-hint">{t('login.apikey.hint')}</div>
             </div>
           )}
 
