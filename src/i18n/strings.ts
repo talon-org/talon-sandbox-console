@@ -181,6 +181,7 @@ export const STRINGS: Record<string, { en: string; zh: string }> = {
   'secrets.accessed24h':   { en: 'Accessed · 24h', zh: '访问 · 24h' },
   'secrets.rotateDue':     { en: 'Rotation due', zh: '到期需轮换' },
   'secrets.encryption':    { en: 'Encryption', zh: '加密方式' },
+  'secrets.encryptionNote':{ en: 'AES-256-GCM · workspace key', zh: 'AES-256-GCM · 空间密钥' },
   'secrets.allCurrent':    { en: 'All current', zh: '全部最新' },
   'secrets.checkNow':      { en: 'Check now', zh: '建议检查' },
   'secrets.filterAll':     { en: 'All', zh: '全部' },

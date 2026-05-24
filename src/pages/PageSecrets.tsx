@@ -209,7 +209,7 @@ export function PageSecrets() {
           <div className="sec-sum-card">
             <div className="micro">{t('secrets.encryption')}</div>
             <div className="snum" style={{ color: 'var(--ok)' }}>KMS</div>
-            <div className="sdelta">AES-256-GCM · tenant key</div>
+            <div className="sdelta">{t('secrets.encryptionNote')}</div>
           </div>
         </div>
 
