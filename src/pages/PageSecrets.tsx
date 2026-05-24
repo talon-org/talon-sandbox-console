@@ -13,47 +13,7 @@ import { MOCK_SECRETS, relTime } from '../mock/data';
 import type { MockSecret } from '../mock/data';
 // TODO: replace mock with apiGet('/v1/secrets'), apiPost('/v1/secrets')
 
-// ── inject styles once ────────────────────────────────────────────────────────
-if (!document.getElementById('tln-page-secrets-styles')) {
-  const s = document.createElement('style');
-  s.id = 'tln-page-secrets-styles';
-  s.textContent = `
-.sec-row { grid-template-columns: 1.5fr 1fr 1fr 0.8fr 0.8fr 0.9fr 60px; }
-.sec-row .name-cell { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.sec-row .name-cell .sic {
-  width: 24px; height: 24px; border-radius: var(--r-2);
-  background: var(--magenta-soft, rgba(198,120,221,0.1));
-  color: var(--magenta, #c678dd);
-  display: flex; align-items: center; justify-content: center; flex: 0 0 auto;
-}
-.sec-row .name-cell .sn   { font-family: var(--font-mono); font-size: 12.5px; color: var(--fg-0); font-weight: 500; }
-.sec-row .scope-pill {
-  font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-2);
-  background: var(--bg-3); padding: 2px 7px; border-radius: 3px;
-  border: 1px solid var(--line); width: fit-content;
-}
-.sec-row .scope-pill.sandbox { color: var(--info); background: var(--info-soft); border-color: transparent; }
-.sec-row .rotate-warn {
-  display: inline-flex; align-items: center; gap: 4px; color: var(--warn);
-  font-family: var(--font-mono); font-size: 10px; text-transform: uppercase;
-  letter-spacing: 0.08em; background: var(--warn-soft);
-  padding: 1px 6px; border-radius: 3px; margin-left: 6px;
-}
-.sec-summary {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px;
-}
-.sec-sum-card {
-  border: 1px solid var(--line); border-radius: var(--r-3);
-  background: var(--bg-2); padding: 16px 18px;
-}
-.sec-sum-card .micro { font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
-.sec-sum-card .snum { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; color: var(--fg-0); font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 4px; }
-.sec-sum-card .snum .unit { font-size: 12px; color: var(--fg-3); font-family: var(--font-mono); font-weight: 400; }
-.sec-sum-card .sdelta { margin-top: 6px; font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-2); }
-.sec-sum-card .sdelta.warn { color: var(--warn); }
-`;
-  document.head.appendChild(s);
-}
+import './PageSecrets.css';
 
 // ── CreateSecretDrawer ────────────────────────────────────────────────────────
 interface CreateSecretDrawerProps { open: boolean; onClose: () => void }

@@ -1,0 +1,32 @@
+.aud-row { grid-template-columns: 100px 1fr 1fr 1.4fr 0.7fr 1.5fr 70px; }
+.aud-row .awhen { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); display: flex; flex-direction: column; gap: 1px; }
+.aud-row .awhen .rel { color: var(--fg-2); }
+.aud-row .atype { font-family: var(--font-mono); font-size: 11px; color: var(--fg-1); font-weight: 500; letter-spacing: -0.005em; }
+.aud-row .atype .kind {
+  display: inline-block; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 1px 5px; border-radius: 3px; margin-right: 6px;
+}
+.aud-row .atype .kind.sandbox { background: var(--acc-soft); color: var(--acc-strong); }
+.aud-row .atype .kind.secret  { background: var(--magenta-soft, rgba(198,120,221,.1)); color: var(--magenta, #c678dd); }
+.aud-row .atype .kind.auth    { background: var(--info-soft); color: var(--info); }
+.aud-row .atype .kind.pty     { background: var(--teal-soft, rgba(86,203,184,.1)); color: var(--teal, #56cbb8); }
+.aud-row .atype .kind.tenant  { background: var(--ok-soft); color: var(--ok); }
+.aud-row .atype .kind.image   { background: var(--warn-soft); color: var(--warn); }
+.aud-row .atype .kind.port    { background: var(--teal-soft, rgba(86,203,184,.1)); color: var(--teal, #56cbb8); }
+.aud-row .atype .kind.file    { background: var(--bg-3); color: var(--fg-2); }
+.aud-row .aactor, .aud-row .atarget {
+  font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  display: flex; align-items: center; gap: 5px;
+}
+.aud-row .aactor .aic { color: var(--fg-3); flex: 0 0 auto; }
+.aud-row .aactor.user   .aic { color: var(--info); }
+.aud-row .aactor.agent  .aic { color: var(--magenta, #c678dd); }
+.aud-row .aactor.sandbox .aic { color: var(--acc-strong); }
+.aud-row .ameta { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aud-stream-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
+  padding: 2px 7px; border-radius: 3px; background: var(--ok-soft); color: var(--ok);
+}
+.aud-stream-pill .sdot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); animation: tln-pulse 1.6s ease-in-out infinite; }

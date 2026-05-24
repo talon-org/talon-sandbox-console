@@ -8,30 +8,7 @@ import { TlnIcon } from '../icons/TlnIcon';
 import { MOCK_RECORDINGS, relTime } from '../mock/data';
 // TODO: replace mock with apiGet('/v1/recordings')
 
-// ── inject styles once ────────────────────────────────────────────────────────
-if (!document.getElementById('tln-page-recordings-styles')) {
-  const s = document.createElement('style');
-  s.id = 'tln-page-recordings-styles';
-  s.textContent = `
-.rec-row {
-  grid-template-columns: 1.8fr 1fr 0.8fr 0.9fr 0.6fr 0.6fr 60px;
-}
-.rec-row .rectitle { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.rec-row .rectitle .t1 { font-size: 13px; color: var(--fg-0); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rec-row .rectitle .t2 { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); }
-.rec-row .agentpill {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--magenta, #c678dd);
-  background: var(--magenta-soft, rgba(198,120,221,.1));
-  padding: 2px 7px;
-  border-radius: 3px;
-  display: inline-flex; align-items: center; gap: 5px;
-  width: fit-content;
-}
-`;
-  document.head.appendChild(s);
-}
+import './PageRecordings.css';
 
 function fmtDuration(sec: number): string {
   return `${Math.floor(sec / 60)}m ${(sec % 60).toString().padStart(2, '0')}s`;
