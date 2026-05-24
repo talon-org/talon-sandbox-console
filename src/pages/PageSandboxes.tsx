@@ -1,7 +1,7 @@
 /* PageSandboxes — list view + create drawer.
  * 1:1 port of page-sandboxes.jsx prototype.
  */
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useId } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   PageHeader, Button, Input, Select, Textarea,
@@ -58,6 +58,9 @@ interface CreateSandboxDrawerProps {
 
 function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps) {
   const t = useT();
+  const cpuId  = useId();
+  const memId  = useId();
+  const diskId = useId();
   const [name,    setName]    = useState('');
   const [image,   setImage]   = useState('node:20-bookworm');
   const [tenantId,setTenantId]= useState('acme');
@@ -137,16 +140,16 @@ function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps) {
         </div>
         <div className="form-grid">
           <div className="form-field">
-            <label className="ff-label">vCPU <span style={{ fontFamily: 'var(--font-mono)', float: 'right' }}>{cpu}</span></label>
-            <input type="range" min={1} max={16} step={1} value={cpu} onChange={e => setCpu(+e.target.value)} style={{ width: '100%' }} />
+            <label className="ff-label" htmlFor={cpuId}>vCPU <span style={{ fontFamily: 'var(--font-mono)', float: 'right' }}>{cpu}</span></label>
+            <input id={cpuId} type="range" min={1} max={16} step={1} value={cpu} onChange={e => setCpu(+e.target.value)} style={{ width: '100%' }} />
           </div>
           <div className="form-field">
-            <label className="ff-label">Memory (GiB) <span style={{ fontFamily: 'var(--font-mono)', float: 'right' }}>{mem}</span></label>
-            <input type="range" min={1} max={32} step={1} value={mem} onChange={e => setMem(+e.target.value)} style={{ width: '100%' }} />
+            <label className="ff-label" htmlFor={memId}>Memory (GiB) <span style={{ fontFamily: 'var(--font-mono)', float: 'right' }}>{mem}</span></label>
+            <input id={memId} type="range" min={1} max={32} step={1} value={mem} onChange={e => setMem(+e.target.value)} style={{ width: '100%' }} />
           </div>
           <div className="form-field">
-            <label className="ff-label">Disk (GiB) <span style={{ fontFamily: 'var(--font-mono)', float: 'right' }}>{disk}</span></label>
-            <input type="range" min={4} max={64} step={4} value={disk} onChange={e => setDisk(+e.target.value)} style={{ width: '100%' }} />
+            <label className="ff-label" htmlFor={diskId}>Disk (GiB) <span style={{ fontFamily: 'var(--font-mono)', float: 'right' }}>{disk}</span></label>
+            <input id={diskId} type="range" min={4} max={64} step={4} value={disk} onChange={e => setDisk(+e.target.value)} style={{ width: '100%' }} />
           </div>
         </div>
       </div>
