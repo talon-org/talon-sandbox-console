@@ -99,7 +99,7 @@ export function PageRecording() {
   const [currentT, setCurrentT] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [speed, setSpeed] = useState(1);
-  const rafRef = useRef<number>(0);
+  const rafRef = useRef<number | null>(null);
   const lastTickRef = useRef<number>(0);
   const stageRef = useRef<HTMLDivElement>(null);
 
@@ -118,7 +118,7 @@ export function PageRecording() {
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
+    return () => { if (rafRef.current !== null) cancelAnimationFrame(rafRef.current); };
   }, [playing, speed, duration]);
 
   const visibleFrames = frames.filter(f => f.at <= currentT);
