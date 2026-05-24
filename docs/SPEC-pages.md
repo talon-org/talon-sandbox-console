@@ -3,6 +3,18 @@
 > 由 explorer subagent 读完 `.design-source/project/app/page-*.jsx` + shell + ui + i18n 后逐页产出。
 > 实现时按本文件 1:1 还原, 不允许自创布局/控件/文案。
 
+## 命名约定 (Naming convention)
+
+| 上下文 | 旧 / 原型 | 新 (production) |
+|---|---|---|
+| UI 文案 (中文) | 租户 | **空间** |
+| UI 文案 (英文) | Tenant / Tenants | **Workspace / Workspaces** |
+| API path | `/v1/admin/tenants` | 保留 (零迁移) |
+| 代码 identifier | `tenant_id`, `PageTenants`, `TenantDrawer` | 保留 (零迁移) |
+| 路由 path | `/tenants` | 保留 (零迁移) |
+
+下文凡是"租户" / "Tenants" / "Tenant Drawer" 字样, **UI 渲染时**必须显示为"空间" / "Workspaces"。代码 identifier 与 API path 保持原样。
+
 ## Page: Login
 
 - **路由路径**: `/login`, full-bleed (无 shell), `position: fixed; inset: 0`
@@ -55,7 +67,7 @@
      - `TlnInput` 搜索 (width 280px, leadIcon="search", placeholder "按 id / 名称 / 镜像 过滤…")
      - `TlnButton` ghost iconOnly filter (列过滤, **无实际功能**)
   3. `.tln-tbl`: 7列 (`.sbx-row`, grid-template-columns: `1.6fr 1.2fr 1fr 0.7fr 1.1fr 0.9fr 60px`)
-     - 表头: Sandbox / 镜像 / 租户 / 运行时长 / 资源 / 状态 / (空)
+     - 表头: Sandbox / 镜像 / 空间 / 运行时长 / 资源 / 状态 / (空)
      - 每行点击 -> `/sandboxes/:id`
      - Sandbox 列: 彩色 iddot (5×5px) + id + name·task (截断)
      - 资源列: pulling-image 状态显示 `TlnProgress` + 百分比, 其他显示 `{cpuLimit}v · {memGiB}G`
@@ -65,7 +77,7 @@
   4. `CreateSandboxDrawer` (`TlnDrawer`, width=580)
 - **URL 触发**: hash 包含 `new=1` 时自动打开 Drawer
 - **CreateSandboxDrawer 表单** (5个 form-sect):
-  1. 基本信息: 名称 (留空=自动) + 租户 (TlnSelect) + 镜像 (TlnInput mono) + 8个预设镜像快捷按钮
+  1. 基本信息: 名称 (留空=自动) + 空间 (TlnSelect) + 镜像 (TlnInput mono) + 8个预设镜像快捷按钮
   2. 资源: vCPU/内存/磁盘 range slider (1-16 / 1-32 / 4-64, step 1/1/4), 实时显示当前值
   3. 网络策略: 3个 radio card (全允许/白名单/全阻断); 白名单时展示 `TlnTextarea` 输入主机列表
   4. 凭据: chip-multi (已选项可删除, 从 TLNData.secrets 添加)
@@ -77,7 +89,7 @@
 - **路由路径**: `/sandboxes/:id`
 - **结构** (无 PageHeader, 自定义 head):
   1. `.sbx-detail-head` (padding 24px 32px 16px):
-     - 左: id (font-mono 22px) + `TlnStateBadge` + `TlnTag` (租户)
+     - 左: id (font-mono 22px) + `TlnStateBadge` + `TlnTag` (空间)
      - 下行: box icon + name + · + image (mono fg-3)
      - 右: 操作按钮组: 终端(`⌘T`) / 录像 / 重启 (ghost iconOnly) / 暂停 (ghost iconOnly) / **终止 (danger)**
   2. `.sbx-info-row` (水平 flex, 各信息项: 节点/区域/启动时间/运行时长/资源/磁盘, mono 12px)
@@ -134,7 +146,7 @@
 - **结构**:
   1. `PageHeader`: eyebrow="工作区 · 凭据", title, num="{n} 个", actions=导出+新建
   2. `.sec-summary` (4列 grid, gap 14px): 4个 mini card (总数/24h 访问/待轮换/加密方式), 待轮换 > 0 时值变 warn 色
-  3. 过滤栏 (`.sbx-filters` 复用样式): 4个 scope filter (全部/租户范围/Sandbox 范围/待轮换) + 搜索 280px
+  3. 过滤栏 (`.sbx-filters` 复用样式): 4个 scope filter (全部/空间范围/Sandbox 范围/待轮换) + 搜索 280px
   4. `.tln-tbl`, 7列 (`.sec-row`, grid `1.5fr 1fr 1fr 0.8fr 0.8fr 0.9fr 60px`):
      - 表头: 名称·范围 / 上次轮换 / 上次使用 / 使用次数·30d / Sandbox数 / 创建者 / (空)
      - 名称列: magenta 24×24 icon box + name + rotate-warn badge (如需轮换) + scope pill
@@ -161,9 +173,9 @@
 
 - **路由路径**: `/tenants`
 - **结构**:
-  1. `PageHeader`: eyebrow="管理", title="租户", num="{n} 个", actions=导出CSV+新建租户
+  1. `PageHeader`: eyebrow="管理", title="空间", num="{n} 个", actions=导出CSV+新建空间
   2. `.tln-tbl`, 7列 (`.ten-row`, grid `1.6fr 0.8fr 0.7fr 0.8fr 1.6fr 0.8fr 60px`):
-     - 表头: 租户/套餐/成员/Sandbox/配额使用·vCPU·内存·磁盘/创建/(空)
+     - 表头: 空间/套餐/成员/Sandbox/配额使用·vCPU·内存·磁盘/创建/(空)
      - 名称列: 28×28 avatar (acc-soft, 首字母, suspended=err-soft) + name (suspended 显示 "已暂停" err badge) + `tenant_{id}`
      - 套餐列: plan badge (Enterprise=acc, Team=info, Free=bg-3/fg-2)
      - 配额列: 2行 sub-grid (CPU/MEM progress thin + 数值), 无磁盘行
@@ -217,7 +229,7 @@
 4. **CmdK 导航文字**: 原型用中文字面量, 实现时必须 i18n 化
 5. **Dashboard `dangerouslySetInnerHTML`**: 改纯 React 渲染
 6. **Files Tab / Network Tab 写死内容**: 实接 `/v1/sandboxes/{id}/fs-*`; Network 拦截 host 列表对接审计过滤 (P2) 或标记 "暂未实现"
-7. **Workers "加入节点" / Tenants "新建租户"**: 原型占位 button, 实现先标 disabled 或 toast "Coming soon"
+7. **Workers "加入节点" / Tenants "新建空间"**: 原型占位 button, 实现先标 disabled 或 toast "Coming soon"
 9. **Dashboard `statesByCount`**: 缺 endpoint 时前端在 `GET /v1/admin/sandboxes` 自行计数
 
 ## 实现顺序

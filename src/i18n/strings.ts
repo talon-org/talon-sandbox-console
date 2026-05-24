@@ -16,7 +16,7 @@ export const STRINGS: Record<string, { en: string; zh: string }> = {
   'nav.secrets': { en: 'Secrets', zh: '凭据' },
   'nav.audit': { en: 'Audit', zh: '审计' },
   'nav.workers': { en: 'Workers', zh: '节点' },
-  'nav.tenants': { en: 'Tenants', zh: '租户' },
+  'nav.tenants': { en: 'Workspaces', zh: '空间' },
 
   // ── common ──────────────────────────────────────────────────────────────
   'common.refresh': { en: 'Refresh', zh: '刷新' },
