@@ -30,27 +30,27 @@ const NAV_ADMIN = [
   { id: 'tenants', labelKey: 'nav.tenants', icon: 'users',  path: '/tenants' },
 ];
 
-function crumbsForPath(path: string): string[] {
+function crumbsForPath(path: string, t: (key: string) => string): string[] {
   if (path.startsWith('/sandboxes/') && path.endsWith('/terminal')) {
     const id = path.split('/')[2];
-    return ['Sandboxes', id, 'Terminal'];
+    return [t('nav.sandboxes'), id, t('common.terminal')];
   }
   if (path.startsWith('/sandboxes/')) {
     const id = path.split('/')[2];
-    return ['Sandboxes', id];
+    return [t('nav.sandboxes'), id];
   }
   if (path.startsWith('/recordings/')) {
     const id = path.split('/')[2];
-    return ['Recordings', id];
+    return [t('nav.recordings'), id];
   }
   const map: Record<string, string> = {
-    '/dashboard': 'Dashboard',
-    '/sandboxes': 'Sandboxes',
-    '/recordings': 'Recordings',
-    '/secrets': 'Secrets',
-    '/audit': 'Audit',
-    '/workers': 'Workers',
-    '/tenants': 'Workspaces',
+    '/dashboard':  t('nav.dashboard'),
+    '/sandboxes':  t('nav.sandboxes'),
+    '/recordings': t('nav.recordings'),
+    '/secrets':    t('nav.secrets'),
+    '/audit':      t('nav.audit'),
+    '/workers':    t('nav.workers'),
+    '/tenants':    t('nav.tenants'),
   };
   const match = Object.keys(map).find(k => path.startsWith(k));
   return match ? [map[match]] : ['—'];
@@ -71,7 +71,7 @@ export function Shell() {
   const lang = useApp(s => s.lang);
   const setTweak = useApp(s => s.setTweak);
 
-  const crumbs = crumbsForPath(location.pathname);
+  const crumbs = crumbsForPath(location.pathname, t);
 
   // ⌘K keyboard shortcut
   useEffect(() => {
