@@ -1,0 +1,29 @@
+/* Design system: @talon-sandbox/react/styles inlines the full token set. */
+@import '@talon-sandbox/react/styles';
+
+/* Console-private CSS variables (not yet generalised into @talon-sandbox/tokens). */
+@import './styles/private.css';
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+body {
+  background: var(--bg-1);
+  color: var(--fg-1);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}

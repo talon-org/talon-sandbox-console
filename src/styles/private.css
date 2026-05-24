@@ -1,0 +1,14 @@
+/* Console-private design tokens.
+ *
+ * These are not (yet) part of @talon-sandbox/tokens because they're console-
+ * specific layout dimensions. If another consumer needs them, promote them.
+ */
+:root {
+  --sidebar-w: 220px;
+  --topbar-h: 48px;
+  --row-h: 44px;
+  --pad-card: 16px;
+  --ctrl-h-sm: 24px;
+  --ctrl-h-md: 32px;
+  --ctrl-h-lg: 40px;
+}
