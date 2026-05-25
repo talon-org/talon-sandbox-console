@@ -63,8 +63,9 @@ function SandboxRow({ s, onClick }: { s: SandboxDTO; onClick: () => void }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
         <span style={{ width: 5, height: 5, borderRadius: '50%', flex: '0 0 auto', background: color }} />
         <div className="img-row">
-          <span className="name">{s.id}</span>
-          <span className="meta">{s.profile}</span>
+          {/* G2 name 字段：有值则显示用户命名，下方显示 id；无名称则 id 作主显 */}
+          <span className="name">{s.name || s.id}</span>
+          <span className="meta">{s.name ? s.id : s.profile}</span>
         </div>
       </div>
       <div className="mono">{s.image_id ?? '—'}</div>
@@ -118,7 +119,13 @@ export function PageSandboxes() {
     else if (filter !== 'all' && s.state !== filter) return false;
     if (search) {
       const q = search.toLowerCase();
-      if (!s.id.toLowerCase().includes(q) && !(s.profile ?? '').toLowerCase().includes(q) && !(s.image_id ?? '').toLowerCase().includes(q)) return false;
+      // G2：name 字段也参与搜索
+      if (
+        !s.id.toLowerCase().includes(q) &&
+        !(s.name ?? '').toLowerCase().includes(q) &&
+        !(s.profile ?? '').toLowerCase().includes(q) &&
+        !(s.image_id ?? '').toLowerCase().includes(q)
+      ) return false;
     }
     return true;
   }), [sandboxes, filter, search]);

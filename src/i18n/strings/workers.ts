@@ -25,4 +25,9 @@ export const workers = {
   'workers.forbiddenTitle': { en: 'Access denied', zh: '无访问权限' },
   'workers.nodesOf':        { en: 'nodes', zh: '个节点' },
   'workers.regionsOf':      { en: 'regions', zh: '个区域' },
+  // G6: worker 邀请令牌（单次使用，24h 有效）
+  'workers.inviteTitle':    { en: 'Worker invite token', zh: 'Worker 邀请令牌' },
+  'workers.inviteBody':     { en: 'Copy this one-time token and pass it to the worker node during registration. It expires in 24 hours and cannot be recovered after closing this dialog.', zh: '复制此单次令牌并在 Worker 节点注册时使用。令牌 24 小时后失效，关闭弹窗后无法恢复。' },
+  'workers.inviteCopy':     { en: 'Copy & close', zh: '复制并关闭' },
+  'workers.inviteExpires':  { en: 'Expires:', zh: '过期时间：' },
 } as const;

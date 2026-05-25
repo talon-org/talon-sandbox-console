@@ -99,16 +99,17 @@ export function PageSandboxDetail() {
         <div style={{ minWidth: 0, flex: 1 }}>
           <div className="id-row">
             <span className="sbxid">{s.id}</span>
-            {/* 租户标签：与原型 TlnTag 对应，提供沙箱所属空间的上下文 */}
-            {(s as { tenant_id?: string }).tenant_id && (
-              <Badge variant="neutral">{(s as { tenant_id?: string }).tenant_id}</Badge>
+            {/* 租户标签：G2 tenant_id 字段 */}
+            {s.tenant_id && (
+              <Badge variant="neutral">{s.tenant_id}</Badge>
             )}
             {/* 状态通过 i18n 翻译，不渲染原始 API 字符串 */}
             <Badge variant={stateVariant(s.state)} dot={s.state === 'running'}>{t(`state.${s.state}`, s.state)}</Badge>
           </div>
           <div className="name-row">
             <TlnIcon name="box" size={14} style={{ color: 'var(--fg-3)' }} />
-            <span>{s.profile}</span>
+            {/* G2 name 字段：有值则显示用户命名，否则回退 profile */}
+            <span>{s.name || s.profile}</span>
             {s.image_id && (
               <>
                 <span style={{ color: 'var(--fg-4, var(--fg-3))' }}>·</span>
@@ -143,7 +144,8 @@ export function PageSandboxDetail() {
         <div className="item"><span className="k">{t('detail.started')}</span><span className="v">{fmtStarted(s.created_at)}</span></div>
         <div className="item"><span className="k">{t('detail.resources')}</span><span className="v">{fmtCpu(s.cpu_millis)} · {fmtMem(s.memory_bytes)}</span></div>
         {/* node 使用 worker_id 字段（API 有则显示，无则 — ） */}
-        <div className="item"><span className="k">{t('detail.node')}</span><span className="v">{(s as { worker_id?: string }).worker_id ?? '—'}</span></div>
+        {/* worker_id：G2 新增字段 */}
+        <div className="item"><span className="k">{t('detail.node')}</span><span className="v">{s.worker_id ?? '—'}</span></div>
         {/* region 字段（API 有则显示，无则 — ） */}
         <div className="item"><span className="k">{t('detail.region')}</span><span className="v">{(s as { region?: string }).region ?? '—'}</span></div>
         {/* disk 使用 disk_gib 字段（API 有则显示，无则 — ） */}
