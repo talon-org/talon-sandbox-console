@@ -1,12 +1,14 @@
 /* PageRecordings — workspace: recording session list.
- * 1:1 port of page-recording.jsx prototype (list view).
+ * Data from useRecordings() hook; no mock data.
  */
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageHeader, Button } from '@talon-sandbox/react';
+import { PageHeader, Button, FilterBar, EmptyState } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
-import { MOCK_RECORDINGS, relTime } from '../mock/data';
-// TODO: replace mock with apiGet('/v1/recordings')
+import { useRecordings } from '../hooks';
+import { useApp } from '../store';
+import type { RecordingQueryParams } from '../api/types';
 
 import './PageRecordings.css';
 
@@ -14,18 +16,93 @@ function fmtDuration(sec: number): string {
   return `${Math.floor(sec / 60)}m ${(sec % 60).toString().padStart(2, '0')}s`;
 }
 
-export function PageRecordings() {
+function relTime(secAgo: number): string {
+  if (secAgo < 60) return `${secAgo}s ago`;
+  if (secAgo < 3600) return `${Math.floor(secAgo / 60)}m ago`;
+  return `${Math.floor(secAgo / 3600)}h ago`;
+}
+
+interface RecordingRowProps {
+  id: string;
+  title?: string;
+  sandboxId: string;
+  agent?: string;
+  startedAt?: string;
+  durationSec: number;
+  steps: number;
+  sizeKb: number;
+  frames: number;
+}
+
+function RecordingRow({ id, title, sandboxId, agent, startedAt, durationSec, steps, sizeKb, frames }: RecordingRowProps) {
   const t = useT();
   const navigate = useNavigate();
-  const recordings = MOCK_RECORDINGS;
-  // TODO: replace with apiGet('/v1/recordings')
+  const ageSec = startedAt ? Math.round((Date.now() - new Date(startedAt).getTime()) / 1000) : null;
+
+  return (
+    <div
+      className="tln-tbl-row rec-row"
+      style={{ cursor: 'pointer' }}
+      onClick={() => navigate('/recordings/' + id)}
+      role="row"
+      aria-label={title ?? id}
+    >
+      <div className="rectitle">
+        <span className="t1">{title ?? id}</span>
+        <span className="t2">{id} · {Math.round(sizeKb)} KiB · {frames} {t('recordings.frames')}</span>
+      </div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{sandboxId}</div>
+      <div>
+        {agent ? (
+          <span className="agentpill">
+            <TlnIcon name="agent" size={11} />
+            {agent}
+          </span>
+        ) : (
+          <span style={{ color: 'var(--fg-4)' }}>—</span>
+        )}
+      </div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)' }}>
+        {ageSec !== null ? relTime(ageSec) : '—'}
+      </div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+        {fmtDuration(durationSec)}
+      </div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--fg-1)' }}>
+        {steps}
+      </div>
+      <div className="actions" onClick={e => e.stopPropagation()}>
+        <Button variant="ghost" size="sm" iconOnly aria-label="More">
+          <TlnIcon name="more" size={14} />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function PageRecordings() {
+  const t = useT();
+  const me = useApp(s => s.me);
+  const isAdmin = me?.tenant_id === '__admin';
+
+  const [agentFilter, setAgentFilter] = useState('all');
+
+  const queryOpts: RecordingQueryParams = useMemo(() => {
+    const p: RecordingQueryParams = { limit: 50 };
+    if (agentFilter !== 'all') p.agent = agentFilter;
+    if (!isAdmin && me?.tenant_id) p.tenant_id = me.tenant_id;
+    return p;
+  }, [agentFilter, isAdmin, me?.tenant_id]);
+
+  const { data, isLoading, isError } = useRecordings(queryOpts);
+  const items = data?.items ?? [];
 
   return (
     <>
       <PageHeader
         eyebrow={t('recordings.eyebrow')}
         title={t('recordings.title')}
-        num={`${recordings.length}`}
+        num={`${items.length}`}
         desc={t('recordings.desc')}
         actions={
           <>
@@ -42,57 +119,63 @@ export function PageRecordings() {
       />
 
       <div className="page-body">
-        <div className="tln-tbl">
-          <div className="tln-tbl-head rec-row">
-            <div>{t('recordings.colTitle')}</div>
-            <div>{t('recordings.colSandbox')}</div>
-            <div>{t('recordings.colAgent')}</div>
-            <div>{t('recordings.colStarted')}</div>
-            <div>{t('recordings.colDuration')}</div>
-            <div>{t('recordings.colSteps')}</div>
-            <div />
+        {isAdmin && (
+          <div className="sbx-filters" style={{ marginBottom: 14 }}>
+            <FilterBar
+              groups={[{ items: [{ value: 'all', label: t('recordings.filterAll') }] }]}
+              value={agentFilter}
+              onChange={setAgentFilter}
+            />
           </div>
+        )}
 
-          {recordings.map(r => {
-            const ageSec = Math.round((Date.now() - new Date(r.startedAt).getTime()) / 1000);
-            return (
-              <div
-                key={r.id}
-                className="tln-tbl-row rec-row"
-                style={{ cursor: 'pointer' }}
-                onClick={() => navigate('/recordings/' + r.id)}
-              >
-                <div className="rectitle">
-                  <span className="t1">{r.title}</span>
-                  <span className="t2">{r.id} · {Math.round(r.sizeKB)} KiB · {r.frames} frames</span>
-                </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-                  {r.sandboxId} · {r.sandboxName}
-                </div>
-                <div>
-                  <span className="agentpill">
-                    <TlnIcon name="agent" size={11} />
-                    {r.agent}
-                  </span>
-                </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)' }}>
-                  {relTime(ageSec)}
-                </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-                  {fmtDuration(r.durationSec)}
-                </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--fg-1)' }}>
-                  {r.steps}
-                </div>
-                <div className="actions" onClick={e => e.stopPropagation()}>
-                  <Button variant="ghost" size="sm" iconOnly aria-label="More">
-                    <TlnIcon name="more" size={14} />
-                  </Button>
-                </div>
+        {isLoading && (
+          <EmptyState title={t('common.loading')} description={t('recordings.loadingDesc')} />
+        )}
+        {isError && (
+          <EmptyState
+            icon={<TlnIcon name="alert" size={24} />}
+            title={t('recordings.errorTitle')}
+            description={t('recordings.errorDesc')}
+          />
+        )}
+
+        {!isLoading && !isError && (
+          <div className="tln-tbl" role="table" aria-label={t('recordings.title')}>
+            <div className="tln-tbl-head rec-row" role="rowgroup">
+              <div role="columnheader">{t('recordings.colTitle')}</div>
+              <div role="columnheader">{t('recordings.colSandbox')}</div>
+              <div role="columnheader">{t('recordings.colAgent')}</div>
+              <div role="columnheader">{t('recordings.colStarted')}</div>
+              <div role="columnheader">{t('recordings.colDuration')}</div>
+              <div role="columnheader">{t('recordings.colSteps')}</div>
+              <div role="columnheader" />
+            </div>
+
+            {items.length === 0 ? (
+              <div style={{ padding: 32 }}>
+                <EmptyState
+                  icon={<TlnIcon name="video" size={24} />}
+                  title={t('recordings.emptyTitle')}
+                  description={t('recordings.emptyDesc')}
+                />
               </div>
-            );
-          })}
-        </div>
+            ) : items.map(r => (
+              <RecordingRow
+                key={r.id}
+                id={r.id}
+                title={r.title}
+                sandboxId={r.sandbox_id}
+                agent={r.agent}
+                startedAt={r.started_at}
+                durationSec={r.duration_sec}
+                steps={r.steps}
+                sizeKb={r.size_kb}
+                frames={r.frames}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </>
   );
