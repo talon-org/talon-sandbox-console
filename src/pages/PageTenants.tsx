@@ -94,8 +94,10 @@ export function PageTenants() {
                     return <div><span className={`tplan ${cls}`}>{lbl}</span></div>;
                   })()}
 
-                  {/* members not in list DTO */}
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>—</div>
+                  {/* member_count：G4 新增字段；后端未填时显示 — */}
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                    {tenant.member_count != null ? tenant.member_count : '—'}
+                  </div>
 
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
                     {tenant.active_sandboxes}

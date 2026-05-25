@@ -2,10 +2,11 @@
  * Data: useWorkers() from src/hooks/useWorkers.ts
  * Non-admin gets error EmptyState from hook 403 — no ACL logic here.
  */
-import { PageHeader, Button, ProgressBar } from '@talon-sandbox/react';
+import { useState } from 'react';
+import { PageHeader, Button, ProgressBar, Dialog, toast } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
-import { useWorkers } from '../hooks/useWorkers';
+import { useWorkers, useInviteWorker } from '../hooks/useWorkers';
 import { EmptyState } from '../components';
 import { RegionGroup } from './_workers/RegionGroup';
 import type { WorkerDTO } from '../api/types';
@@ -15,6 +16,11 @@ import './PageWorkers.css';
 export function PageWorkers() {
   const t = useT();
   const { data, isLoading, isError } = useWorkers();
+
+  // G6: worker 邀请令牌弹窗状态
+  const [inviteToken,    setInviteToken]    = useState<string | null>(null);
+  const [inviteExpires,  setInviteExpires]  = useState<string>('');
+  const invite = useInviteWorker();
 
   const ws = data?.workers ?? [];
 
@@ -32,6 +38,16 @@ export function PageWorkers() {
 
   const numStr = `${stats.total} ${t('workers.nodesOf')} · ${Object.keys(byRegion).length} ${t('workers.regionsOf')}`;
 
+  const handleInvite = () => {
+    invite.mutate(undefined, {
+      onSuccess: (res) => {
+        setInviteToken(res.token);
+        setInviteExpires(res.expires_at);
+      },
+      onError: () => toast.error(t('common.loadFailed')),
+    });
+  };
+
   return (
     <>
       <PageHeader
@@ -44,7 +60,8 @@ export function PageWorkers() {
               <TlnIcon name="refresh" size={14} />
               {t('workers.sync')}
             </Button>
-            <Button variant="primary" disabled>
+            {/* G6: 邀请令牌按钮 — 点击生成单次 token */}
+            <Button variant="primary" loading={invite.isPending} onClick={handleInvite}>
               <TlnIcon name="plus" size={14} />
               {t('workers.join')}
             </Button>
@@ -117,6 +134,42 @@ export function PageWorkers() {
           </>
         )}
       </div>
+
+      {/* G6: 邀请令牌展示弹窗 — token 仅展示一次，关闭后无法恢复 */}
+      <Dialog
+        open={!!inviteToken}
+        onClose={() => setInviteToken(null)}
+        title={
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <TlnIcon name="key" size={15} style={{ color: 'var(--acc)' }} />
+            {t('workers.inviteTitle')}
+          </span>
+        }
+        footer={
+          <Button variant="primary" onClick={() => {
+            if (inviteToken) navigator.clipboard.writeText(inviteToken).catch(() => {});
+            setInviteToken(null);
+          }}>
+            <TlnIcon name="check" size={14} />
+            {t('workers.inviteCopy')}
+          </Button>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ fontSize: 12, color: 'var(--fg-2)' }}>{t('workers.inviteBody')}</div>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 12, wordBreak: 'break-all',
+            background: 'var(--bg-3)', border: '1px solid var(--line)',
+            borderRadius: 'var(--r-2)', padding: '10px 12px', color: 'var(--fg-0)',
+            userSelect: 'all',
+          }}>
+            {inviteToken}
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--fg-3)' }}>
+            {t('workers.inviteExpires')} {inviteExpires}
+          </div>
+        </div>
+      </Dialog>
     </>
   );
 }

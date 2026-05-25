@@ -45,6 +45,12 @@ export interface SandboxDTO {
   created_at?: number;       // Unix seconds
   network_policy?: string;
   secrets?: SecretBindingDTO[];
+  // G2 (v30)：sandbox 扩展字段
+  name?: string;                       // 用户自定义名称；空 = 未命名
+  task?: string;                       // 当前任务描述（自由文本）
+  network_allowed_hosts?: string[];    // allowlist 模式下允许访问的主机列表
+  worker_id?: string;                  // 承载此 sandbox 的 worker id
+  tenant_id?: string;                  // 所属租户 id（管理员视角可见）
 }
 
 /** GET /v1/sandboxes response */
@@ -79,6 +85,10 @@ export interface SecretDTO {
   revoked?: boolean;
   used_by_count: number;
   last_rotated_at?: number;  // Unix seconds; 0 / absent = never rotated
+  // G5 (v30)：secrets 扩展字段
+  scope?: 'tenant' | 'sandbox';   // 派生字段；undefined = tenant（旧记录兼容）
+  last_used_at?: number;           // Unix seconds; 0 / absent = never used
+  created_by?: string;             // JWT user_id；空 = API Key / 旧记录
 }
 
 /** GET /v1/secrets response */
@@ -128,6 +138,36 @@ export interface WorkerListResponse {
   workers: WorkerDTO[];
 }
 
+/** POST /v1/admin/workers/invite response (G6) */
+export interface WorkerInviteResponse {
+  token: string;      // 明文单次令牌，需立即展示给管理员
+  expires_at: string; // RFC3339
+}
+
+// ── Processes ─────────────────────────────────────────────────────────────────
+
+/** Single process from GET /v1/sandboxes/{id}/processes */
+export interface ProcessDTO {
+  id: string;
+  sandbox_id: string;
+  command: string[];
+  pid: number;
+  state: string;       // running / exited / killed / failed
+  exit_code: number;   // -1 = 信号终止
+  started_at: number;  // Unix seconds
+  exited_at: number;   // Unix seconds; 0 = 尚未退出
+  expose_ports?: number[];
+  host_ports?: Record<number, number>;
+  // G1 (v30)：每进程资源用率（worker 每 5s 采样）
+  cpu_pct?: number;    // 0-100；旧 worker 不填
+  mem_mb?: number;     // 物理内存 MB；旧 worker 不填
+}
+
+/** GET /v1/sandboxes/{id}/processes response */
+export interface ProcessListResponse {
+  processes: ProcessDTO[];
+}
+
 // ── Tenants / Workspaces ──────────────────────────────────────────────────────
 
 /** Single tenant from GET /v1/admin/tenants list */
@@ -138,6 +178,7 @@ export interface TenantDTO {
   quota_max_sandboxes: number;
   active_sandboxes: number;
   plan?: 'free' | 'team' | 'enterprise';   // backend-gaps G4：列表响应已扩展此字段
+  member_count?: number;                    // G4 (v30)：该租户的用户数（列表端点扩展）
 }
 
 /** GET /v1/admin/tenants response */

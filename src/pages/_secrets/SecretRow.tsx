@@ -25,6 +25,7 @@ interface Props {
 export function SecretRow({ secret: s, onRotate }: Props) {
   const t = useT();
   const rotatedAgo    = s.last_rotated_at ? relTime(secsAgo(s.last_rotated_at)) : '—';
+  const lastUsedAgo   = s.last_used_at && s.last_used_at > 0 ? relTime(secsAgo(s.last_used_at)) : '—';
   const rotateDueFlag = !s.last_rotated_at;
 
   return (
@@ -41,15 +42,21 @@ export function SecretRow({ secret: s, onRotate }: Props) {
               </span>
             )}
           </span>
-          {/* scope pill 反映实际 scope 字段，缺省视为 tenant */}
-          <span className="scope-pill">{t(`secrets.scope.${(s as { scope?: string }).scope || 'tenant'}`, t('secrets.filterTenant'))}</span>
+          {/* scope pill 反映实际 scope 字段，缺省视为 tenant（G5 新增字段） */}
+          <span className={`scope-pill${s.scope === 'sandbox' ? ' sandbox' : ''}`}>
+            {t(`secrets.scope.${s.scope || 'tenant'}`, t('secrets.filterTenant'))}
+          </span>
         </div>
       </div>
       <div className="mono">{rotatedAgo}</div>
-      <div className="mono">—</div>
+      {/* last_used_at：G5 新增字段；后端未写入时显示 — */}
+      <div className="mono">{lastUsedAgo}</div>
       <div className="mono" style={{ color: 'var(--fg-1)' }}>{s.used_by_count.toLocaleString()}</div>
       <div className="mono">{s.used_by_count}</div>
-      <div className="mono">—</div>
+      {/* created_by：G5 新增字段；旧记录 / API Key 为空则显示 — */}
+      <div className="mono" title={s.created_by || undefined} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {s.created_by || '—'}
+      </div>
       <div className="actions">
         <Button variant="ghost" size="sm"
           onClick={() => toast.warn(s.name + ' — ' + t('secrets.viewToast'))}>

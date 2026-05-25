@@ -20,12 +20,21 @@ export function TabOverview({ s }: { s: SandboxDTO }) {
   const t   = useT();
   const nav = useNavigate();
   const cpuCores   = (s.cpu_millis ?? 0) / 1000;
-  const cpuUsed    = cpuCores * 0.3;   // real usage not in DTO — TODO: needs /processes endpoint
+  const cpuUsed    = cpuCores * 0.3;   // 真实用量待 /processes 端点上线
   const memGib     = (s.memory_bytes ?? 0) / (1024 ** 3);
-  const memUsed    = memGib * 0.4;     // TODO: needs /processes endpoint
+  const memUsed    = memGib * 0.4;     // 真实用量待 /processes 端点上线
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* G2 task 字段：sandbox 有当前任务描述时在 overview 顶部显示 */}
+      {s.task && (
+        <div className="task-card">
+          <div className="task-text">{s.task}</div>
+          <div className="task-meta">
+            <span>{t('detail.task')}</span>
+          </div>
+        </div>
+      )}
       <div className="sbx-2col">
         <Card
           title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="cpu" size={14} style={{ color: 'var(--fg-2)' }} />{t('detail.resources')}</span>}
@@ -135,18 +144,30 @@ export function TabFiles({ s: _ }: { s: SandboxDTO }) {
 // ── Network tab ───────────────────────────────────────────────────────────────
 export function TabNetwork({ s }: { s: SandboxDTO }) {
   const t = useT();
+  // G2：network_allowed_hosts 已在 SandboxDTO 中
+  const hosts = s.network_allowed_hosts ?? [];
   return (
     <div className="sbx-2col">
       <Card title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="shield" size={14} style={{ color: 'var(--info)' }} />{t('detail.networkPolicy')}</span>}>
         <KV items={[
-          { label: t('detail.policy'),        value: s.network_policy ?? 'allow-all' },
-          { label: t('detail.blocked24h'),     value: '—' },
+          { label: t('detail.policy'),    value: s.network_policy ?? 'allow-all' },
+          { label: t('detail.blocked24h'), value: '—' },
         ]} />
-        {/* TODO: allowlist hosts not in SandboxDTO — needs network policy endpoint (P2) */}
+        {/* G2：allowlist 模式下显示允许主机列表 */}
+        {hosts.length > 0 && (
+          <div className="hostlist" style={{ marginTop: 12 }}>
+            {hosts.map(h => (
+              <div key={h} className="hitem">
+                <TlnIcon name="globe" size={11} style={{ color: 'var(--fg-3)', flex: '0 0 auto' }} />
+                {h}
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
       <Card title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="alert" size={14} style={{ color: 'var(--warn)' }} />{t('detail.recentBlocked')}</span>}>
         <div style={{ color: 'var(--fg-3)', fontSize: 12, fontFamily: 'var(--font-mono)', padding: '8px 0' }}>
-          {/* TODO: blocked request list requires audit filtering (P2) */}
+          {/* TODO: 封锁请求列表需要审计过滤端点（P2） */}
           {t('common.comingSoon')}
         </div>
       </Card>

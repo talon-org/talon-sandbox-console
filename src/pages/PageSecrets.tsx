@@ -34,9 +34,9 @@ export function PageSecrets() {
   const list = all.filter(s => {
     // rotate-due 过滤：last_rotated_at 为空代表需要轮换
     if (scope === 'rotate-due' && s.last_rotated_at) return false;
-    // tenant/sandbox 范围过滤：按 scope 字段匹配
-    if (scope === 'tenant'  && (s as { scope?: string }).scope !== 'tenant'  && (s as { scope?: string }).scope != null) return false;
-    if (scope === 'sandbox' && (s as { scope?: string }).scope !== 'sandbox') return false;
+    // tenant/sandbox 范围过滤：按 G5 scope 字段匹配（缺省视为 tenant）
+    if (scope === 'tenant'  && (s.scope ?? 'tenant') !== 'tenant')  return false;
+    if (scope === 'sandbox' && s.scope !== 'sandbox') return false;
     if (search && !s.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
