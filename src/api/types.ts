@@ -304,6 +304,7 @@ export interface DashboardSandbox {
   image: string;
   status: string;
   tenant: string;
+  created_at?: string;   // RFC3339；后端 T10 扩展字段，用于计算 age 列
 }
 
 /** GET /v1/metrics/dashboard response (T10) */

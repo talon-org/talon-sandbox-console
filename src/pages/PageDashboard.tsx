@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   PageHeader, Card, Button, ProgressBar,
-  SandboxStateBar, DEFAULT_STATE_COLORS,
+  DEFAULT_STATE_COLORS,
   type SandboxState as DSState,
 } from '@talon-sandbox/react';
 import { useApp } from '../store';
@@ -44,6 +44,15 @@ function relTime(secAgo: number): string {
   return `${Math.floor(secAgo / 3600)}h`;
 }
 
+// 计算 sandbox 已运行时长，格式如 "5m"、"2h"；缺少 created_at 时返回 —
+function fmtAge(createdAt?: string): string {
+  if (!createdAt) return '—';
+  const ageSec = (Date.now() - new Date(createdAt).getTime()) / 1000;
+  if (ageSec < 60)    return Math.floor(ageSec) + 's';
+  if (ageSec < 3600)  return Math.floor(ageSec / 60) + 'm';
+  return Math.floor(ageSec / 3600) + 'h';
+}
+
 // ── Metric card ───────────────────────────────────────────────────────────────
 interface MetricProps {
   micro: string;
@@ -81,6 +90,49 @@ function Metric({ micro, value, unit, of: ofVal, delta, deltaKind = 'neut', seri
 const DS_STATE_ORDER: DSState[] = [
   'running', 'pulling-image', 'provisioning', 'idle', 'paused', 'terminating', 'failed', 'evicted',
 ];
+
+// 1:1 port of the prototype's StatesOverview: stacked bar + 4-col legend grid.
+// Legend labels go through i18n via t(`state.<key>`) so they render in zh/en.
+function StatesOverview({
+  order,
+  counts,
+  t,
+}: {
+  order: DSState[];
+  counts: Partial<Record<string, number>>;
+  t: (k: string) => string;
+}) {
+  const total = order.reduce((s, k) => s + (counts[k] ?? 0), 0) || 1;
+  return (
+    <div>
+      <div className="states-bar" role="img" aria-label="sandbox states distribution">
+        {order.map((k) => {
+          const c = counts[k] ?? 0;
+          if (!c) return null;
+          return (
+            <div
+              key={k}
+              style={{ flex: c, background: DEFAULT_STATE_COLORS[k] }}
+              title={`${t(`state.${k}`)}: ${c} (${Math.round((c / total) * 100)}%)`}
+            />
+          );
+        })}
+      </div>
+      <div className="states-legend">
+        {order.map((k) => {
+          const c = counts[k] ?? 0;
+          return (
+            <div key={k} className="item">
+              <span className="swatch" style={{ background: DEFAULT_STATE_COLORS[k] }} />
+              <span className="label">{t(`state.${k}`)}</span>
+              <span className={'count' + (c === 0 ? ' zero' : '')}>{c}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export function PageDashboard() {
@@ -191,16 +243,7 @@ export function PageDashboard() {
             title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="box" size={14} style={{ color: 'var(--fg-2)' }} />{t('dash.sandboxStates')}</span>}
             footer={<span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-3)' }}>{t('dash.lastRefresh')}</span>}
           >
-            <SandboxStateBar counts={stateCounts} />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '8px 16px', marginTop: 16 }}>
-              {DS_STATE_ORDER.map(k => (
-                <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: DEFAULT_STATE_COLORS[k], flex: '0 0 auto' }} />
-                  <span style={{ color: 'var(--fg-2)', flex: 1 }}>{k}</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', color: (stateMap[k] ?? 0) === 0 ? 'var(--fg-3)' : 'var(--fg-0)', fontSize: 12, fontWeight: 500 }}>{stateMap[k] ?? 0}</span>
-                </div>
-              ))}
-            </div>
+            <StatesOverview order={DS_STATE_ORDER} counts={stateMap} t={t} />
           </Card>
 
           <Card
@@ -214,14 +257,14 @@ export function PageDashboard() {
                       <span className="qi-label">vCPU</span>
                       <span className="qi-value">{quota.vcpu.used.toFixed(1)} / {quota.vcpu.limit}</span>
                     </div>
-                    <ProgressBar value={quota.vcpu.used} max={quota.vcpu.limit} />
+                    <ProgressBar value={quota.vcpu.used} max={quota.vcpu.limit || 1} />
                   </div>
                   <div className="quota-item">
                     <div className="qi-header">
                       <span className="qi-label">{t('dash.metric.mem')}</span>
                       <span className="qi-value">{quota.memory_gib.used} / {quota.memory_gib.limit} GiB</span>
                     </div>
-                    <ProgressBar value={quota.memory_gib.used} max={quota.memory_gib.limit} />
+                    <ProgressBar value={quota.memory_gib.used} max={quota.memory_gib.limit || 1} />
                   </div>
                   <div className="quota-item">
                     <div className="qi-header">
@@ -290,7 +333,8 @@ export function PageDashboard() {
                       <span className="id">{s.id}</span>
                       <span className="task">{s.name || s.image}</span>
                     </div>
-                    <span className="age">{s.status}</span>
+                    {/* age 列显示已运行时长，而非状态标签（与原型语义对齐） */}
+                    <span className="age">{fmtAge(s.created_at)}</span>
                   </div>
                 );
               })}
