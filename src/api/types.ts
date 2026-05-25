@@ -137,6 +137,7 @@ export interface TenantDTO {
   created_at: number;   // Unix seconds
   quota_max_sandboxes: number;
   active_sandboxes: number;
+  plan?: 'free' | 'team' | 'enterprise';   // backend-gaps G4：列表响应已扩展此字段
 }
 
 /** GET /v1/admin/tenants response */

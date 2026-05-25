@@ -84,8 +84,16 @@ export function PageTenants() {
                     </div>
                   </div>
 
-                  {/* plan not in list DTO */}
-                  <div><span className="tplan Free">{t('tenants.drawer.planFree')}</span></div>
+                  {/* plan 读取 API 字段，缺省回退 free */}
+                  {(() => {
+                    const plan = tenant.plan ?? 'free';
+                    // CSS 类名使用首字母大写的格式（Free / Team / Enterprise）
+                    const cls  = plan.charAt(0).toUpperCase() + plan.slice(1);
+                    const lbl  = plan === 'enterprise' ? t('tenants.drawer.planEnt')
+                               : plan === 'team'       ? t('tenants.drawer.planTeam')
+                               :                        t('tenants.drawer.planFree');
+                    return <div><span className={`tplan ${cls}`}>{lbl}</span></div>;
+                  })()}
 
                   {/* members not in list DTO */}
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>—</div>
