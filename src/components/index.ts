@@ -1,5 +1,4 @@
 /* src/components/index.ts — barrel */
-export * from './CodeBlock';
 export * from './ConfirmDialog';
 export * from './Drawer';
 export * from './EmptyState';
