@@ -64,13 +64,24 @@
 .quota-item .qi-value { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-2); }
 .quota-item .qi-value.danger { color: var(--err); }
 
+/*
+ * ProgressBar 组件的 .fill 默认使用 var(--acc)，不识别 --tln-progress-color。
+ * 通过在容器上设置 --pb-color 变量，再在此覆盖 .fill 的 background，
+ * 从而让 Secret/失败 两行展示原型指定的 magenta / err 颜色。
+ */
+.quota-item .tln-progress[style*="--pb-color"] .fill {
+  background: var(--pb-color);
+}
+
 /* States overview — 1:1 port of prototype */
 .states-bar {
   display: flex;
   height: 8px;
-  border-radius: 3px;
+  /* 原型用 4px，与 --r-1 圆角一致 */
+  border-radius: 4px;
   overflow: hidden;
-  background: var(--bg-2);
+  /* 原型用 var(--bg-3)，作为空白段底色，与 bg-2 卡片背景有层次区分 */
+  background: var(--bg-3);
 }
 .states-bar > div { transition: flex 280ms var(--ease-out, ease-out); }
 .states-legend {
