@@ -138,10 +138,16 @@ export function PageSandboxDetail() {
         </div>
       </div>
 
-      {/* meta row */}
+      {/* 信息行：与原型对齐，补充 node/region/disk 字段 */}
       <div className="sbx-info-row">
         <div className="item"><span className="k">{t('detail.started')}</span><span className="v">{fmtStarted(s.created_at)}</span></div>
         <div className="item"><span className="k">{t('detail.resources')}</span><span className="v">{fmtCpu(s.cpu_millis)} · {fmtMem(s.memory_bytes)}</span></div>
+        {/* node 使用 worker_id 字段（API 有则显示，无则 — ） */}
+        <div className="item"><span className="k">{t('detail.node')}</span><span className="v">{(s as { worker_id?: string }).worker_id ?? '—'}</span></div>
+        {/* region 字段（API 有则显示，无则 — ） */}
+        <div className="item"><span className="k">{t('detail.region')}</span><span className="v">{(s as { region?: string }).region ?? '—'}</span></div>
+        {/* disk 使用 disk_gib 字段（API 有则显示，无则 — ） */}
+        <div className="item"><span className="k">{t('detail.disk')}</span><span className="v">{(s as { disk_gib?: number }).disk_gib != null ? (s as { disk_gib?: number }).disk_gib + ' GiB' : '—'}</span></div>
         <div className="item"><span className="k">{t('detail.profile')}</span><span className="v">{s.profile}</span></div>
         <div className="item"><span className="k">ttl</span><span className="v">{s.ttl_seconds != null ? s.ttl_seconds + 's' : '—'}</span></div>
       </div>
