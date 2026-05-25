@@ -358,6 +358,55 @@ export interface DashboardResponse {
   running_sandboxes: DashboardSandbox[];
 }
 
+// ── Exposed Ports (Spec 50) ───────────────────────────────────────────────────
+
+/** POST /v1/sandboxes/{id}/expose 请求体 */
+export interface ExposeRequest {
+  port: number;
+  sign?: boolean;        // 是否签发带 token 的 signed URL
+  ttl?: string;          // 如 "1h"，仅 sign=true 时有效
+  subdomain?: string;    // 自定义子域，空 = 自动生成
+}
+
+/** POST /v1/sandboxes/{id}/expose 响应体 */
+export interface ExposeResponse {
+  port: number;
+  url: string;
+  signed: boolean;
+  expires_at: string;    // RFC3339 或空字符串
+}
+
+/** GET /v1/sandboxes/{id}/expose 的单条端口记录 */
+export interface ExposedPortDTO {
+  port: number;
+  url: string;
+  signed?: boolean;
+  expires_at?: string;   // RFC3339，仅 signed 时有值
+  created_at?: string;   // RFC3339，仅 explicit 时有值
+  source: string;        // "explicit" | "dynamic"
+}
+
+/** GET /v1/sandboxes/{id}/expose 响应体 */
+export interface ExposedPortListResponse {
+  ports: ExposedPortDTO[];
+}
+
+// ── Files (Spec 35) ───────────────────────────────────────────────────────────
+
+/** fs-list 单条目录项 */
+export interface FSEntry {
+  name: string;
+  size: number;       // bytes
+  mod_time: number;   // Unix 秒
+  is_dir: boolean;
+}
+
+/** GET /v1/sandboxes/{id}/fs-list/{path} 响应体 */
+export interface FSListResponse {
+  entries: FSEntry[];
+  total: number;
+}
+
 // ── Query params ──────────────────────────────────────────────────────────────
 
 export interface AuditQueryParams {

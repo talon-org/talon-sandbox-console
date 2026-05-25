@@ -46,6 +46,7 @@ export const sandboxes = {
   'detail.mountedSecrets': { en: 'Mounted secrets', zh: '挂载的凭据' },
   'detail.manage':         { en: 'Manage', zh: '管理' },
   'detail.noPorts':        { en: 'No ports exposed', zh: '未暴露任何端口' },
+  'detail.more':           { en: 'more', zh: '更多' },
   'detail.noSecrets':      { en: 'None', zh: '无' },
   'detail.exposePort':     { en: 'Expose port', zh: '暴露端口' },
   'detail.networkPolicy':  { en: 'Network policy', zh: '网络策略' },
@@ -102,4 +103,34 @@ export const sandboxes = {
   // Sandboxes 列表计数器单位
   'sandboxes.running':       { en: 'running', zh: '运行中' },
   'sandboxes.total':         { en: 'total', zh: '总数' },
+
+  // Ports tab
+  'detail.ports.port':       { en: 'Port', zh: '端口' },
+  'detail.ports.url':        { en: 'URL', zh: 'URL' },
+  'detail.ports.source':     { en: 'Source', zh: '来源' },
+  'detail.ports.delete':     { en: 'Remove', zh: '移除' },
+  'detail.ports.deleteConfirmTitle': { en: 'Remove exposed port?', zh: '移除暴露端口？' },
+  'detail.ports.deleteConfirmDesc':  { en: 'The port will no longer be accessible externally.', zh: '该端口将不再对外开放。' },
+  'detail.ports.exposeDialogTitle':  { en: 'Expose a port', zh: '暴露端口' },
+  'detail.ports.portLabel':  { en: 'Port number', zh: '端口号' },
+  'detail.ports.signLabel':  { en: 'Signed URL (token required)', zh: '签名 URL（需要 token）' },
+  'detail.ports.submit':     { en: 'Expose', zh: '确认暴露' },
+  'detail.ports.copyUrl':    { en: 'Copy URL', zh: '复制链接' },
+  'detail.ports.urlCopied':  { en: 'Copied!', zh: '已复制！' },
+  'detail.ports.dynamic':    { en: 'dynamic', zh: '动态发现' },
+  'detail.ports.explicit':   { en: 'explicit', zh: '手动暴露' },
+
+  // Files tab
+  'detail.files.root':       { en: 'Root', zh: '根目录' },
+  'detail.files.name':       { en: 'Name', zh: '名称' },
+  'detail.files.size':       { en: 'Size', zh: '大小' },
+  'detail.files.modified':   { en: 'Modified', zh: '修改时间' },
+  'detail.files.selectFile': { en: 'Select a file to preview', zh: '选择文件以预览' },
+  'detail.files.binary':     { en: '(binary file — preview unavailable)', zh: '（二进制文件，无法预览）' },
+  'detail.files.noEntries':  { en: 'Empty directory', zh: '空目录' },
+  'detail.files.back':       { en: 'Back', zh: '返回上级' },
+
+  // Processes tab 新增列标题
+  'detail.colStarted':       { en: 'Started', zh: '启动时间' },
+  'detail.colStatus':        { en: 'Status', zh: '状态' },
 } as const;
