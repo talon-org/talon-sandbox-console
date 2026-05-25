@@ -1,7 +1,6 @@
 /* src/components/index.ts — barrel */
 export * from './CodeBlock';
 export * from './ConfirmDialog';
-export * from './DataTable';
 export * from './Drawer';
 export * from './EmptyState';
 export * from './PageHeader';
