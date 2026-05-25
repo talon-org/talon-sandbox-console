@@ -46,6 +46,7 @@ export const sandboxes = {
   'detail.mountedSecrets': { en: 'Mounted secrets', zh: '挂载的凭据' },
   'detail.manage':         { en: 'Manage', zh: '管理' },
   'detail.noPorts':        { en: 'No ports exposed', zh: '未暴露任何端口' },
+  'detail.more':           { en: 'more', zh: '更多' },
   'detail.noSecrets':      { en: 'None', zh: '无' },
   'detail.exposePort':     { en: 'Expose port', zh: '暴露端口' },
   'detail.networkPolicy':  { en: 'Network policy', zh: '网络策略' },

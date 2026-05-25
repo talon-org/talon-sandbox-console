@@ -21,14 +21,58 @@ function fmtAge(createdAt?: number): string {
   return Math.floor(sec / 3600) + 'h ' + Math.floor((sec % 3600) / 60) + 'm';
 }
 
+// Overview 内嵌的端口预览卡 — 显示前 3 条已暴露端口,完整列表在 TabPorts。
+// 与 TabPorts 共享 react-query key,不会重复请求。
+function PortsPreviewCard({ sandboxId }: { sandboxId: string }) {
+  const t = useT();
+  const { data, isLoading, isError } = useSandboxPorts(sandboxId);
+  const ports = data?.ports ?? [];
+  const preview = ports.slice(0, 3);
+
+  return (
+    <Card
+      title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="network" size={14} style={{ color: 'var(--info)' }} />{t('detail.tab.ports')}</span>}
+      footer={ports.length > 3 ? (
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)' }}>
+          +{ports.length - 3} {t('detail.more', 'more')}
+        </span>
+      ) : null}
+    >
+      {isLoading && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--fg-3)' }}>{t('common.loading')}</span>}
+      {isError && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--err)' }}>{t('common.loadFailed')}</span>}
+      {!isLoading && !isError && preview.length === 0 && (
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--fg-3)' }}>{t('detail.noPorts')}</span>
+      )}
+      {!isLoading && !isError && preview.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {preview.map(p => (
+            <a key={p.port} href={p.url} target="_blank" rel="noopener noreferrer"
+               style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--info)', textDecoration: 'none' }}>
+              <span style={{ color: 'var(--fg-2)' }}>:{p.port}</span>
+              <span style={{ color: 'var(--fg-3)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.url}</span>
+              <TlnIcon name="arrowRight" size={11} />
+            </a>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 // ── Overview tab ──────────────────────────────────────────────────────────────
 export function TabOverview({ s }: { s: SandboxDTO }) {
   const t   = useT();
   const nav = useNavigate();
-  const cpuCores   = (s.cpu_millis ?? 0) / 1000;
-  const cpuUsed    = cpuCores * 0.3;   // 真实用量待 /processes 端点上线
-  const memGib     = (s.memory_bytes ?? 0) / (1024 ** 3);
-  const memUsed    = memGib * 0.4;     // 真实用量待 /processes 端点上线
+  // 真实用量从 processes 端点聚合得到; react-query 会与 TabProcesses 共享同一 query key,
+  // 不会双倍请求。失败/空时回退到 0,不显示假占比。
+  const { data: procData } = useSandboxProcesses(s.id);
+  const procs = procData?.processes ?? [];
+  const cpuCores = (s.cpu_millis ?? 0) / 1000;
+  const memGib   = (s.memory_bytes ?? 0) / (1024 ** 3);
+  // CPU 用量: 单核 100% = 1 vCPU,累加所有进程的 cpu_pct/100
+  const cpuUsed  = procs.reduce((sum, p) => sum + (p.cpu_pct ?? 0) / 100, 0);
+  // 内存用量: 进程 mem_mb 累加换算成 GiB
+  const memUsed  = procs.reduce((sum, p) => sum + (p.mem_mb ?? 0), 0) / 1024;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -46,7 +90,6 @@ export function TabOverview({ s }: { s: SandboxDTO }) {
           title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="cpu" size={14} style={{ color: 'var(--fg-2)' }} />{t('detail.resources')}</span>}
           footer={<span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-3)' }}>{t('detail.realtime')}</span>}
         >
-          {/* TODO: 真实用量需要 GET /v1/sandboxes/{id}/processes（P1 endpoint） */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <ResRow label={t('detail.resourceVcpu')}   used={cpuUsed}  max={cpuCores || 2}  unit="vCPU" />
             <ResRow label={t('detail.resourceMemory')} used={memUsed}  max={memGib || 4}    unit="GiB" />
@@ -55,13 +98,7 @@ export function TabOverview({ s }: { s: SandboxDTO }) {
           </div>
         </Card>
 
-        <Card
-          title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="network" size={14} style={{ color: 'var(--info)' }} />{t('detail.tab.ports')}</span>}
-          footer={<Button variant="ghost" size="sm" iconOnly aria-label={t('detail.exposePort')}><TlnIcon name="plus" size={12} /></Button>}
-        >
-          {/* TODO: ports not in SandboxDTO — needs port exposure endpoint (P1) */}
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--fg-3)' }}>{t('detail.noPorts')}</span>
-        </Card>
+        <PortsPreviewCard sandboxId={s.id} />
       </div>
 
       <Card
