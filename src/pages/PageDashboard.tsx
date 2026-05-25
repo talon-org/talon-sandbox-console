@@ -271,14 +271,16 @@ export function PageDashboard() {
                       <span className="qi-label">{t('dash.secretsAccessed')}</span>
                       <span className="qi-value">{quota.secrets_reads.used.toLocaleString()}</span>
                     </div>
-                    <ProgressBar value={quota.secrets_reads.used} max={quota.secrets_reads.limit || 100} style={{ '--tln-progress-color': 'var(--magenta)' } as React.CSSProperties} />
+                    {/* 原型：color="var(--magenta)"；用 --pb-color 局部覆盖 .fill 颜色 */}
+                    <ProgressBar value={quota.secrets_reads.used} max={quota.secrets_reads.limit || 100} style={{ '--pb-color': 'var(--magenta)' } as React.CSSProperties} />
                   </div>
                   <div className="quota-item">
                     <div className="qi-header">
                       <span className="qi-label">{t('dash.failures24h')}</span>
                       <span className="qi-value danger">{quota.failures.used}</span>
                     </div>
-                    <ProgressBar value={quota.failures.used} max={quota.failures.limit || 100} style={{ '--tln-progress-color': 'var(--err)' } as React.CSSProperties} />
+                    {/* 原型：color="var(--err)"；用 --pb-color 局部覆盖 .fill 颜色 */}
+                    <ProgressBar value={quota.failures.used} max={quota.failures.limit || 100} style={{ '--pb-color': 'var(--err)' } as React.CSSProperties} />
                   </div>
                 </>
               )}
