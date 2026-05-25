@@ -23,4 +23,6 @@ export const recordings = {
   'recordings.notFound':     { en: 'Recording not found', zh: '录像不存在' },
   'recordings.notFoundDesc': { en: 'The recording with this ID could not be found.', zh: '找不到该 ID 对应的录像。' },
   'recordings.loadingPlayer':{ en: 'Loading recording…', zh: '正在加载录像…' },
+  // PageHeader 计数单位
+  'recordings.count':        { en: '{n} sessions', zh: '{n} 个会话' },
 } as const;

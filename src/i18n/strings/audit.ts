@@ -31,4 +31,13 @@ export const audit = {
   'audit.liveConnected':     { en: '● live', zh: '● 实时' },
   'audit.liveDisconnected':  { en: '○ reconnecting', zh: '○ 重连中' },
   'audit.reconnect':         { en: 'Reconnect', zh: '重新连接' },
+  // 审计结果翻译
+  'audit.outcome.ok':        { en: 'OK', zh: '成功' },
+  'audit.outcome.err':       { en: 'Error', zh: '失败' },
+  // 相对时间单位（用于 relTime helper）
+  'audit.relTime.justNow':   { en: 'just now', zh: '刚刚' },
+  'audit.relTime.secAgo':    { en: '{n}s ago', zh: '{n} 秒前' },
+  'audit.relTime.minAgo':    { en: '{n}m ago', zh: '{n} 分钟前' },
+  'audit.relTime.hourAgo':   { en: '{n}h ago', zh: '{n} 小时前' },
+  'audit.relTime.dayAgo':    { en: '{n}d ago', zh: '{n} 天前' },
 } as const;

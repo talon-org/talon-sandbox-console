@@ -25,4 +25,25 @@ export const common = {
   'common.retry':          { en: 'Retry', zh: '重试' },
   'common.recordings':     { en: 'Recordings', zh: '录像' },
   'common.notFound':       { en: 'Not found', zh: '未找到' },
+
+  // ── Sandbox state labels (used by StatusPill + state filters) ────────────
+  'state.running':         { en: 'Running', zh: '运行中' },
+  'state.pulling-image':   { en: 'Pulling', zh: '拉取镜像' },
+  'state.provisioning':    { en: 'Provisioning', zh: '调度中' },
+  'state.idle':            { en: 'Idle', zh: '空闲' },
+  'state.paused':          { en: 'Paused', zh: '已暂停' },
+  'state.terminating':     { en: 'Terminating', zh: '终止中' },
+  'state.failed':          { en: 'Failed', zh: '失败' },
+  'state.evicted':         { en: 'Evicted', zh: '已驱逐' },
+  'state.stopped':         { en: 'Stopped', zh: '已停止' },
+  'state.destroyed':       { en: 'Destroyed', zh: '已销毁' },
+
+  // ── Worker status ───────────────────────────────────────────────────────
+  'worker.healthy':        { en: 'Healthy', zh: '健康' },
+  'worker.draining':       { en: 'Draining', zh: '排空中' },
+  'worker.unhealthy':      { en: 'Unhealthy', zh: '异常' },
+
+  // ── Tenant/workspace status ──────────────────────────────────────────────
+  'tenant.active':         { en: 'Active', zh: '活跃' },
+  'tenant.suspended':      { en: 'Suspended', zh: '已冻结' },
 } as const;

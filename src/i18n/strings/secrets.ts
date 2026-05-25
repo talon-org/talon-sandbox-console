@@ -50,4 +50,7 @@ export const secrets = {
   'secrets.create.scopeLabel':    { en: 'Scope', zh: '范围' },
   'secrets.viewToast':            { en: 'Shown for 30s — copy now', zh: '已显示 30s，请立即复制' },
   'secrets.rotateSuccess':        { en: 'Rotated · sandboxes refresh within 60s', zh: '已轮换 · sandbox 将在 60s 内刷新' },
+  // 范围 pill 翻译（每行 SecretRow 使用）
+  'secrets.scope.tenant':         { en: 'Workspace scope', zh: '空间范围' },
+  'secrets.scope.sandbox':        { en: 'Sandbox scope', zh: 'Sandbox 范围' },
 } as const;

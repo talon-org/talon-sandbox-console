@@ -89,4 +89,17 @@ export const sandboxes = {
   'sbx.create.blockAll':     { en: 'Block all', zh: '全阻断' },
   'sbx.create.blockAllDesc': { en: 'No outbound network. Use for sealed evaluation.', zh: '无出站网络，适合封闭评估环境。' },
   'sbx.creating':            { en: 'Sandbox creating…', zh: 'Sandbox 创建中…' },
+  // 运行时长字段标签（detail 信息行）
+  'detail.age':              { en: 'Age', zh: '运行时长' },
+  // 资源用量 ResRow 标签
+  'detail.resourceVcpu':     { en: 'vCPU', zh: 'vCPU' },
+  'detail.resourceMemory':   { en: 'Memory', zh: '内存' },
+  'detail.resourceDisk':     { en: 'Disk', zh: '磁盘' },
+  'detail.resourceEgress':   { en: 'Egress', zh: '出站' },
+  // SandboxDetail 信息行补充字段
+  'detail.node':             { en: 'Node', zh: '节点' },
+  'detail.region':           { en: 'Region', zh: '区域' },
+  // Sandboxes 列表计数器单位
+  'sandboxes.running':       { en: 'running', zh: '运行中' },
+  'sandboxes.total':         { en: 'total', zh: '总数' },
 } as const;
