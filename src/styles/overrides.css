@@ -1,0 +1,30 @@
+/* Console-side overrides for @talon-sandbox/react.
+ *
+ * Don't touch DS library; tune component sizing here.
+ * Keep selectors at the same specificity as the DS rule (single class),
+ * relying on import order to win.
+ */
+
+/* PageHeader: compact for dense admin/console pages.
+ * Library default 28/32/20 padding + 22px title is too tall for our layout
+ * (we have a fixed top bar already). Halve vertical padding, shrink title,
+ * tighten desc spacing. */
+.tln-page-header {
+  padding: 14px 24px 12px;
+}
+.tln-page-header__title {
+  font-size: 18px;
+  gap: 10px;
+}
+.tln-page-header__num {
+  font-size: 13px;
+}
+.tln-page-header__desc {
+  font-size: 12.5px;
+  margin-top: 3px;
+  line-height: 1.5;
+}
+.tln-page-header__actions {
+  gap: 6px;
+  margin-top: 0;
+}

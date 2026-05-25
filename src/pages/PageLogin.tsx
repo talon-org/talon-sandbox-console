@@ -1,24 +1,18 @@
 /* PageLogin — full-bleed split-screen login.
- * 1:1 port of page-login.jsx prototype.
- * Left: brand + tagline + SDK code block + stats.
- * Right: email/password | API key tab toggle + SSO buttons.
- * Uses LoginLayout from @talon-sandbox/react as the two-column shell.
+ * Email-code is the primary human auth path; API-key is for service accounts.
+ *   tab=email  → Send code → 60s resend cooldown → enter 6-digit code → verify
+ *   tab=apikey → paste ask_… → bearer-auth + GET /v1/auth/me in one shot
  */
-import { useState, FormEvent } from 'react';
+import { useState, useEffect } from 'react';
+import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoginLayout, Button, Input } from '@talon-sandbox/react';
 import { useApp } from '../store';
 import { useT } from '../i18n/useT';
 import { TlnIcon, Mark } from '../icons/TlnIcon';
-import { apiPost } from '../api/client';
+import { requestCode, verifyCode, loginApiKey } from '../api/auth';
 
 import './PageLogin.css';
-
-// ── API types ─────────────────────────────────────────────────────────────────
-interface LoginEmailReq  { email: string; password: string }
-interface LoginKeyReq    { api_key: string }
-interface LoginResp      { token: string }
-interface MeResp         { id: string; email: string; name: string; role: string; tenant_id: string }
 
 // ── left panel ────────────────────────────────────────────────────────────────
 function LoginLeft() {
@@ -79,35 +73,76 @@ export function PageLogin() {
   const nav     = useNavigate();
   const setAuth = useApp((s) => s.setAuth);
 
-  const [tab,      setTab]      = useState<'password' | 'apikey'>('password');
-  const [email,    setEmail]    = useState('ada@acme.dev');
-  const [password, setPassword] = useState('');
+  const [tab,      setTab]      = useState<'email' | 'apikey'>('email');
+  const [email,    setEmail]    = useState('admin@talon.dev');
+  const [code,     setCode]     = useState('');
   const [apiKey,   setApiKey]   = useState('');
   const [busy,     setBusy]     = useState(false);
+  const [sending,  setSending]  = useState(false);
   const [err,      setErr]      = useState('');
+  const [info,     setInfo]     = useState('');
+  // Resend cooldown in seconds. >0 means a code was just sent.
+  const [cooldown, setCooldown] = useState(0);
+
+  // Cooldown ticker.
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = window.setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => window.clearTimeout(id);
+  }, [cooldown]);
+
+  const sendCode = async () => {
+    setErr('');
+    setInfo('');
+    if (!email.trim()) {
+      setErr(t('login.email') + ' required');
+      return;
+    }
+    setSending(true);
+    try {
+      await requestCode(email);
+      setInfo(t('login.codeSent'));
+      setCooldown(60);
+    } catch (ex) {
+      // 429 too many; surface the message but don't lock the UI.
+      setErr(ex instanceof Error ? ex.message : String(ex));
+    } finally {
+      setSending(false);
+    }
+  };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setErr('');
     setBusy(true);
     try {
-      // POST /v1/auth/login
-      const body = tab === 'password'
-        ? ({ email, password } satisfies LoginEmailReq)
-        : ({ api_key: apiKey } satisfies LoginKeyReq);
-      const resp = await apiPost<LoginResp>('/v1/auth/login', body);
-      // GET /v1/auth/me
-      const me = await import('../api/client').then(({ apiGet }) =>
-        apiGet<MeResp>('/v1/auth/me'),
-      );
-      setAuth(resp.token, me);
-      nav('/dashboard', { replace: true });
+      let token: string;
+      let me;
+      if (tab === 'email') {
+        const resp = await verifyCode(email, code);
+        token = resp.token;
+        me = await fetch('/v1/auth/me', { credentials: 'include' })
+          .then((r) => { if (!r.ok) throw new Error(`me ${r.status}`); return r.json(); });
+      } else {
+        const r = await loginApiKey({ api_key: apiKey });
+        token = r.token;
+        me = r.me;
+      }
+      // Atomic write — Boot's effect won't fire because me is set.
+      setAuth(token, me);
+      nav('/', { replace: true });
     } catch (ex) {
+      console.error('[login] failed', ex);
       setErr(ex instanceof Error ? ex.message : String(ex));
     } finally {
       setBusy(false);
     }
   };
+
+  const canResend = cooldown === 0 && !sending;
+  const resendLabel = cooldown > 0
+    ? t('login.resendIn').replace('{s}', String(cooldown))
+    : (sending ? t('login.sending') : t('login.resend'));
 
   return (
     <LoginLayout left={<LoginLeft />}>
@@ -122,9 +157,9 @@ export function PageLogin() {
           <button
             id="tab-email"
             role="tab"
-            aria-selected={tab === 'password'}
+            aria-selected={tab === 'email'}
             aria-controls="tabpanel-email"
-            onClick={() => setTab('password')}
+            onClick={() => { setTab('email'); setErr(''); setInfo(''); }}
           >
             <TlnIcon name="user" size={13} />
             {t('login.tab.email')}
@@ -134,7 +169,7 @@ export function PageLogin() {
             role="tab"
             aria-selected={tab === 'apikey'}
             aria-controls="tabpanel-apikey"
-            onClick={() => setTab('apikey')}
+            onClick={() => { setTab('apikey'); setErr(''); setInfo(''); }}
           >
             <TlnIcon name="key" size={13} />
             {t('login.tab.apikey')}
@@ -142,7 +177,7 @@ export function PageLogin() {
         </div>
 
         <form className="login-fields" onSubmit={submit} noValidate>
-          {tab === 'password' ? (
+          {tab === 'email' ? (
             <div
               id="tabpanel-email"
               role="tabpanel"
@@ -165,21 +200,40 @@ export function PageLogin() {
                   required
                 />
               </div>
-              {/* password field */}
+
+              {/* send-code button (above the code input) */}
+              <Button
+                type="button"
+                variant="default"
+                size="md"
+                onClick={sendCode}
+                disabled={!canResend || !email.trim()}
+                loading={sending}
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
+                {cooldown > 0 ? resendLabel : t('login.sendCode')}
+              </Button>
+
+              {/* code field */}
               <div className="login-field">
                 <div className="lf-label-row">
-                  <label className="lf-label" htmlFor="login-password">{t('login.password')}</label>
-                  <a className="lf-label" style={{ color: 'var(--acc-strong)', cursor: 'pointer', fontWeight: 400, fontSize: 11 }}>
-                    {t('login.forgot')}
-                  </a>
+                  <label className="lf-label" htmlFor="login-code">{t('login.code')}</label>
+                  <span className="lf-label" style={{ color: 'var(--fg-3)', fontWeight: 400, fontSize: 11 }}>
+                    {t('login.codeHint')}
+                  </span>
                 </div>
                 <Input
-                  id="login-password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  id="login-code"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  mono
+                  maxLength={6}
+                  pattern="\d{6}"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   prefix={<TlnIcon name="lock" size={14} style={{ color: 'var(--fg-3)' }} />}
+                  placeholder="••••••"
                   required
                 />
               </div>
@@ -204,7 +258,7 @@ export function PageLogin() {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   prefix={<TlnIcon name="key" size={14} style={{ color: 'var(--fg-3)' }} />}
-                  placeholder="tlk_•••••••••••••••••••••••••"
+                  placeholder="ask_•••••••••••••••••••••••••"
                   required
                 />
                 <div className="lf-hint">{t('login.apikey.hint')}</div>
@@ -212,6 +266,7 @@ export function PageLogin() {
             </div>
           )}
 
+          {info && <div className="login-info" role="status">{info}</div>}
           {err && <div className="login-error" role="alert">{err}</div>}
 
           <Button
@@ -219,7 +274,7 @@ export function PageLogin() {
             variant="primary"
             size="lg"
             loading={busy}
-            disabled={busy}
+            disabled={busy || (tab === 'email' && code.length !== 6) || (tab === 'apikey' && !apiKey)}
             style={{ marginTop: 6, width: '100%', justifyContent: 'center' }}
           >
             {busy

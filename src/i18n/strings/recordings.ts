@@ -1,0 +1,28 @@
+/* src/i18n/strings/recordings.ts — agent session recordings page */
+export const recordings = {
+  'recordings.eyebrow':      { en: 'workspace', zh: '工作区' },
+  'recordings.title':        { en: 'Recordings', zh: '录像' },
+  'recordings.desc':         { en: 'Every agent shell session can be recorded to a tamper-evident log. Replay with the same speed it ran.', zh: '每个 agent shell 会话都可以录制成防篡改日志,按原速回放。' },
+  'recordings.colTitle':     { en: 'Recording', zh: '录像' },
+  'recordings.colSandbox':   { en: 'Sandbox', zh: 'Sandbox' },
+  'recordings.colAgent':     { en: 'Agent', zh: 'Agent' },
+  'recordings.colStarted':   { en: 'Started', zh: '启动' },
+  'recordings.colDuration':  { en: 'Duration', zh: '时长' },
+  'recordings.colSteps':     { en: 'Steps', zh: '步骤' },
+  'recordings.frames':       { en: 'frames', zh: '帧' },
+  'recordings.filterAll':    { en: 'All agents', zh: '全部 Agent' },
+  'recordings.emptyTitle':   { en: 'No recordings yet', zh: '暂无录像' },
+  'recordings.emptyDesc':    { en: 'Recordings appear here when an agent shell session is captured.', zh: '当 agent shell 会话被录制后,录像会显示在这里。' },
+  'recordings.loadingDesc':  { en: 'Fetching recordings…', zh: '正在加载录像…' },
+  'recordings.errorTitle':   { en: 'Failed to load recordings', zh: '录像加载失败' },
+  'recordings.errorDesc':    { en: 'Check your connection and try again.', zh: '请检查网络连接后重试。' },
+  'recordings.back':         { en: 'Recordings', zh: '录像' },
+  'recordings.copyLink':     { en: 'Copy share link', zh: '复制分享链接' },
+  'recordings.exportCast':   { en: 'Export .cast', zh: '导出 .cast' },
+  'recordings.agentSteps':   { en: 'Agent steps', zh: 'Agent 步骤' },
+  'recordings.notFound':     { en: 'Recording not found', zh: '录像不存在' },
+  'recordings.notFoundDesc': { en: 'The recording with this ID could not be found.', zh: '找不到该 ID 对应的录像。' },
+  'recordings.loadingPlayer':{ en: 'Loading recording…', zh: '正在加载录像…' },
+  // PageHeader 计数单位
+  'recordings.count':        { en: '{n} sessions', zh: '{n} 个会话' },
+} as const;

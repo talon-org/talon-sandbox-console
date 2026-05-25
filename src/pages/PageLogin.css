@@ -174,3 +174,12 @@
   border-radius: var(--r-2);
   border: 1px solid var(--danger-line, rgba(224,108,117,0.2));
 }
+
+.login-info {
+  font-size: 12px;
+  color: var(--fg-2);
+  padding: 8px 10px;
+  background: var(--bg-3, rgba(255,255,255,0.04));
+  border-radius: var(--r-2);
+  border: 1px solid var(--line, rgba(255,255,255,0.08));
+}

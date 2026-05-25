@@ -42,8 +42,8 @@ export function Sparkline({ data, height = 36, color = 'var(--acc-strong)', clas
       style={style}
       aria-hidden="true"
     >
-      {/* subtle fill */}
-      <path d={fillPath} fill={color} fillOpacity={0.08} />
+      {/* 填充区域透明度与原型保持一致（0.20），视觉上形成明显的面积感 */}
+      <path d={fillPath} fill={color} fillOpacity={0.20} />
       {/* line */}
       <polyline
         points={polyline}

@@ -1,0 +1,22 @@
+/* src/i18n/strings/cmdk.ts — command palette overlay */
+export const cmdk = {
+  'cmdk.placeholder':      { en: 'Jump to sandbox, secret, action…', zh: '跳转到 sandbox、凭据、动作…' },
+  'cmdk.empty':            { en: 'No match', zh: '没有匹配' },
+  'cmdk.group.nav':        { en: 'Navigation', zh: '导航' },
+  'cmdk.group.actions':    { en: 'Actions', zh: '动作' },
+  'cmdk.group.sandboxes':  { en: 'Sandboxes', zh: '沙箱' },
+  'cmdk.group.recordings': { en: 'Recordings', zh: '录像' },
+  'cmdk.nav.dashboard':    { en: 'Dashboard', zh: '仪表盘' },
+  'cmdk.nav.sandboxes':    { en: 'Sandboxes', zh: '沙箱' },
+  'cmdk.nav.recordings':   { en: 'Recordings', zh: '录像' },
+  'cmdk.nav.secrets':      { en: 'Secrets', zh: '凭据' },
+  'cmdk.nav.audit':        { en: 'Audit', zh: '审计' },
+  'cmdk.nav.workers':      { en: 'Workers', zh: '节点' },
+  'cmdk.nav.tenants':      { en: 'Workspaces', zh: '空间' },
+  'cmdk.action.newSandbox':{ en: 'New sandbox', zh: '新建 sandbox' },
+  'cmdk.action.newSecret': { en: 'New secret', zh: '新建凭据' },
+  'cmdk.action.signOut':   { en: 'Sign out', zh: '退出登录' },
+  'cmdk.foot.select':      { en: '↑↓ select', zh: '↑↓ 选择' },
+  'cmdk.foot.open':        { en: '↩ open', zh: '↩ 打开' },
+  'cmdk.foot.close':       { en: 'esc close', zh: 'esc 关闭' },
+} as const;

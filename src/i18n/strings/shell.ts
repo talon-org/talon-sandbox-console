@@ -1,0 +1,18 @@
+/* src/i18n/strings/shell.ts — brand, sidebar, topbar */
+export const shell = {
+  'app.subtitle':              { en: 'agent sandbox runtime', zh: 'agent 沙箱运行时' },
+  'sidebar.workspace':         { en: 'Workspace', zh: '工作区' },
+  'sidebar.admin':             { en: 'Admin', zh: '管理' },
+  'sidebar.newSandbox':        { en: 'New sandbox', zh: '新建 sandbox' },
+  'nav.dashboard':             { en: 'Dashboard', zh: '仪表盘' },
+  'nav.sandboxes':             { en: 'Sandboxes', zh: '沙箱' },
+  'nav.recordings':            { en: 'Recordings', zh: '录像' },
+  'nav.secrets':               { en: 'Secrets', zh: '凭据' },
+  'nav.audit':                 { en: 'Audit', zh: '审计' },
+  'nav.workers':               { en: 'Workers', zh: '节点' },
+  'nav.tenants':               { en: 'Workspaces', zh: '空间' },
+  'topbar.cmdk_placeholder':   { en: 'Jump to sandbox, secret, or action…', zh: '跳转到 sandbox、secret 或动作…' },
+  'topbar.notifications':      { en: 'Notifications', zh: '通知' },
+  'topbar.help':               { en: 'Help', zh: '帮助' },
+  'topbar.settings':           { en: 'Settings', zh: '设置' },
+} as const;

@@ -1,0 +1,42 @@
+/* src/i18n/strings/index.ts
+ * Merges all namespace dictionaries into the flat STRINGS record
+ * consumed by useT() in src/i18n/useT.ts.
+ * Import individual namespaces for tree-shaking in tests:
+ *   import { dashboard } from '../i18n/strings/dashboard';
+ */
+import { shell }      from './shell';
+import { common }     from './common';
+import { tweaks }     from './tweaks';
+import { cmdk }       from './cmdk';
+import { dashboard }  from './dashboard';
+import { sandboxes }  from './sandboxes';
+import { login }      from './login';
+import { secrets }    from './secrets';
+import { audit }      from './audit';
+import { workers }    from './workers';
+import { tenants }    from './tenants';
+import { recordings } from './recordings';
+import { terminal }   from './terminal';
+
+export type LangKey = 'en' | 'zh';
+
+export const STRINGS: Record<string, { en: string; zh: string }> = {
+  ...shell,
+  ...common,
+  ...tweaks,
+  ...cmdk,
+  ...dashboard,
+  ...sandboxes,
+  ...login,
+  ...secrets,
+  ...audit,
+  ...workers,
+  ...tenants,
+  ...recordings,
+  ...terminal,
+};
+
+export {
+  shell, common, tweaks, cmdk, dashboard, sandboxes,
+  login, secrets, audit, workers, tenants, recordings, terminal,
+};
