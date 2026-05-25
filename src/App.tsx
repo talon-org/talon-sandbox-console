@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   HashRouter,
   Routes,
@@ -32,23 +33,41 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
 function Boot() {
   // Hydrate `me` if we have a token but no profile loaded yet (page reload case).
+  // No AbortController: StrictMode's double-mount in dev would otherwise abort
+  // the first request, hit the .catch, and clear the token we just restored.
+  // The me request is idempotent and fast — letting two run is harmless.
   const token = useApp((s) => s.authToken);
   const me = useApp((s) => s.me);
   const setAuth = useApp((s) => s.setAuth);
   useEffect(() => {
-    if (token && !me) {
-      const ac = new AbortController();
-      getMe(ac.signal)
-        .then((m) => setAuth(token, m))
-        .catch(() => setAuth(null, null));
-      return () => ac.abort();
-    }
+    if (!token || me) return;
+    let cancelled = false;
+    getMe()
+      .then((m) => { if (!cancelled) setAuth(token, m); })
+      .catch((err) => {
+        if (cancelled) return;
+        // Only clear auth on real failures (401/403), not on transient errors.
+        // ApiError carries a status field; anything else (network, parse) → keep token.
+        const status = (err as { status?: number } | null)?.status;
+        if (status === 401 || status === 403) setAuth(null, null);
+      });
+    return () => { cancelled = true; };
   }, [token, me, setAuth]);
   return null;
 }
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 10_000,
+    },
+  },
+});
+
 export default function App() {
   return (
+    <QueryClientProvider client={queryClient}>
     <HashRouter>
       <Boot />
       <Routes>
@@ -94,5 +113,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </HashRouter>
+    </QueryClientProvider>
   );
 }
