@@ -249,24 +249,24 @@ export function PageDashboard() {
           <Card
             title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="clock" size={14} style={{ color: 'var(--fg-2)' }} />{t('dash.quota24h')}</span>}
           >
-            <div className="quota-row">
+            <div className="dash-quota-row">
               {quota && (
                 <>
-                  <div className="quota-item">
+                  <div className="dash-quota-item">
                     <div className="qi-header">
                       <span className="qi-label">vCPU</span>
                       <span className="qi-value">{quota.vcpu.used.toFixed(1)} / {quota.vcpu.limit}</span>
                     </div>
                     <ProgressBar value={quota.vcpu.used} max={quota.vcpu.limit || 1} />
                   </div>
-                  <div className="quota-item">
+                  <div className="dash-quota-item">
                     <div className="qi-header">
                       <span className="qi-label">{t('dash.metric.mem')}</span>
                       <span className="qi-value">{quota.memory_gib.used} / {quota.memory_gib.limit} GiB</span>
                     </div>
                     <ProgressBar value={quota.memory_gib.used} max={quota.memory_gib.limit || 1} />
                   </div>
-                  <div className="quota-item">
+                  <div className="dash-quota-item">
                     <div className="qi-header">
                       <span className="qi-label">{t('dash.secretsAccessed')}</span>
                       <span className="qi-value">{quota.secrets_reads.used.toLocaleString()}</span>
@@ -274,7 +274,7 @@ export function PageDashboard() {
                     {/* 原型：color="var(--magenta)"；用 --pb-color 局部覆盖 .fill 颜色 */}
                     <ProgressBar value={quota.secrets_reads.used} max={quota.secrets_reads.limit || 100} style={{ '--pb-color': 'var(--magenta)' } as React.CSSProperties} />
                   </div>
-                  <div className="quota-item">
+                  <div className="dash-quota-item">
                     <div className="qi-header">
                       <span className="qi-label">{t('dash.failures24h')}</span>
                       <span className="qi-value danger">{quota.failures.used}</span>
