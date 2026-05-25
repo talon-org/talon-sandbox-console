@@ -10,19 +10,9 @@ import { useSecrets, useRotateSecret } from '../hooks/useSecrets';
 import { EmptyState as LocalEmptyState } from '../components';
 import type { SecretDTO } from '../api/types';
 import { CreateSecretDrawer } from './_secrets/CreateSecretDrawer';
+import { SecretRow } from './_secrets/SecretRow';
 
 import './PageSecrets.css';
-
-function relTime(sec: number): string {
-  if (sec < 60)    return `${sec}s`;
-  if (sec < 3600)  return `${Math.floor(sec / 60)}m`;
-  if (sec < 86400) return `${Math.floor(sec / 3600)}h`;
-  return `${Math.floor(sec / 86400)}d`;
-}
-
-function secsAgo(unix: number): number {
-  return Math.round((Date.now() / 1000) - unix);
-}
 
 export function PageSecrets() {
   const t              = useT();
@@ -146,46 +136,9 @@ export function PageSecrets() {
               <div />
             </div>
 
-            {list.map(s => {
-              const rotatedAgo   = s.last_rotated_at ? relTime(secsAgo(s.last_rotated_at)) : '—';
-              const rotateDueFlag = !s.last_rotated_at;
-              return (
-                <div key={s.id} className="tln-tbl-row sec-row" style={{ cursor: 'default' }}>
-                  <div className="name-cell">
-                    <div className="sic"><TlnIcon name="key" size={12} /></div>
-                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                      <span className="sn">
-                        {s.name}
-                        {rotateDueFlag && (
-                          <span className="rotate-warn">
-                            <TlnIcon name="refresh" size={9} />
-                            {t('secrets.filterRotate')}
-                          </span>
-                        )}
-                      </span>
-                      <span className="scope-pill">{t('secrets.filterTenant')}</span>
-                    </div>
-                  </div>
-                  <div className="mono">{rotatedAgo}</div>
-                  <div className="mono">—</div>
-                  <div className="mono" style={{ color: 'var(--fg-1)' }}>{s.used_by_count.toLocaleString()}</div>
-                  <div className="mono">{s.used_by_count}</div>
-                  <div className="mono">—</div>
-                  <div className="actions">
-                    <Button variant="ghost" size="sm"
-                      onClick={() => toast.warn(s.name + ' — ' + t('secrets.viewToast'))}>
-                      <TlnIcon name="eye" size={13} />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setRotateTarget(s)}>
-                      <TlnIcon name="refresh" size={13} />
-                    </Button>
-                    <Button variant="ghost" size="sm" iconOnly aria-label={t('secrets.rotate')}>
-                      <TlnIcon name="more" size={14} />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
+            {list.map(s => (
+              <SecretRow key={s.id} secret={s} onRotate={setRotateTarget} />
+            ))}
 
             {list.length === 0 && (
               <div style={{ padding: 32 }}>
