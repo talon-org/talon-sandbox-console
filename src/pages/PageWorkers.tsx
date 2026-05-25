@@ -1,12 +1,16 @@
 /* PageWorkers — admin: worker nodes grouped by region.
- * 1:1 port of page-workers.jsx prototype.
+ * Data: useWorkers() from src/hooks/useWorkers.ts
+ * Non-admin gets error EmptyState from hook 403 — no ACL logic here.
  */
 import { Fragment } from 'react';
 import { PageHeader, Button, ProgressBar } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
-import { MOCK_WORKERS } from '../mock/data';
-// TODO: replace mock with apiGet('/v1/admin/workers')
+import { useWorkers } from '../hooks/useWorkers';
+import { EmptyState } from '../components';
+import { WorkerLoadBars } from './_workers/WorkerLoadBars';
+import { WorkerStatusBadge } from './_workers/WorkerStatusBadge';
+import type { WorkerDTO } from '../api/types';
 
 import './PageWorkers.css';
 
@@ -16,158 +20,186 @@ function fmtUptime(sec: number): string {
   return Math.floor(sec / 60) + 'm';
 }
 
-function loadCls(n: number): string { return n >= 90 ? 'hot' : n >= 70 ? 'warm' : ''; }
+const STATUS_KEY: Record<WorkerDTO['status'], string> = {
+  healthy:   'workers.healthy',
+  draining:  'workers.draining',
+  unhealthy: 'workers.unhealthy',
+};
 
 export function PageWorkers() {
   const t = useT();
-  const ws = MOCK_WORKERS;
-  // TODO: replace with apiGet('/v1/admin/workers')
+  const { data, isLoading, isError } = useWorkers();
 
-  // group by region
-  const byRegion: Record<string, typeof ws> = {};
-  for (const w of ws) { (byRegion[w.region] ??= []).push(w); }
+  const ws = data?.workers ?? [];
+
+  const byRegion: Record<string, WorkerDTO[]> = {};
+  for (const w of ws) { (byRegion[w.region ?? 'unknown'] ??= []).push(w); }
 
   const stats = {
     total:    ws.length,
-    healthy:  ws.filter(w => w.state === 'healthy').length,
-    draining: ws.filter(w => w.state === 'draining').length,
-    unhealthy:ws.filter(w => w.state === 'unhealthy').length,
-    sandboxes:ws.reduce((a, w) => a + w.sandboxes, 0),
-    capacity: ws.reduce((a, w) => a + w.capacity, 0),
+    healthy:  ws.filter(w => w.status === 'healthy').length,
+    draining: ws.filter(w => w.status === 'draining').length,
+    unhealthy:ws.filter(w => w.status === 'unhealthy').length,
+    sandboxes:ws.reduce((a, w) => a + (w.sandboxes ?? w.sandbox_count ?? 0), 0),
+    capacity: ws.reduce((a, w) => a + (w.capacity ?? w.max_sandboxes ?? 0), 0),
   };
+
+  const numStr = `${stats.total} ${t('workers.nodesOf')} · ${Object.keys(byRegion).length} ${t('workers.regionsOf')}`;
 
   return (
     <>
       <PageHeader
-        eyebrow={t('sidebar.admin')}
-        title={t('nav.workers')}
-        num={`${stats.total} nodes · ${Object.keys(byRegion).length} regions`}
-        desc="Worker nodes run the actual sandbox micro-VMs. Drain a node before maintenance — the scheduler will stop dispatching new tasks."
+        eyebrow={t('workers.eyebrow')}
+        title={t('workers.title')}
+        num={numStr}
+        desc={t('workers.desc')}
         actions={
           <>
             <Button variant="ghost">
               <TlnIcon name="refresh" size={14} />
-              Sync
+              {t('workers.sync')}
             </Button>
-            <Button variant="primary">
+            <Button variant="primary" disabled>
               <TlnIcon name="plus" size={14} />
-              Join node
+              {t('workers.join')}
             </Button>
           </>
         }
       />
 
       <div className="page-body">
-        {/* summary */}
-        <div className="wkr-summary">
-          <div className="wkr-sum-card ok">
-            <div className="wlabel"><TlnIcon name="dot" size={10} className="wic" />Healthy</div>
-            <div className="wn">{stats.healthy} <span className="small">/ {stats.total} nodes</span></div>
-          </div>
-          <div className="wkr-sum-card warn">
-            <div className="wlabel"><TlnIcon name="alert" size={11} className="wic" />Draining</div>
-            <div className="wn">{stats.draining} <span className="small">graceful exit</span></div>
-          </div>
-          <div className="wkr-sum-card err">
-            <div className="wlabel"><TlnIcon name="alert" size={11} className="wic" />Unhealthy</div>
-            <div className="wn">{stats.unhealthy} <span className="small">needs attention</span></div>
-          </div>
-          <div className="wkr-sum-card">
-            <div className="wlabel"><TlnIcon name="box" size={11} className="wic" />Sandboxes / capacity</div>
-            <div className="wn">{stats.sandboxes} <span className="small">/ {stats.capacity}</span></div>
-            <ProgressBar value={stats.sandboxes} max={stats.capacity} />
-          </div>
-        </div>
+        {isLoading && <EmptyState variant="loading" title={t('common.loading')} />}
 
-        {/* per-region tables */}
-        {Object.entries(byRegion).map(([region, workers]) => (
-          <div key={region} className="region-group">
-            <div className="region-head">
-              <TlnIcon name="globe" size={13} style={{ color: 'var(--info)' }} />
-              <span className="rname">{region}</span>
-              <span className="rcount">{workers.length} nodes</span>
-              <span className="rmeta">
-                {workers.reduce((a, w) => a + w.sandboxes, 0)} sandboxes ·
-                avg load {Math.round(workers.reduce((a, w) => a + w.cpu, 0) / workers.length)}%
-              </span>
-            </div>
-            <div className="tln-tbl">
-              <div className="tln-tbl-head wkr-row">
-                <div>Worker</div>
-                <div>State</div>
-                <div>Load · CPU · Mem · Disk</div>
-                <div>Sandboxes</div>
-                <div>Uptime</div>
-                <div />
+        {isError && (
+          <EmptyState
+            variant="error"
+            title={t('workers.forbiddenTitle')}
+            message={t('workers.forbidden')}
+          />
+        )}
+
+        {!isLoading && !isError && (
+          <>
+            <div className="wkr-summary">
+              <div className="wkr-sum-card ok">
+                <div className="wlabel">
+                  <TlnIcon name="dot" size={10} className="wic" />
+                  {t('workers.healthy')}
+                </div>
+                <div className="wn">
+                  {stats.healthy}
+                  <span className="small">/ {stats.total} {t('workers.nodesOf')}</span>
+                </div>
               </div>
-              {workers.map(w => {
-                const dotColor = w.state === 'healthy' ? 'var(--ok)' : w.state === 'draining' ? 'var(--warn)' : 'var(--err)';
-                const dotShadow = w.state === 'healthy' ? '0 0 0 3px var(--ok-soft)' : 'none';
-                const stateVariant = (w.state === 'healthy' ? 'success' : w.state === 'draining' ? 'warning' : 'danger') as 'success' | 'warning' | 'danger';
-                return (
-                  <Fragment key={w.id}>
-                    <div className="tln-tbl-row wkr-row" style={{ cursor: 'default' }}>
-                      {/* id */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', flex: '0 0 auto', background: dotColor, boxShadow: dotShadow, animation: 'tln-pulse 1.6s ease-in-out infinite' }} />
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span className="wid">{w.id}</span>
-                          <span className="wuptime">{w.region}</span>
-                        </div>
-                      </div>
-                      {/* state */}
-                      <div>
-                        {/* inline Badge-like without importing to keep sizes */}
-                        <span style={{
-                          display: 'inline-flex', alignItems: 'center',
-                          fontSize: 10.5, fontFamily: 'var(--font-mono)',
-                          padding: '2px 7px', borderRadius: 4,
-                          background: stateVariant === 'success' ? 'var(--ok-soft)' : stateVariant === 'warning' ? 'var(--warn-soft)' : 'var(--err-soft)',
-                          color:      stateVariant === 'success' ? 'var(--ok)'      : stateVariant === 'warning' ? 'var(--warn)'      : 'var(--err)',
-                        }}>{w.state}</span>
-                      </div>
-                      {/* loads */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        {[
-                          { lbl: 'CPU', val: w.cpu,  color: w.cpu  >= 90 ? 'var(--err)' : w.cpu  >= 70 ? 'var(--warn)' : 'var(--ok)' },
-                          { lbl: 'MEM', val: w.mem,  color: w.mem  >= 90 ? 'var(--err)' : w.mem  >= 70 ? 'var(--warn)' : 'var(--info)' },
-                          { lbl: 'DSK', val: w.disk, color: w.disk >= 90 ? 'var(--err)' : 'var(--info)' },
-                        ].map(({ lbl, val, color }) => (
-                          <div key={lbl} className="loads">
-                            <span className="llbl">{lbl}</span>
-                            <ProgressBar value={val} max={100} style={{ '--tln-progress-color': color } as React.CSSProperties} />
-                            <span className={'lval ' + loadCls(val)}>{val}%</span>
-                          </div>
-                        ))}
-                      </div>
-                      {/* sandboxes */}
-                      <div className="wpop">
-                        <span className="wused">{w.sandboxes}</span> <span className="wof">/ {w.capacity}</span>
-                      </div>
-                      {/* uptime */}
-                      <div className="wuptime">{fmtUptime(w.uptimeSec)}</div>
-                      {/* actions */}
-                      <div className="actions">
-                        <Button variant="ghost" size="sm" iconOnly aria-label="More">
-                          <TlnIcon name="more" size={14} />
-                        </Button>
-                      </div>
-                    </div>
-                    {w.lastError && (
-                      <div className="wkr-error-strip">
-                        <TlnIcon name="alert" size={12} />
-                        <span>{w.lastError}</span>
-                        <Button variant="ghost" size="sm" style={{ marginLeft: 'auto', color: 'var(--err)' }}>
-                          Drain · Restart
-                        </Button>
-                      </div>
-                    )}
-                  </Fragment>
-                );
-              })}
+              <div className="wkr-sum-card warn">
+                <div className="wlabel">
+                  <TlnIcon name="alert" size={11} className="wic" />
+                  {t('workers.draining')}
+                </div>
+                <div className="wn">
+                  {stats.draining}
+                  <span className="small">{t('workers.gracefulExit')}</span>
+                </div>
+              </div>
+              <div className="wkr-sum-card err">
+                <div className="wlabel">
+                  <TlnIcon name="alert" size={11} className="wic" />
+                  {t('workers.unhealthy')}
+                </div>
+                <div className="wn">
+                  {stats.unhealthy}
+                  <span className="small">{t('workers.needsAttention')}</span>
+                </div>
+              </div>
+              <div className="wkr-sum-card">
+                <div className="wlabel">
+                  <TlnIcon name="box" size={11} className="wic" />
+                  {t('workers.capacity')}
+                </div>
+                <div className="wn">
+                  {stats.sandboxes}
+                  <span className="small">/ {stats.capacity}</span>
+                </div>
+                <ProgressBar value={stats.sandboxes} max={stats.capacity} />
+              </div>
             </div>
-          </div>
-        ))}
+
+            {Object.entries(byRegion).map(([region, workers]) => {
+              const regionSbx = workers.reduce((a, w) => a + (w.sandboxes ?? w.sandbox_count ?? 0), 0);
+              const avgLoad   = workers.length
+                ? Math.round(workers.reduce((a, w) => a + (w.cpu_pct ?? 0), 0) / workers.length)
+                : 0;
+
+              return (
+                <div key={region} className="region-group">
+                  <div className="region-head">
+                    <TlnIcon name="globe" size={13} style={{ color: 'var(--info)' }} />
+                    <span className="rname">{region}</span>
+                    <span className="rcount">{workers.length} {t('workers.nodesOf')}</span>
+                    <span className="rmeta">
+                      {regionSbx} {t('workers.sandboxes')} · {t('workers.avgLoad')} {avgLoad}%
+                    </span>
+                  </div>
+                  <div className="tln-tbl">
+                    <div className="tln-tbl-head wkr-row">
+                      <div>{t('workers.colWorker')}</div>
+                      <div>{t('workers.colStatus')}</div>
+                      <div>{t('workers.colLoad')}</div>
+                      <div>{t('workers.colSandboxes')}</div>
+                      <div>{t('workers.colUptime')}</div>
+                      <div />
+                    </div>
+                    {workers.map(w => {
+                      const dotColor  = w.status === 'healthy' ? 'var(--ok)' : w.status === 'draining' ? 'var(--warn)' : 'var(--err)';
+                      const dotShadow = w.status === 'healthy' ? '0 0 0 3px var(--ok-soft)' : 'none';
+                      const wSbx = w.sandboxes ?? w.sandbox_count ?? 0;
+                      const wCap = w.capacity ?? w.max_sandboxes ?? 0;
+                      return (
+                        <Fragment key={w.id}>
+                          <div className="tln-tbl-row wkr-row" style={{ cursor: 'default' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', flex: '0 0 auto', background: dotColor, boxShadow: dotShadow }} />
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span className="wid">{w.id}</span>
+                                <span className="wuptime">{w.region}</span>
+                              </div>
+                            </div>
+                            <div>
+                              <WorkerStatusBadge status={w.status} label={t(STATUS_KEY[w.status])} />
+                            </div>
+                            <WorkerLoadBars cpu={w.cpu_pct ?? 0} mem={w.mem_pct ?? 0} disk={w.disk_pct ?? 0} />
+                            <div className="wpop">
+                              <span className="wused">{wSbx}</span>
+                              {' '}
+                              <span className="wof">/ {wCap}</span>
+                            </div>
+                            <div className="wuptime">{fmtUptime(w.uptime_sec ?? 0)}</div>
+                            <div className="actions">
+                              <Button variant="ghost" size="sm" iconOnly aria-label={t('common.filter')}>
+                                <TlnIcon name="more" size={14} />
+                              </Button>
+                            </div>
+                          </div>
+                          {w.last_error && (
+                            <div className="wkr-error-strip">
+                              <TlnIcon name="alert" size={12} />
+                              <span>{w.last_error}</span>
+                              <Button variant="ghost" size="sm" style={{ marginLeft: 'auto', color: 'var(--err)' }}>
+                                {t('workers.drain')}
+                              </Button>
+                            </div>
+                          )}
+                        </Fragment>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+
+            {ws.length === 0 && <EmptyState variant="empty" title={t('common.empty')} />}
+          </>
+        )}
       </div>
     </>
   );

@@ -19,4 +19,10 @@ export const workers = {
   'workers.colUptime':      { en: 'Uptime', zh: '运行时间' },
   'workers.needsAttention': { en: 'Needs attention', zh: '需要关注' },
   'workers.gracefulExit':   { en: 'Graceful exit', zh: '优雅退出' },
+  'workers.sandboxes':      { en: 'sandboxes', zh: '个 sandbox' },
+  'workers.avgLoad':        { en: 'avg load', zh: '平均负载' },
+  'workers.forbidden':      { en: 'This page is only accessible to super-admins.', zh: '此页面仅限超级管理员访问。' },
+  'workers.forbiddenTitle': { en: 'Access denied', zh: '无访问权限' },
+  'workers.nodesOf':        { en: 'nodes', zh: '个节点' },
+  'workers.regionsOf':      { en: 'regions', zh: '个区域' },
 } as const;
