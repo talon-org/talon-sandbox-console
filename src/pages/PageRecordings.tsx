@@ -95,7 +95,6 @@ export function PageRecordings() {
   return (
     <>
       <PageHeader
-        eyebrow={t('recordings.eyebrow')}
         title={t('recordings.title')}
         num={t('recordings.count').replace('{n}', String(items.length))}
         desc={t('recordings.desc')}

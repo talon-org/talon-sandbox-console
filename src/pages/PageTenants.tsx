@@ -33,7 +33,6 @@ export function PageTenants() {
   return (
     <>
       <PageHeader
-        eyebrow={t('tenants.eyebrow')}
         title={t('tenants.title')}
         num={String(tenants.length)}
         desc={t('tenants.desc')}

@@ -66,7 +66,6 @@ export function PageSecrets() {
   return (
     <>
       <PageHeader
-        eyebrow={t('secrets.eyebrow')}
         title={t('secrets.title')}
         num={String(all.length)}
         desc={t('secrets.desc')}

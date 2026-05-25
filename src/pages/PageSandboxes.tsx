@@ -139,7 +139,6 @@ export function PageSandboxes() {
   return (
     <>
       <PageHeader
-        eyebrow={t('sbx.eyebrow')}
         title={t('sbx.title')}
         num={`${counts['active'] ?? 0} ${t('sandboxes.running')} / ${counts.all} ${t('sandboxes.total')}`}
         actions={

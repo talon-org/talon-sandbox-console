@@ -4,6 +4,9 @@
 /* Console-private CSS variables (not yet generalised into @talon-sandbox/tokens). */
 @import './styles/private.css';
 
+/* Console-side overrides for @talon-sandbox/react components. */
+@import './styles/overrides.css';
+
 html,
 body,
 #root {

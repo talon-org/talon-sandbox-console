@@ -35,7 +35,6 @@ export function PageWorkers() {
   return (
     <>
       <PageHeader
-        eyebrow={t('workers.eyebrow')}
         title={t('workers.title')}
         num={numStr}
         desc={t('workers.desc')}

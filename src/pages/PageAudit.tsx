@@ -92,7 +92,6 @@ export function PageAudit() {
   return (
     <>
       <PageHeader
-        eyebrow={t('audit.eyebrow')}
         title={t('audit.title')}
         desc={
           <span>

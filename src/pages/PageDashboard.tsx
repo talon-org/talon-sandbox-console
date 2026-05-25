@@ -175,7 +175,6 @@ export function PageDashboard() {
   return (
     <>
       <PageHeader
-        eyebrow={t('dash.eyebrow')}
         title={
           <>
             {t('dash.welcome')}{' '}
