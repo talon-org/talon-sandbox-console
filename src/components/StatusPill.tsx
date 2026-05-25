@@ -1,7 +1,9 @@
 /* src/components/StatusPill.tsx
  * Color-coded badge for sandbox state, worker health, and tenant status.
- * Handles the full state set from api/types.ts (including stopped/destroyed
- * which are absent from @talon-sandbox/react's SandboxState union).
+ * Delegates rendering to @talon-sandbox/react Badge.
+ * Covers the full SandboxState union from api/types.ts, including 'stopped' and
+ * 'destroyed' which are absent from the design-system SandboxState type.
+ *
  * Usage:
  *   <StatusPill state="running" />
  *   <StatusPill state="failed" />
@@ -9,6 +11,8 @@
  *   <StatusPill tenantStatus="suspended" />
  */
 import type { CSSProperties } from 'react';
+import { Badge } from '@talon-sandbox/react';
+import type { BadgeVariant } from '@talon-sandbox/react';
 import type { SandboxState } from '../api/types';
 
 type WorkerStatus = 'healthy' | 'draining' | 'unhealthy';
@@ -30,82 +34,59 @@ interface StatusPillTenantProps {
   tenantStatus: TenantStatus;
 }
 
-type StatusPillProps = (StatusPillSandboxProps | StatusPillWorkerProps | StatusPillTenantProps) & {
-  style?: CSSProperties;
-};
+export type StatusPillProps = (
+  | StatusPillSandboxProps
+  | StatusPillWorkerProps
+  | StatusPillTenantProps
+) & { style?: CSSProperties };
 
-interface PillStyle {
+// ── State → Badge variant + dot map ──────────────────────────────────────────
+
+interface PillConfig {
+  variant: BadgeVariant;
+  dot: boolean;
   label: string;
-  bg: string;
-  fg: string;
-  dot?: boolean;
-  pulse?: boolean;
 }
 
-const SANDBOX_STYLES: Record<SandboxState, PillStyle> = {
-  'running':        { label: 'Running',       bg: 'var(--ok-muted)',   fg: 'var(--ok)',   dot: true, pulse: true },
-  'pulling-image':  { label: 'Pulling',        bg: 'var(--acc-muted)',  fg: 'var(--acc)',  dot: true },
-  'provisioning':   { label: 'Provisioning',   bg: 'var(--acc-muted)',  fg: 'var(--acc)',  dot: true },
-  'idle':           { label: 'Idle',           bg: 'var(--border)',     fg: 'var(--fg-2)' },
-  'paused':         { label: 'Paused',         bg: 'var(--border)',     fg: 'var(--fg-2)' },
-  'terminating':    { label: 'Terminating',    bg: 'var(--warn-muted)', fg: 'var(--warn)', dot: true },
-  'failed':         { label: 'Failed',         bg: 'var(--err-muted)',  fg: 'var(--err)' },
-  'evicted':        { label: 'Evicted',        bg: 'var(--err-muted)',  fg: 'var(--err)' },
-  'stopped':        { label: 'Stopped',        bg: 'var(--border)',     fg: 'var(--fg-3)' },
-  'destroyed':      { label: 'Destroyed',      bg: 'var(--border)',     fg: 'var(--fg-3)' },
+const SANDBOX_CONFIG: Record<SandboxState, PillConfig> = {
+  'running':       { variant: 'success', dot: true,  label: 'Running' },
+  'pulling-image': { variant: 'info',    dot: true,  label: 'Pulling' },
+  'provisioning':  { variant: 'info',    dot: true,  label: 'Provisioning' },
+  'idle':          { variant: 'neutral', dot: false, label: 'Idle' },
+  'paused':        { variant: 'neutral', dot: false, label: 'Paused' },
+  'terminating':   { variant: 'warning', dot: true,  label: 'Terminating' },
+  'failed':        { variant: 'danger',  dot: false, label: 'Failed' },
+  'evicted':       { variant: 'danger',  dot: false, label: 'Evicted' },
+  'stopped':       { variant: 'neutral', dot: false, label: 'Stopped' },
+  'destroyed':     { variant: 'neutral', dot: false, label: 'Destroyed' },
 };
 
-const WORKER_STYLES: Record<WorkerStatus, PillStyle> = {
-  'healthy':   { label: 'Healthy',   bg: 'var(--ok-muted)',   fg: 'var(--ok)',   dot: true, pulse: true },
-  'draining':  { label: 'Draining',  bg: 'var(--warn-muted)', fg: 'var(--warn)', dot: true },
-  'unhealthy': { label: 'Unhealthy', bg: 'var(--err-muted)',  fg: 'var(--err)' },
+const WORKER_CONFIG: Record<WorkerStatus, PillConfig> = {
+  'healthy':   { variant: 'success', dot: true,  label: 'Healthy' },
+  'draining':  { variant: 'warning', dot: true,  label: 'Draining' },
+  'unhealthy': { variant: 'danger',  dot: false, label: 'Unhealthy' },
 };
 
-const TENANT_STYLES: Record<TenantStatus, PillStyle> = {
-  'active':    { label: 'Active',    bg: 'var(--ok-muted)',  fg: 'var(--ok)' },
-  'suspended': { label: 'Suspended', bg: 'var(--err-muted)', fg: 'var(--err)' },
+const TENANT_CONFIG: Record<TenantStatus, PillConfig> = {
+  'active':    { variant: 'success', dot: false, label: 'Active' },
+  'suspended': { variant: 'danger',  dot: false, label: 'Suspended' },
 };
 
-function resolvePill(props: StatusPillProps): PillStyle {
-  if (props.state !== undefined) return SANDBOX_STYLES[props.state];
-  if (props.workerStatus !== undefined) return WORKER_STYLES[props.workerStatus];
-  return TENANT_STYLES[props.tenantStatus];
+function resolveConfig(props: StatusPillProps): PillConfig {
+  if ((props as StatusPillSandboxProps).state !== undefined)
+    return SANDBOX_CONFIG[(props as StatusPillSandboxProps).state];
+  if ((props as StatusPillWorkerProps).workerStatus !== undefined)
+    return WORKER_CONFIG[(props as StatusPillWorkerProps).workerStatus];
+  return TENANT_CONFIG[(props as StatusPillTenantProps).tenantStatus];
 }
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export function StatusPill(props: StatusPillProps) {
-  const pill = resolvePill(props);
+  const { variant, dot, label } = resolveConfig(props);
   return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 5,
-        padding: '2px 8px',
-        borderRadius: 9999,
-        fontSize: 11,
-        fontWeight: 600,
-        letterSpacing: '0.04em',
-        background: pill.bg,
-        color: pill.fg,
-        whiteSpace: 'nowrap',
-        ...props.style,
-      }}
-    >
-      {pill.dot && (
-        <span
-          aria-hidden="true"
-          style={{
-            display: 'inline-block',
-            width: 6,
-            height: 6,
-            borderRadius: '50%',
-            background: 'currentColor',
-            animation: pill.pulse ? 'pulse 1.4s ease-in-out infinite' : undefined,
-            flexShrink: 0,
-          }}
-        />
-      )}
-      {pill.label}
-    </span>
+    <Badge variant={variant} dot={dot} style={props.style}>
+      {label}
+    </Badge>
   );
 }
