@@ -1,22 +1,15 @@
 /* _sandboxes/CreateSandboxDrawer.tsx — create sandbox drawer form */
-import { useState, useId } from 'react';
+import { useState, useId, useEffect } from 'react';
 import { Drawer, Button, Input, Select, Textarea, toast } from '@talon-sandbox/react';
 import { useT } from '../../i18n/useT';
 import { TlnIcon } from '../../icons/TlnIcon';
-import { useCreateSandbox } from '../../hooks';
+import { useCreateSandbox, useImages } from '../../hooks';
 import { useSecrets } from '../../hooks';
 
 interface CreateSandboxDrawerProps {
   open: boolean;
   onClose: () => void;
 }
-
-const PRESET_IMAGES = [
-  'node:20-bookworm', 'node:22-alpine',
-  'python:3.12-slim', 'python:3.12',
-  'ubuntu:24.04', 'debian:12-slim',
-  'rust:1.78-slim', 'golang:1.23-alpine',
-];
 
 export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps) {
   const t      = useT();
@@ -25,7 +18,8 @@ export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps)
   const diskId = useId();
 
   const [name,        setName]        = useState('');
-  const [image,       setImage]       = useState('node:20-bookworm');
+  // image 现在存的是 ImageDTO.id（短码),不再是 name 字符串。空字符串 = 让后端选默认。
+  const [image,       setImage]       = useState('');
   const [cpu,         setCpu]         = useState(2);
   const [mem,         setMem]         = useState(4);
   const [disk,        setDisk]        = useState(8);
@@ -37,6 +31,18 @@ export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps)
   const create    = useCreateSandbox();
   const { data: secretsData } = useSecrets();
   const secrets   = secretsData?.secrets ?? [];
+
+  // 拉可用 baseimage 列表(后端 seed/admin 添加的所有 image),drawer 打开时自动选 default。
+  // 不让用户自由输入 image name —— 平台只识别 images 表里有的条目,自由输入必报错。
+  const { data: imagesData, isLoading: imagesLoading, isError: imagesError } = useImages();
+  const images = imagesData?.images ?? [];
+
+  useEffect(() => {
+    if (!image && images.length > 0) {
+      const def = images.find(i => i.is_default) ?? images[0];
+      setImage(def.id);
+    }
+  }, [images, image]);
 
   const estCost = (cpu * mem * 0.012).toFixed(3).slice(1);
 
@@ -88,12 +94,31 @@ export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps)
         </div>
         <div className="form-field">
           <label className="ff-label" htmlFor="csd-image">{t('sbx.colImage')}</label>
-          <Input id="csd-image" mono value={image} onChange={e => setImage(e.target.value)} prefix={<TlnIcon name="image" size={14} style={{ color: 'var(--fg-3)' }} />} />
-          <div className="image-suggest">
-            {PRESET_IMAGES.map(p => (
-              <button key={p} className={p === image ? 'on' : ''} onClick={() => setImage(p)}>{p}</button>
+          <Select
+            id="csd-image"
+            mono
+            value={image}
+            onChange={e => setImage(e.target.value)}
+            disabled={imagesLoading || imagesError || images.length === 0}
+          >
+            {imagesLoading && <option value="">{t('common.loading')}</option>}
+            {imagesError && <option value="">{t('common.loadFailed')}</option>}
+            {!imagesLoading && !imagesError && images.length === 0 && (
+              <option value="">{t('sbx.create.noImages')}</option>
+            )}
+            {images.map(img => (
+              <option key={img.id} value={img.id}>
+                {img.name}{img.is_default ? ` (${t('sbx.create.defaultImage')})` : ''}
+              </option>
             ))}
-          </div>
+          </Select>
+          {/* 显示当前选中 image 的描述,帮助用户判断是否合适 */}
+          {(() => {
+            const sel = images.find(i => i.id === image);
+            return sel?.description ? (
+              <div style={{ fontSize: 11, color: 'var(--fg-3)', marginTop: 4 }}>{sel.description}</div>
+            ) : null;
+          })()}
         </div>
       </div>
 

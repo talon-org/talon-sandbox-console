@@ -74,6 +74,8 @@ export const sandboxes = {
   'detail.notFoundDesc':   { en: 'The requested sandbox ID does not exist or has been destroyed.', zh: '该 sandbox 不存在或已被销毁。' },
   'detail.loadFailed':     { en: 'Failed to load sandbox', zh: 'Sandbox 加载失败' },
   'sbx.create.name':       { en: 'Name', zh: '名称' },
+  'sbx.create.noImages':   { en: 'No images available', zh: '无可用镜像' },
+  'sbx.create.defaultImage': { en: 'default', zh: '默认' },
   'sbx.create.namePlaceholder': { en: 'auto · sb_…', zh: '自动 · sb_…' },
   'sbx.create.allowedHosts': { en: 'Allowed hosts', zh: '允许的主机' },
   'sbx.create.allowedHint':  { en: 'One per line · wildcards supported (*.github.com)', zh: '每行一个 · 支持通配符 (*.github.com)' },
