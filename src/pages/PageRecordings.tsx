@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { PageHeader, Button, FilterBar, EmptyState } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
+import { relTime } from '../lib/relTime';
 import { useRecordings } from '../hooks';
 import { useApp } from '../store';
 import type { RecordingQueryParams } from '../api/types';
@@ -14,12 +15,6 @@ import './PageRecordings.css';
 
 function fmtDuration(sec: number): string {
   return `${Math.floor(sec / 60)}m ${(sec % 60).toString().padStart(2, '0')}s`;
-}
-
-function relTime(secAgo: number): string {
-  if (secAgo < 60) return `${secAgo}s ago`;
-  if (secAgo < 3600) return `${Math.floor(secAgo / 60)}m ago`;
-  return `${Math.floor(secAgo / 3600)}h ago`;
 }
 
 interface RecordingRowProps {
@@ -35,9 +30,9 @@ interface RecordingRowProps {
 }
 
 function RecordingRow({ id, title, sandboxId, agent, startedAt, durationSec, steps, sizeKb, frames }: RecordingRowProps) {
-  const t = useT();
+  const t        = useT();
   const navigate = useNavigate();
-  const ageSec = startedAt ? Math.round((Date.now() - new Date(startedAt).getTime()) / 1000) : null;
+  const ageSec   = startedAt ? Math.round((Date.now() - new Date(startedAt).getTime()) / 1000) : null;
 
   return (
     <div
@@ -63,7 +58,7 @@ function RecordingRow({ id, title, sandboxId, agent, startedAt, durationSec, ste
         )}
       </div>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)' }}>
-        {ageSec !== null ? relTime(ageSec) : '—'}
+        {ageSec !== null ? relTime(ageSec, t) : '—'}
       </div>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
         {fmtDuration(durationSec)}
@@ -102,7 +97,7 @@ export function PageRecordings() {
       <PageHeader
         eyebrow={t('recordings.eyebrow')}
         title={t('recordings.title')}
-        num={`${items.length}`}
+        num={t('recordings.count').replace('{n}', String(items.length))}
         desc={t('recordings.desc')}
         actions={
           <>

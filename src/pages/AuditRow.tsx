@@ -1,8 +1,10 @@
-/* AuditRow — single row in the audit event table.
- * Extracted from PageAudit to keep that file within the 200-line limit.
+/* AuditRow — 审计事件表格单行组件。
+ * 从 PageAudit 中抽离，保持该文件在 200 行以内。
  */
 import { Button, Badge } from '@talon-sandbox/react';
+import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
+import { relTime as sharedRelTime } from '../lib/relTime';
 import type { AuditEventDTO } from '../api/types';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -24,13 +26,7 @@ function actorIcon(actorKind: string): string {
   return 'info';
 }
 
-export function relTime(secAgo: number): string {
-  if (secAgo < 60)   return `${secAgo}s ago`;
-  if (secAgo < 3600) return `${Math.floor(secAgo / 60)}m ago`;
-  return `${Math.floor(secAgo / 3600)}h ago`;
-}
-
-/** Convert a stream event ts (RFC3339) + AuditEventDTO.at (Unix seconds). */
+/** 将流事件时间戳（RFC3339）或 AuditEventDTO.at（Unix 秒）换算为距今秒数 */
 export function auditSecAgo(atUnix: number): number {
   return Math.round(Date.now() / 1000 - atUnix);
 }
@@ -42,19 +38,23 @@ interface AuditRowProps {
 }
 
 export function AuditRow({ event }: AuditRowProps) {
-  const kind     = typeKind(event.event_type);
-  const secAgo   = auditSecAgo(event.at);
-  const timeStr  = new Date(event.at * 1000).toISOString().slice(11, 19);
-  const subEvent = event.event_type.split('.').slice(1).join('.');
+  const t         = useT();
+  const kind      = typeKind(event.event_type);
+  const secAgo    = auditSecAgo(event.at);
+  const timeStr   = new Date(event.at * 1000).toISOString().slice(11, 19);
+  const subEvent  = event.event_type.split('.').slice(1).join('.');
   const actorKind = event.actor?.includes('sb_') ? 'sandbox' : 'user';
   const meta = event.extra
     ? Object.entries(event.extra).map(([k, v]) => `${k}=${v}`).join(' · ')
     : event.reason ?? '—';
 
+  // outcome 通过 i18n 翻译（ok → 成功/OK，err → 失败/Error）
+  const outcomeLabel = t(`audit.outcome.${event.outcome}`, event.outcome);
+
   return (
     <div className="tln-tbl-row aud-row" style={{ cursor: 'default' }} role="row">
       <div className="awhen">
-        <span className="rel">{relTime(secAgo)}</span>
+        <span className="rel">{sharedRelTime(secAgo, t)}</span>
         <span>{timeStr}</span>
       </div>
       <div className="atype">
@@ -67,7 +67,7 @@ export function AuditRow({ event }: AuditRowProps) {
       </div>
       <div className="atarget">{event.target ?? '—'}</div>
       <div>
-        <Badge variant={event.outcome === 'ok' ? 'success' : 'danger'}>{event.outcome}</Badge>
+        <Badge variant={event.outcome === 'ok' ? 'success' : 'danger'}>{outcomeLabel}</Badge>
       </div>
       <div className="ameta">{meta}</div>
       <div className="actions">

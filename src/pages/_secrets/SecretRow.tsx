@@ -41,7 +41,8 @@ export function SecretRow({ secret: s, onRotate }: Props) {
               </span>
             )}
           </span>
-          <span className="scope-pill">{t('secrets.filterTenant')}</span>
+          {/* scope pill 反映实际 scope 字段，缺省视为 tenant */}
+          <span className="scope-pill">{t(`secrets.scope.${(s as { scope?: string }).scope || 'tenant'}`, t('secrets.filterTenant'))}</span>
         </div>
       </div>
       <div className="mono">{rotatedAgo}</div>

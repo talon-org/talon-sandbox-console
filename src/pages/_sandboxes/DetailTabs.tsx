@@ -1,22 +1,18 @@
-/* _sandboxes/DetailTabs.tsx — tab body components for PageSandboxDetail */
+/* _sandboxes/DetailTabs.tsx — PageSandboxDetail 各 tab 的主体组件 */
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, KV, Badge, ResRow } from '@talon-sandbox/react';
 import { useT } from '../../i18n/useT';
 import { TlnIcon } from '../../icons/TlnIcon';
+import { relTime } from '../../lib/relTime';
 import type { SandboxDTO, AuditEventDTO } from '../../api/types';
 
+// 格式化沙箱运行时长，如 "5m 30s" 或 "2h 10m"
 function fmtAge(createdAt?: number): string {
   if (!createdAt) return '—';
   const sec = Math.floor(Date.now() / 1000 - createdAt);
   if (sec < 60) return sec + 's';
   if (sec < 3600) return Math.floor(sec / 60) + 'm ' + (sec % 60) + 's';
   return Math.floor(sec / 3600) + 'h ' + Math.floor((sec % 3600) / 60) + 'm';
-}
-
-function relTime(secAgo: number): string {
-  if (secAgo < 60) return `${secAgo}s`;
-  if (secAgo < 3600) return `${Math.floor(secAgo / 60)}m`;
-  return `${Math.floor(secAgo / 3600)}h`;
 }
 
 // ── Overview tab ──────────────────────────────────────────────────────────────
@@ -35,12 +31,12 @@ export function TabOverview({ s }: { s: SandboxDTO }) {
           title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="cpu" size={14} style={{ color: 'var(--fg-2)' }} />{t('detail.resources')}</span>}
           footer={<span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-3)' }}>{t('detail.realtime')}</span>}
         >
-          {/* TODO: real usage requires GET /v1/sandboxes/{id}/processes (P1 endpoint) */}
+          {/* TODO: 真实用量需要 GET /v1/sandboxes/{id}/processes（P1 endpoint） */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <ResRow label="vCPU"   used={cpuUsed}  max={cpuCores || 2}  unit="vCPU" />
-            <ResRow label="Memory" used={memUsed}  max={memGib || 4}    unit="GiB" />
-            <ResRow label="Disk"   used={0}        max={1}              unit="GiB" color="ok" />
-            <ResRow label="Egress" used={0}        max={5}              unit="MB/s" color="acc" />
+            <ResRow label={t('detail.resourceVcpu')}   used={cpuUsed}  max={cpuCores || 2}  unit="vCPU" />
+            <ResRow label={t('detail.resourceMemory')} used={memUsed}  max={memGib || 4}    unit="GiB" />
+            <ResRow label={t('detail.resourceDisk')}   used={0}        max={1}              unit="GiB" color="ok" />
+            <ResRow label={t('detail.resourceEgress')} used={0}        max={5}              unit="MB/s" color="acc" />
           </div>
         </Card>
 
@@ -70,8 +66,9 @@ export function TabOverview({ s }: { s: SandboxDTO }) {
         </div>
       </Card>
 
+      {/* detail.age、profile、ttl 均通过 i18n key 输出，不硬编码英文标签 */}
       <div style={{ fontSize: 11, color: 'var(--fg-3)', fontFamily: 'var(--font-mono)' }}>
-        {t('detail.age')}: {fmtAge(s.created_at)} · profile: {s.profile} · ttl: {s.ttl_seconds != null ? s.ttl_seconds + 's' : '—'}
+        {t('detail.age')}: {fmtAge(s.created_at)} · {t('detail.profile')}: {s.profile} · ttl: {s.ttl_seconds != null ? s.ttl_seconds + 's' : '—'}
       </div>
     </div>
   );
@@ -174,15 +171,17 @@ export function TabAudit({ events }: { events: AuditEventDTO[] }) {
           <div style={{ padding: '24px 16px', color: 'var(--fg-3)', fontSize: 12, textAlign: 'center' }}>{t('common.empty')}</div>
         )}
         {events.map(e => {
-          const secAgo = Math.round(Date.now() / 1000 - e.at);
+          const secAgo      = Math.round(Date.now() / 1000 - e.at);
+          // outcome 通过 i18n 翻译
+          const outcomeLabel = t(`audit.outcome.${e.outcome}`, e.outcome);
           return (
             <div key={e.id} className="tln-tbl-row det-audit-row" style={{ cursor: 'default' }}>
-              <span className="when">{relTime(secAgo)}</span>
+              <span className="when">{relTime(secAgo, t)}</span>
               <span className="etype">{e.event_type}</span>
               <span className="actor">{e.actor ?? '—'}</span>
               <span className="dtarget">{e.target}{e.reason ? ' · ' + e.reason : ''}</span>
               <span className="dresult">
-                <Badge variant={e.outcome === 'ok' ? 'success' : 'danger'}>{e.outcome}</Badge>
+                <Badge variant={e.outcome === 'ok' ? 'success' : 'danger'}>{outcomeLabel}</Badge>
               </span>
             </div>
           );

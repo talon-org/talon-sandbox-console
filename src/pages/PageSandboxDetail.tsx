@@ -99,7 +99,12 @@ export function PageSandboxDetail() {
         <div style={{ minWidth: 0, flex: 1 }}>
           <div className="id-row">
             <span className="sbxid">{s.id}</span>
-            <Badge variant={stateVariant(s.state)} dot={s.state === 'running'}>{s.state}</Badge>
+            {/* 租户标签：与原型 TlnTag 对应，提供沙箱所属空间的上下文 */}
+            {(s as { tenant_id?: string }).tenant_id && (
+              <Badge variant="neutral">{(s as { tenant_id?: string }).tenant_id}</Badge>
+            )}
+            {/* 状态通过 i18n 翻译，不渲染原始 API 字符串 */}
+            <Badge variant={stateVariant(s.state)} dot={s.state === 'running'}>{t(`state.${s.state}`, s.state)}</Badge>
           </div>
           <div className="name-row">
             <TlnIcon name="box" size={14} style={{ color: 'var(--fg-3)' }} />

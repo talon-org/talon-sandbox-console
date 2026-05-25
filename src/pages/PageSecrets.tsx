@@ -32,7 +32,11 @@ export function PageSecrets() {
   const all = data?.secrets ?? [];
 
   const list = all.filter(s => {
-    if (scope === 'rotate-due' && !s.last_rotated_at) return false;
+    // rotate-due 过滤：last_rotated_at 为空代表需要轮换
+    if (scope === 'rotate-due' && s.last_rotated_at) return false;
+    // tenant/sandbox 范围过滤：按 scope 字段匹配
+    if (scope === 'tenant'  && (s as { scope?: string }).scope !== 'tenant'  && (s as { scope?: string }).scope != null) return false;
+    if (scope === 'sandbox' && (s as { scope?: string }).scope !== 'sandbox') return false;
     if (search && !s.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });

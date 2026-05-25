@@ -54,7 +54,10 @@ function fmtAge(createdAt?: number): string {
 
 // ── SandboxRow ────────────────────────────────────────────────────────────────
 function SandboxRow({ s, onClick }: { s: SandboxDTO; onClick: () => void }) {
+  const t     = useT();
   const color = STATE_COLORS[s.state] ?? 'var(--fg-3)';
+  // 状态标签通过 i18n 翻译，不直接渲染原始 API 字符串
+  const stateLabel = t(`state.${s.state}`, s.state);
   return (
     <div className="tln-tbl-row sbx-row" onClick={onClick} role="row" tabIndex={0} onKeyDown={e => e.key === 'Enter' && onClick()}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
@@ -65,7 +68,8 @@ function SandboxRow({ s, onClick }: { s: SandboxDTO; onClick: () => void }) {
         </div>
       </div>
       <div className="mono">{s.image_id ?? '—'}</div>
-      <div className="mono">—</div>
+      {/* tenant_id 列：直接渲染 API 字段，无则显示 — */}
+      <div className="mono">{(s as { tenant_id?: string }).tenant_id ?? '—'}</div>
       <div className="mono">{fmtAge(s.created_at)}</div>
       <div className="res">
         {s.state === 'pulling-image' ? (
@@ -75,7 +79,7 @@ function SandboxRow({ s, onClick }: { s: SandboxDTO; onClick: () => void }) {
         )}
       </div>
       <div>
-        <Badge variant={stateVariant(s.state)} dot={s.state === 'running'}>{s.state}</Badge>
+        <Badge variant={stateVariant(s.state)} dot={s.state === 'running'}>{stateLabel}</Badge>
       </div>
       <div className="actions" onClick={e => e.stopPropagation()}>
         <Button variant="ghost" size="sm" iconOnly aria-label="More">
@@ -137,7 +141,7 @@ export function PageSandboxes() {
       <PageHeader
         eyebrow={t('sbx.eyebrow')}
         title={t('sbx.title')}
-        num={`${counts['active'] ?? 0} / ${counts.all}`}
+        num={`${counts['active'] ?? 0} ${t('sandboxes.running')} / ${counts.all} ${t('sandboxes.total')}`}
         actions={
           <>
             <Button variant="ghost" onClick={() => refetch()}>
