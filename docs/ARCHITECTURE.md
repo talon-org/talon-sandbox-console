@@ -37,17 +37,27 @@ src/
 │   └── index.ts          barrel
 │
 ├── components/       Shared UI atoms — composable, props-only, no business logic
-│   ├── PageHeader.tsx    Wrapper over @talon-sandbox/react PageHeader
-│   ├── StatCard.tsx      KPI card: animated count-up + inline SVG sparkline
-│   ├── DataTable.tsx     Generic typed table (Column<T>) with skeleton loading
-│   ├── EmptyState.tsx    loading / empty / error unified display
-│   ├── Drawer.tsx        Wrapper over @talon-sandbox/react Drawer (default width 480)
-│   ├── StatusPill.tsx    Sandbox/worker/tenant state pill (full state set incl. stopped/destroyed)
-│   ├── ConfirmDialog.tsx Destructive action confirmation (wraps @talon-sandbox/react Dialog)
-│   ├── CodeBlock.tsx     Wrapper over @talon-sandbox/react CodeBlock + optional label
+│   │
+│   │   ── thin wrappers (add project-specific value over @talon-sandbox/react) ──
+│   ├── EmptyState.tsx    variant="loading|empty|error" system with ARIA attrs;
+│   │                     delegates markup to @talon-sandbox/react EmptyState
+│   ├── ConfirmDialog.tsx Destructive-confirm pattern (Dialog + danger Button footer);
+│   │                     delegates modal markup to @talon-sandbox/react Dialog
+│   ├── StatusPill.tsx    Full SandboxState (incl. stopped/destroyed) + workerStatus +
+│   │                     tenantStatus → Badge variant map; delegates to @talon-sandbox/react Badge
+│   │
+│   │   ── kept as-is (no design-system equivalent) ──
+│   ├── Sparkline.tsx     SVG polyline + fill sparkline; no equivalent in @talon-sandbox/react
 │   ├── Toast.tsx         Re-exports toast / ToastViewport from @talon-sandbox/react
-│   ├── Sparkline.tsx     SVG sparkline (standalone, also embedded in StatCard)
+│   │
 │   └── index.ts          barrel
+│
+│   Deleted (use @talon-sandbox/react directly):
+│     PageHeader  → import { PageHeader } from '@talon-sandbox/react'
+│     StatCard    → import { StatCard, StatCardGrid } from '@talon-sandbox/react'
+│     DataTable   → import { Table } from '@talon-sandbox/react'
+│     Drawer      → import { Drawer } from '@talon-sandbox/react'
+│     CodeBlock   → import { CodeBlock } from '@talon-sandbox/react'
 │
 ├── i18n/
 │   ├── strings.ts        Re-export shim (backward compat) → strings/index.ts
@@ -182,8 +192,8 @@ The sibling agents (B, C, D) must:
    - `PageRecordings` → `useRecordings(opts)`
    - `PageTerminal` → `useSandbox(id)` for metadata; `sandboxPtyUrl(id)` for WebSocket URL
    - `PageRecording` → `useRecordings()` for metadata + `@talon-sandbox/react` RecordingPlayer
-3. Use `EmptyState` for loading/error/empty states.
-4. Use `StatusPill` for state rendering.
-5. Use `ConfirmDialog` for destructive confirmations (kill sandbox, rotate secret, suspend tenant).
-6. Use `DataTable` for list pages (or `@talon-sandbox/react` Table — same Column<T> interface).
+3. Use `EmptyState` (from `src/components/`) for loading/error/empty states.
+4. Use `StatusPill` (from `src/components/`) for state rendering.
+5. Use `ConfirmDialog` (from `src/components/`) for destructive confirmations (kill sandbox, rotate secret, suspend tenant).
+6. Use `Table` from `@talon-sandbox/react` for list pages (DataTable was deleted; Table has the same Column<T> interface).
 7. i18n: import keys from `src/i18n/strings/` namespace files, use `useT()` for all text.
