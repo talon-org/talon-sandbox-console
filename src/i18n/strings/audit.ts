@@ -1,0 +1,23 @@
+/* src/i18n/strings/audit.ts — audit log page */
+export const audit = {
+  'audit.eyebrow':           { en: 'workspace · audit', zh: '工作区 · 审计' },
+  'audit.title':             { en: 'Audit log', zh: '审计日志' },
+  'audit.desc':              { en: 'Every privileged action is recorded with cryptographic chain integrity.', zh: '每一次特权操作都记录在链式校验的日志里。' },
+  'audit.live':              { en: '● Live · showing last 200 events', zh: '● 末尾是实时流 · 显示最近 200 条事件。' },
+  'audit.filterAll':         { en: 'All', zh: '全部' },
+  'audit.filterSandbox':     { en: 'Sandbox', zh: 'Sandbox' },
+  'audit.filterSecret':      { en: 'Secrets', zh: '凭据' },
+  'audit.filterAuth':        { en: 'Auth', zh: '认证' },
+  'audit.filterPty':         { en: 'PTY', zh: 'PTY' },
+  'audit.filterImage':       { en: 'Image', zh: '镜像' },
+  'audit.colTime':           { en: 'Time', zh: '时间' },
+  'audit.colEvent':          { en: 'Event', zh: '事件' },
+  'audit.colActor':          { en: 'Actor', zh: '发起者' },
+  'audit.colTarget':         { en: 'Target', zh: '目标' },
+  'audit.colResult':         { en: 'Result', zh: '结果' },
+  'audit.colMeta':           { en: 'Meta', zh: '元信息' },
+  'audit.advFilter':         { en: 'Advanced filter', zh: '高级过滤' },
+  'audit.exportCsv':         { en: 'Export CSV', zh: '导出 CSV' },
+  'audit.searchPlaceholder': { en: 'Search type · actor · target · meta…', zh: '搜索类型 · 发起者 · 目标 · 元信息…' },
+  'audit.empty.head':        { en: 'No matching events', zh: '没有事件匹配当前过滤器' },
+} as const;
