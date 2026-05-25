@@ -21,4 +21,8 @@ export const common = {
   'common.loading':        { en: 'Loading…', zh: '加载中…' },
   'common.empty':          { en: 'No data', zh: '暂无数据' },
   'common.comingSoon':     { en: 'Coming soon', zh: '即将上线' },
+  'common.loadFailed':     { en: 'Failed to load', zh: '加载失败' },
+  'common.retry':          { en: 'Retry', zh: '重试' },
+  'common.recordings':     { en: 'Recordings', zh: '录像' },
+  'common.notFound':       { en: 'Not found', zh: '未找到' },
 } as const;

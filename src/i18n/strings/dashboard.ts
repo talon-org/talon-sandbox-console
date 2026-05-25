@@ -16,4 +16,7 @@ export const dashboard = {
   'dash.secretsAccessed': { en: 'Secrets accessed · 24h', zh: 'Secret 访问 · 24h' },
   'dash.failures24h':     { en: 'Failures · 24h', zh: '失败 · 24h' },
   'dash.viewAll':         { en: 'All', zh: '全部' },
+  'dash.viewAllAudit':    { en: 'View all', zh: '查看全部' },
+  'dash.viewAllSandboxes':{ en: 'View all', zh: '查看全部' },
+  'dash.loadFailed':      { en: 'Dashboard failed to load', zh: '仪表盘加载失败' },
 } as const;

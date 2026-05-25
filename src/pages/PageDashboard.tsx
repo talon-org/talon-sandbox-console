@@ -1,19 +1,22 @@
-/* PageDashboard — 1:1 port of page-dashboard.jsx prototype.
- * 4 metric cards · sandbox states bar · recent activity · running list
- */
-import { useEffect, useState, useMemo } from 'react';
+/* PageDashboard — metrics overview wired to useDashboard() hook. */
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageHeader, Card, Button, ProgressBar, SandboxStateBar, DEFAULT_STATE_COLORS } from '@talon-sandbox/react';
+import {
+  PageHeader, Card, Button, ProgressBar,
+  SandboxStateBar, DEFAULT_STATE_COLORS,
+  type SandboxState as DSState,
+} from '@talon-sandbox/react';
 import { useApp } from '../store';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { Sparkline } from '../components/Sparkline';
-import { MOCK_METRICS, MOCK_RECENT, MOCK_SANDBOXES, relTime } from '../mock/data';
-import type { SandboxState } from '../mock/data';
+import { EmptyState } from '../components/EmptyState';
+import { useDashboard } from '../hooks';
+import type { DashboardActivity } from '../api/types';
 
 import './PageDashboard.css';
 
-// ── animated counter ──────────────────────────────────────────────────────────
+// ── count-up animation ────────────────────────────────────────────────────────
 function useCount(target: number, duration = 700): number {
   const [v, setV] = useState(0);
   useEffect(() => {
@@ -32,8 +35,13 @@ function useCount(target: number, duration = 700): number {
 }
 
 function fmtNum(n: number): string {
-  if (n >= 100) return Math.round(n).toString();
-  return n.toFixed(1);
+  return n >= 100 ? Math.round(n).toString() : n.toFixed(1);
+}
+
+function relTime(secAgo: number): string {
+  if (secAgo < 60) return `${secAgo}s`;
+  if (secAgo < 3600) return `${Math.floor(secAgo / 60)}m`;
+  return `${Math.floor(secAgo / 3600)}h`;
 }
 
 // ── Metric card ───────────────────────────────────────────────────────────────
@@ -63,126 +71,54 @@ function Metric({ micro, value, unit, of: ofVal, delta, deltaKind = 'neut', seri
           {ofVal != null && <span className="of">/ {ofVal}</span>}
         </div>
         {series && (
-          <Sparkline
-            data={series}
-            height={36}
-            color={color ?? 'var(--acc-strong)'}
-            className="spark"
-          />
+          <Sparkline data={series} height={36} color={color ?? 'var(--acc-strong)'} className="spark" />
         )}
       </div>
     </Card>
   );
 }
 
-// ── states label lookup ───────────────────────────────────────────────────────
-const STATE_LABELS: Record<SandboxState, string> = {
-  'running':       'Running',
-  'pulling-image': 'Pulling',
-  'provisioning':  'Provisioning',
-  'idle':          'Idle',
-  'paused':        'Paused',
-  'terminating':   'Terminating',
-  'failed':        'Failed',
-  'evicted':       'Evicted',
-};
-const STATE_ORDER: SandboxState[] = ['running', 'pulling-image', 'provisioning', 'idle', 'paused', 'terminating', 'failed', 'evicted'];
-
-// ── StatesOverview ────────────────────────────────────────────────────────────
-function StatesOverview() {
-  // Derived from MOCK_SANDBOXES so switching to real data only requires
-  // replacing MOCK_SANDBOXES with useSandboxes() — no logic change needed.
-  const counts = useMemo(() => {
-    const acc: Record<string, number> = { running: 0, 'pulling-image': 0, provisioning: 0, idle: 0, paused: 0, failed: 0, terminating: 0, evicted: 0 };
-    for (const s of MOCK_SANDBOXES) acc[s.state] = (acc[s.state] ?? 0) + 1;
-    return acc;
-  }, []);
-  return (
-    <div>
-      <SandboxStateBar counts={counts} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '8px 16px', marginTop: 16 }}>
-        {STATE_ORDER.map((k) => {
-          const c = counts[k] ?? 0;
-          const color = DEFAULT_STATE_COLORS[k];
-          return (
-            <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, flex: '0 0 auto' }} />
-              <span style={{ color: 'var(--fg-2)', flex: 1 }}>{STATE_LABELS[k]}</span>
-              <span style={{ fontFamily: 'var(--font-mono)', color: c === 0 ? 'var(--fg-3)' : 'var(--fg-0)', fontSize: 12, fontWeight: 500 }}>{c}</span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ── RecentActivity ────────────────────────────────────────────────────────────
-function RecentActivity() {
-  return (
-    <div className="activity-list">
-      {MOCK_RECENT.map((r, i) => {
-        const secAgo = Math.round((Date.now() - new Date(r.at).getTime()) / 1000);
-        return (
-          <div key={i} className={'activity-item ' + r.kind}>
-            <div className="dotw"><span className="d" /></div>
-            <div className="time">{relTime(secAgo)}</div>
-            <div className="text">
-              {r.text.split(/(sb_[a-z0-9]+|[A-Z_]{3,}|\d+%|\d+\.\d+)/).map((part, j) =>
-                /(sb_[a-z0-9]+|[A-Z_]{3,}|\d+%|\d+\.\d+)/.test(part)
-                  ? <span key={j} style={{ fontFamily: 'var(--font-mono)', color: 'var(--fg-0)' }}>{part}</span>
-                  : part
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ── RunningList ───────────────────────────────────────────────────────────────
-function RunningList() {
-  const nav = useNavigate();
-  const items = MOCK_SANDBOXES.filter(s => s.state === 'running' || s.state === 'pulling-image');
-  return (
-    <div className="run-list">
-      {items.map((s) => {
-        const isPulling = s.state === 'pulling-image';
-        const dotColor  = isPulling ? 'var(--warn)' : 'var(--ok)';
-        const dotShadow = isPulling ? '0 0 0 3px var(--warn-soft)' : '0 0 0 3px var(--ok-soft)';
-        const ageStr    = isPulling
-          ? (Math.round((s.pullProgress ?? 0) * 100) + '%')
-          : (Math.floor(s.ageSec / 60) + 'm');
-        return (
-          <div
-            key={s.id}
-            className="run-row"
-            onClick={() => nav('/sandboxes/' + s.id)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && nav('/sandboxes/' + s.id)}
-          >
-            <span className="run-dot" style={{ background: dotColor, boxShadow: dotShadow }} />
-            <div className="who">
-              <span className="id">{s.id}</span>
-              <span className="task">{s.task ?? s.image}</span>
-            </div>
-            <span className="age">{ageStr}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+const DS_STATE_ORDER: DSState[] = [
+  'running', 'pulling-image', 'provisioning', 'idle', 'paused', 'terminating', 'failed', 'evicted',
+];
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export function PageDashboard() {
   const t   = useT();
   const nav = useNavigate();
   const me  = useApp((s) => s.me);
-  const m   = MOCK_METRICS;
-  // TODO: replace mock data with apiGet('/v1/metrics') etc.
+
+  const { data, isLoading, error, refetch } = useDashboard();
+
+  if (isLoading) return <EmptyState variant="loading" />;
+  if (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    return (
+      <EmptyState
+        variant="error"
+        title={t('dash.loadFailed')}
+        message={msg}
+        action={<Button onClick={() => refetch()}>{t('common.retry')}</Button>}
+      />
+    );
+  }
+
+  const summary  = data?.summary;
+  const quota    = data?.quota_24h;
+  const activity = data?.recent_activity ?? [];
+  const running  = data?.running_sandboxes ?? [];
+  const stateMap = data?.states_by_count ?? {};
+
+  const stateCounts: Partial<Record<DSState, number>> = {};
+  for (const key of DS_STATE_ORDER) {
+    if (stateMap[key] != null) stateCounts[key] = stateMap[key];
+  }
+
+  const activeSeries = summary?.active_sandboxes.series.map(p => p.value) ?? [];
+  const cpuSeries    = summary?.vcpu.series.map(p => p.value) ?? [];
+  const memSeries    = summary?.memory_gib.series.map(p => p.value) ?? [];
+  const egressSeries = summary?.egress_mbps.series.map(p => p.value) ?? [];
+  const deltaEgress  = summary?.egress_mbps.delta_24h_pct;
 
   return (
     <>
@@ -199,7 +135,7 @@ export function PageDashboard() {
         desc={t('dash.desc')}
         actions={
           <>
-            <Button variant="ghost" onClick={() => window.location.reload()}>
+            <Button variant="ghost" onClick={() => refetch()}>
               <TlnIcon name="refresh" size={14} />
               {t('common.refresh')}
             </Button>
@@ -212,121 +148,124 @@ export function PageDashboard() {
       />
 
       <div className="page-body">
-        {/* 4-col metric grid */}
         <div className="dash-grid">
           <Metric
             micro={t('dash.metric.active')}
-            value={m.sandboxesActive}
-            delta={'24h ' + m.sandboxesActive_delta_24h}
+            value={summary?.active_sandboxes.current ?? 0}
+            delta={summary?.active_sandboxes.delta_24h != null ? `24h +${summary.active_sandboxes.delta_24h}` : undefined}
             deltaKind="neut"
-            series={m.cpuSeries.slice(-30).map(v => v * 1.2)}
+            series={activeSeries}
           />
           <Metric
             micro={t('dash.metric.cpu')}
-            value={m.vCPU}
+            value={summary?.vcpu.current ?? 0}
             unit="vCPU"
-            of={m.vCPUTotal}
-            delta="+2.1 vCPU"
+            of={summary?.vcpu.limit}
+            delta={summary?.vcpu.delta_24h != null ? `+${summary.vcpu.delta_24h.toFixed(1)} vCPU` : undefined}
             deltaKind="neut"
-            series={m.cpuSeries}
+            series={cpuSeries}
           />
           <Metric
             micro={t('dash.metric.mem')}
-            value={m.mem}
+            value={summary?.memory_gib.current ?? 0}
             unit="GiB"
-            of={m.memTotal}
-            delta="+1.4 GiB"
+            of={summary?.memory_gib.limit}
+            delta={summary?.memory_gib.delta_24h != null ? `+${summary.memory_gib.delta_24h.toFixed(1)} GiB` : undefined}
             deltaKind="neut"
-            series={m.memSeries}
+            series={memSeries}
             color="var(--info)"
           />
           <Metric
             micro={t('dash.metric.egress')}
-            value={m.egressMBs}
+            value={summary?.egress_mbps.current ?? 0}
             unit="MB/s"
-            delta={'24h ' + m.egressMBs_delta_24h}
-            deltaKind="bad"
-            series={m.egressSeries}
+            delta={deltaEgress != null ? `24h ${deltaEgress > 0 ? '+' : ''}${deltaEgress.toFixed(0)}%` : undefined}
+            deltaKind={deltaEgress != null && deltaEgress < 0 ? 'bad' : 'neut'}
+            series={egressSeries}
             color="var(--info)"
           />
         </div>
 
-        {/* states bar + quota */}
         <div className="dash-2col">
           <Card
-            title={
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <TlnIcon name="box" size={14} style={{ color: 'var(--fg-2)' }} />
-                {t('dash.sandboxStates')}
-              </span>
-            }
-            footer={
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-3)' }}>
-                {t('dash.lastRefresh')}
-              </span>
-            }
+            title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="box" size={14} style={{ color: 'var(--fg-2)' }} />{t('dash.sandboxStates')}</span>}
+            footer={<span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-3)' }}>{t('dash.lastRefresh')}</span>}
           >
-            <StatesOverview />
+            <SandboxStateBar counts={stateCounts} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '8px 16px', marginTop: 16 }}>
+              {DS_STATE_ORDER.map(k => (
+                <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: DEFAULT_STATE_COLORS[k], flex: '0 0 auto' }} />
+                  <span style={{ color: 'var(--fg-2)', flex: 1 }}>{k}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', color: (stateMap[k] ?? 0) === 0 ? 'var(--fg-3)' : 'var(--fg-0)', fontSize: 12, fontWeight: 500 }}>{stateMap[k] ?? 0}</span>
+                </div>
+              ))}
+            </div>
           </Card>
 
           <Card
-            title={
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <TlnIcon name="clock" size={14} style={{ color: 'var(--fg-2)' }} />
-                {t('dash.quota24h')}
-              </span>
-            }
+            title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="clock" size={14} style={{ color: 'var(--fg-2)' }} />{t('dash.quota24h')}</span>}
           >
             <div className="quota-row">
-              <div className="quota-item">
-                <div className="qi-header">
-                  <span className="qi-label">vCPU</span>
-                  <span className="qi-value">{m.vCPU.toFixed(1)} / {m.vCPUTotal}</span>
-                </div>
-                <ProgressBar value={m.vCPU} max={m.vCPUTotal} />
-              </div>
-              <div className="quota-item">
-                <div className="qi-header">
-                  <span className="qi-label">{t('dash.metric.mem')}</span>
-                  <span className="qi-value">{m.mem} / {m.memTotal} GiB</span>
-                </div>
-                <ProgressBar value={m.mem} max={m.memTotal} />
-              </div>
-              <div className="quota-item">
-                <div className="qi-header">
-                  <span className="qi-label">{t('dash.secretsAccessed')}</span>
-                  <span className="qi-value">{m.secretsAccessed_24h.toLocaleString()}</span>
-                </div>
-                <ProgressBar value={42} max={100} style={{ '--tln-progress-color': 'var(--magenta)' } as React.CSSProperties} />
-              </div>
-              <div className="quota-item">
-                <div className="qi-header">
-                  <span className="qi-label">{t('dash.failures24h')}</span>
-                  <span className="qi-value danger">{m.failures_24h}</span>
-                </div>
-                <ProgressBar value={4} max={100} style={{ '--tln-progress-color': 'var(--err)' } as React.CSSProperties} />
-              </div>
+              {quota && (
+                <>
+                  <div className="quota-item">
+                    <div className="qi-header">
+                      <span className="qi-label">vCPU</span>
+                      <span className="qi-value">{quota.vcpu.used.toFixed(1)} / {quota.vcpu.limit}</span>
+                    </div>
+                    <ProgressBar value={quota.vcpu.used} max={quota.vcpu.limit} />
+                  </div>
+                  <div className="quota-item">
+                    <div className="qi-header">
+                      <span className="qi-label">{t('dash.metric.mem')}</span>
+                      <span className="qi-value">{quota.memory_gib.used} / {quota.memory_gib.limit} GiB</span>
+                    </div>
+                    <ProgressBar value={quota.memory_gib.used} max={quota.memory_gib.limit} />
+                  </div>
+                  <div className="quota-item">
+                    <div className="qi-header">
+                      <span className="qi-label">{t('dash.secretsAccessed')}</span>
+                      <span className="qi-value">{quota.secrets_reads.used.toLocaleString()}</span>
+                    </div>
+                    <ProgressBar value={quota.secrets_reads.used} max={quota.secrets_reads.limit || 100} style={{ '--tln-progress-color': 'var(--magenta)' } as React.CSSProperties} />
+                  </div>
+                  <div className="quota-item">
+                    <div className="qi-header">
+                      <span className="qi-label">{t('dash.failures24h')}</span>
+                      <span className="qi-value danger">{quota.failures.used}</span>
+                    </div>
+                    <ProgressBar value={quota.failures.used} max={quota.failures.limit || 100} style={{ '--tln-progress-color': 'var(--err)' } as React.CSSProperties} />
+                  </div>
+                </>
+              )}
             </div>
           </Card>
         </div>
 
-        {/* recent activity + running list */}
         <div className="dash-2col">
           <Card
-            title={
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <TlnIcon name="zap" size={14} style={{ color: 'var(--fg-2)' }} />
-                {t('dash.recentActivity')}
-              </span>
-            }
-            footer={
-              <Button variant="ghost" size="sm" onClick={() => nav('/audit')}>
-                {t('dash.viewAll')}
-                <TlnIcon name="arrowRight" size={12} />
-              </Button>
-            }
+            title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="zap" size={14} style={{ color: 'var(--fg-2)' }} />{t('dash.recentActivity')}</span>}
+            footer={<Button variant="ghost" size="sm" onClick={() => nav('/audit')}>{t('dash.viewAllAudit')}<TlnIcon name="arrowRight" size={12} /></Button>}
           >
-            <RecentActivity />
+            <div className="activity-list">
+              {activity.map((r: DashboardActivity, i: number) => {
+                const secAgo = Math.round((Date.now() - new Date(r.ts).getTime()) / 1000);
+                return (
+                  <div key={i} className={'activity-item ' + r.kind}>
+                    <div className="dotw"><span className="d" /></div>
+                    <div className="time">{relTime(secAgo)}</div>
+                    <div className="text">
+                      {r.summary.split(/(sb_[a-z0-9]+|[A-Z_]{3,}|\d+%|\d+\.\d+)/).map((part, j) =>
+                        /(sb_[a-z0-9]+|[A-Z_]{3,}|\d+%|\d+\.\d+)/.test(part)
+                          ? <span key={j} style={{ fontFamily: 'var(--font-mono)', color: 'var(--fg-0)' }}>{part}</span>
+                          : part
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </Card>
 
           <Card
@@ -334,19 +273,28 @@ export function PageDashboard() {
               <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <TlnIcon name="dot" size={14} style={{ color: 'var(--ok)', animation: 'tln-pulse 1.6s ease-in-out infinite' }} />
                 {t('dash.runningNow')}
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)', marginLeft: 4 }}>
-                  {MOCK_SANDBOXES.filter(s => s.state === 'running' || s.state === 'pulling-image').length}
-                </span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)', marginLeft: 4 }}>{running.length}</span>
               </span>
             }
-            footer={
-              <Button variant="ghost" size="sm" onClick={() => nav('/sandboxes')}>
-                {t('dash.viewAll')}
-                <TlnIcon name="arrowRight" size={12} />
-              </Button>
-            }
+            footer={<Button variant="ghost" size="sm" onClick={() => nav('/sandboxes')}>{t('dash.viewAllSandboxes')}<TlnIcon name="arrowRight" size={12} /></Button>}
           >
-            <RunningList />
+            <div className="run-list">
+              {running.map(s => {
+                const isPulling = s.status === 'pulling-image';
+                const dotColor  = isPulling ? 'var(--warn)' : 'var(--ok)';
+                const dotShadow = isPulling ? '0 0 0 3px var(--warn-soft)' : '0 0 0 3px var(--ok-soft)';
+                return (
+                  <div key={s.id} className="run-row" onClick={() => nav('/sandboxes/' + s.id)} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && nav('/sandboxes/' + s.id)}>
+                    <span className="run-dot" style={{ background: dotColor, boxShadow: dotShadow }} />
+                    <div className="who">
+                      <span className="id">{s.id}</span>
+                      <span className="task">{s.name || s.image}</span>
+                    </div>
+                    <span className="age">{s.status}</span>
+                  </div>
+                );
+              })}
+            </div>
           </Card>
         </div>
       </div>
