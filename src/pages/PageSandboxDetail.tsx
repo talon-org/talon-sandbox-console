@@ -1,7 +1,7 @@
 /* PageSandboxDetail — 6-tab detail view, wired to useSandbox() + useAuditEvents(). */
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button, Tabs, Badge } from '@talon-sandbox/react';
+import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Badge } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { EmptyState } from '../components/EmptyState';
@@ -71,26 +71,6 @@ export function PageSandboxDetail() {
     );
   }
 
-  const tabItems = [
-    { value: 'overview',  label: t('detail.tab.overview') },
-    { value: 'processes', label: t('detail.tab.processes') },
-    { value: 'ports',     label: t('detail.tab.ports') },
-    { value: 'files',     label: t('detail.tab.files') },
-    { value: 'network',   label: t('detail.tab.network') },
-    {
-      value: 'audit',
-      label: (
-        <>
-          {t('detail.tab.audit')}
-          {auditEvents.length > 0 && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)', marginLeft: 4 }}>
-              {auditEvents.length}
-            </span>
-          )}
-        </>
-      ),
-    },
-  ];
 
   return (
     <>
@@ -155,18 +135,33 @@ export function PageSandboxDetail() {
       </div>
 
       {/* tabs */}
-      <div className="sbx-tabs-wrap">
-        <Tabs value={tab} onChange={setTab} items={tabItems} />
-      </div>
-
-      <div className="sbx-tab-body">
-        {tab === 'overview'  && <TabOverview  s={s} />}
-        {tab === 'processes' && <TabProcesses s={s} />}
-        {tab === 'ports'     && <TabPorts     s={s} />}
-        {tab === 'files'     && <TabFiles     s={s} />}
-        {tab === 'network'   && <TabNetwork   s={s} />}
-        {tab === 'audit'     && <TabAudit events={auditEvents} />}
-      </div>
+      <Tabs value={tab} onValueChange={setTab}>
+        <div className="sbx-tabs-wrap">
+          <TabsList>
+            <TabsTrigger value="overview">{t('detail.tab.overview')}</TabsTrigger>
+            <TabsTrigger value="processes">{t('detail.tab.processes')}</TabsTrigger>
+            <TabsTrigger value="ports">{t('detail.tab.ports')}</TabsTrigger>
+            <TabsTrigger value="files">{t('detail.tab.files')}</TabsTrigger>
+            <TabsTrigger value="network">{t('detail.tab.network')}</TabsTrigger>
+            <TabsTrigger value="audit">
+              {t('detail.tab.audit')}
+              {auditEvents.length > 0 && (
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)', marginLeft: 4 }}>
+                  {auditEvents.length}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        <div className="sbx-tab-body">
+          <TabsContent value="overview"><TabOverview  s={s} /></TabsContent>
+          <TabsContent value="processes"><TabProcesses s={s} /></TabsContent>
+          <TabsContent value="ports"><TabPorts     s={s} /></TabsContent>
+          <TabsContent value="files"><TabFiles     s={s} /></TabsContent>
+          <TabsContent value="network"><TabNetwork   s={s} /></TabsContent>
+          <TabsContent value="audit"><TabAudit events={auditEvents} /></TabsContent>
+        </div>
+      </Tabs>
 
       {/* kill confirm */}
       <ConfirmDialog

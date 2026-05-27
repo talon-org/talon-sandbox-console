@@ -3,7 +3,11 @@
  */
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { PageHeader, Button, Input, Dialog, EmptyState, toast } from '@talon-sandbox/react';
+import {
+  Button, Input, PageHeader,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  EmptyState, toast,
+} from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { useSecrets, useRotateSecret } from '../hooks/useSecrets';
@@ -164,28 +168,25 @@ export function PageSecrets() {
 
       <CreateSecretDrawer open={drawer} onClose={() => setDrawer(false)} />
 
-      <Dialog
-        open={!!rotateTarget}
-        onClose={() => setRotateTarget(null)}
-        title={
-          <>
-            {t('secrets.rotateTitle')}&nbsp;
-            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--magenta, #c678dd)' }}>
-              {rotateTarget?.name}
-            </span>
-          </>
-        }
-        footer={
-          <>
+      <Dialog open={!!rotateTarget} onOpenChange={(o) => { if (!o) setRotateTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {t('secrets.rotateTitle')}&nbsp;
+              <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--magenta, #c678dd)' }}>
+                {rotateTarget?.name}
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+          {t('secrets.rotateBody')}
+          <DialogFooter>
             <Button variant="ghost" onClick={() => setRotateTarget(null)}>{t('common.cancel')}</Button>
             <Button variant="primary" onClick={handleRotateConfirm}>
               <TlnIcon name="refresh" size={14} />
               {t('secrets.rotateConfirm')}
             </Button>
-          </>
-        }
-      >
-        {t('secrets.rotateBody')}
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </>
   );

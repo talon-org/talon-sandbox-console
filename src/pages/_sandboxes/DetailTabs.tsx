@@ -1,7 +1,11 @@
 /* _sandboxes/DetailTabs.tsx — PageSandboxDetail 各 tab 的主体组件 */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Button, KV, Badge, ResRow, Input, Dialog, toast } from '@talon-sandbox/react';
+import {
+  Card, Button, KV, Badge, Input, ResRow,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  toast,
+} from '@talon-sandbox/react';
 import { useT } from '../../i18n/useT';
 import { TlnIcon } from '../../icons/TlnIcon';
 import { relTime } from '../../lib/relTime';
@@ -91,10 +95,10 @@ export function TabOverview({ s }: { s: SandboxDTO }) {
           footer={<span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-3)' }}>{t('detail.realtime')}</span>}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <ResRow label={t('detail.resourceVcpu')}   used={cpuUsed}  max={cpuCores || 2}  unit="vCPU" />
-            <ResRow label={t('detail.resourceMemory')} used={memUsed}  max={memGib || 4}    unit="GiB" />
-            <ResRow label={t('detail.resourceDisk')}   used={0}        max={1}              unit="GiB" color="ok" />
-            <ResRow label={t('detail.resourceEgress')} used={0}        max={5}              unit="MB/s" color="acc" />
+            <ResRow label={t('detail.resourceVcpu')}   used={cpuUsed} max={cpuCores || 2}  unit="vCPU" />
+            <ResRow label={t('detail.resourceMemory')} used={memUsed} max={memGib || 4}    unit="GiB"  />
+            <ResRow label={t('detail.resourceDisk')}   used={0}       max={1}              unit="GiB"  />
+            <ResRow label={t('detail.resourceEgress')} used={0}       max={5}              unit="MB/s" />
           </div>
         </Card>
 
@@ -360,55 +364,56 @@ export function TabPorts({ s }: { s: SandboxDTO }) {
       </Card>
 
       {/* 暴露端口 Dialog */}
-      <Dialog
-        open={exposeOpen}
-        onClose={() => setExposeOpen(false)}
-        title={t('detail.ports.exposeDialogTitle')}
-        footer={
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <Button variant="ghost" size="sm" onClick={() => setExposeOpen(false)}>
-              {t('common.cancel')}
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleExpose}
-              loading={exposeMut.isPending}
-              disabled={!portInput || exposeMut.isPending}
-            >
-              {t('detail.ports.submit')}
-            </Button>
-          </div>
-        }
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 300 }}>
-          {/* 端口号输入 */}
-          <div>
-            <label className="ff-label" htmlFor="expose-port">
-              {t('detail.ports.portLabel')}
+      <Dialog open={exposeOpen} onOpenChange={(o) => { if (!o) setExposeOpen(false); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('detail.ports.exposeDialogTitle')}</DialogTitle>
+          </DialogHeader>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 300 }}>
+            {/* 端口号输入 */}
+            <div>
+              <label className="ff-label" htmlFor="expose-port">
+                {t('detail.ports.portLabel')}
+              </label>
+              <Input
+                id="expose-port"
+                mono
+                type="number"
+                min={1}
+                max={65535}
+                value={portInput}
+                onChange={e => setPortInput(e.target.value)}
+                placeholder="8080"
+              />
+            </div>
+            {/* 签名 URL 复选 */}
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--fg-2)', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={signInput}
+                onChange={e => setSignInput(e.target.checked)}
+                style={{ accentColor: 'var(--acc)' }}
+              />
+              {t('detail.ports.signLabel')}
             </label>
-            <Input
-              id="expose-port"
-              mono
-              type="number"
-              min={1}
-              max={65535}
-              value={portInput}
-              onChange={e => setPortInput(e.target.value)}
-              placeholder="8080"
-            />
           </div>
-          {/* 签名 URL 复选 */}
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--fg-2)', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={signInput}
-              onChange={e => setSignInput(e.target.checked)}
-              style={{ accentColor: 'var(--acc)' }}
-            />
-            {t('detail.ports.signLabel')}
-          </label>
-        </div>
+          <DialogFooter>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <Button variant="ghost" size="sm" onClick={() => setExposeOpen(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleExpose}
+                loading={exposeMut.isPending}
+                disabled={!portInput || exposeMut.isPending}
+              >
+                {t('detail.ports.submit')}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
 
       {/* 删除确认 Dialog */}
@@ -450,9 +455,9 @@ export function TabNetwork({ s }: { s: SandboxDTO }) {
   return (
     <div className="sbx-2col">
       <Card title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="shield" size={14} style={{ color: 'var(--info)' }} />{t('detail.networkPolicy')}</span>}>
-        <KV items={[
-          { label: t('detail.policy'),    value: s.network_policy ?? 'allow-all' },
-          { label: t('detail.blocked24h'), value: '—' },
+        <KV rows={[
+          { k: t('detail.policy'),    v: s.network_policy ?? 'allow-all' },
+          { k: t('detail.blocked24h'), v: '—' },
         ]} />
         {/* G2：allowlist 模式下显示允许主机列表 */}
         {hosts.length > 0 && (

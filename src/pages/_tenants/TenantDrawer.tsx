@@ -4,7 +4,8 @@
  */
 import { useState, useEffect } from 'react';
 import {
-  Drawer, Button, ProgressBar, Segmented, KV, toast,
+  Drawer, DrawerContent, DrawerHeader, DrawerTitle,
+  Button, ProgressBar, SegmentedGroup, SegmentedItem, KV, toast,
 } from '@talon-sandbox/react';
 import { useT } from '../../i18n/useT';
 import { TlnIcon } from '../../icons/TlnIcon';
@@ -46,13 +47,13 @@ export function TenantDrawer({ tenant, onClose }: Props) {
   const members = d?.members ?? [];
   const security = d?.security;
 
-  const kvItems: Array<{ label: string; value: string }> = [
-    { label: t('tenants.drawer.kmsKey'), value: security?.kms_key_arn ?? `arn:kms:eu-fra-1:tenant_${tenant.id}:key/main` },
-    { label: t('tenants.drawer.rotation'), value: t('tenants.drawer.rotationValue') },
-    { label: t('tenants.drawer.network'), value: security?.network_policy ?? t('tenants.drawer.networkValue') },
+  const kvItems: Array<{ k: string; v: string }> = [
+    { k: t('tenants.drawer.kmsKey'), v: security?.kms_key_arn ?? `arn:kms:eu-fra-1:tenant_${tenant.id}:key/main` },
+    { k: t('tenants.drawer.rotation'), v: t('tenants.drawer.rotationValue') },
+    { k: t('tenants.drawer.network'), v: security?.network_policy ?? t('tenants.drawer.networkValue') },
     {
-      label: t('tenants.drawer.twoFactor'),
-      value: (security?.two_factor ?? plan === 'enterprise')
+      k: t('tenants.drawer.twoFactor'),
+      v: (security?.two_factor ?? plan === 'enterprise')
         ? t('tenants.drawer.twoFactorReq')
         : t('tenants.drawer.twoFactorOpt'),
     },
@@ -78,12 +79,11 @@ export function TenantDrawer({ tenant, onClose }: Props) {
 
   return (
     <>
-      <Drawer
-        open={!!tenant}
-        onClose={onClose}
-        width={620}
-        title={drawerTitle}
-      >
+      <Drawer open={!!tenant} onOpenChange={(o) => { if (!o) onClose(); }}>
+        <DrawerContent style={{ width: 620 }}>
+          <DrawerHeader>
+            <DrawerTitle>{drawerTitle}</DrawerTitle>
+          </DrawerHeader>
         <div className="tenant-drawer-body">
           {/* header bar */}
           <div className="tenant-bar">
@@ -94,16 +94,11 @@ export function TenantDrawer({ tenant, onClose }: Props) {
                 {plan} · {members.length} {t('tenants.drawer.members')} · {tenant.active_sandboxes} {t('tenants.drawer.running')}
               </div>
             </div>
-            <Segmented
-              value={plan}
-              onChange={() => {}}
-              size="sm"
-              options={[
-                { value: 'free',       label: t('tenants.drawer.planFree') },
-                { value: 'team',       label: t('tenants.drawer.planTeam') },
-                { value: 'enterprise', label: t('tenants.drawer.planEnt')  },
-              ]}
-            />
+            <SegmentedGroup value={plan} size="sm">
+              <SegmentedItem value="free">{t('tenants.drawer.planFree')}</SegmentedItem>
+              <SegmentedItem value="team">{t('tenants.drawer.planTeam')}</SegmentedItem>
+              <SegmentedItem value="enterprise">{t('tenants.drawer.planEnt')}</SegmentedItem>
+            </SegmentedGroup>
           </div>
 
           {/* quota section */}
@@ -211,7 +206,7 @@ export function TenantDrawer({ tenant, onClose }: Props) {
               <TlnIcon name="shield" size={12} className="ic" />
               {t('tenants.drawer.security')}
             </div>
-            <KV items={kvItems} />
+            <KV rows={kvItems} />
           </div>
 
           {/* footer actions */}
@@ -244,6 +239,7 @@ export function TenantDrawer({ tenant, onClose }: Props) {
             </div>
           </div>
         </div>
+        </DrawerContent>
       </Drawer>
 
       <ConfirmDialog

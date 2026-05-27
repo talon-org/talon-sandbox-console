@@ -3,7 +3,8 @@
  */
 import { useState } from 'react';
 import {
-  Drawer, Button, Input, Select, Textarea, Switch, toast,
+  Drawer, DrawerContent, DrawerHeader, DrawerTitle,
+  Button, Input, Select, Textarea, Switch, toast,
 } from '@talon-sandbox/react';
 import { useT } from '../../i18n/useT';
 import { TlnIcon } from '../../icons/TlnIcon';
@@ -55,7 +56,11 @@ export function CreateSecretDrawer({ open, onClose }: Props) {
   );
 
   return (
-    <Drawer open={open} onClose={onClose} side="right" width={520} title={drawerTitle}>
+    <Drawer open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DrawerContent side="right" style={{ width: 520 }}>
+        <DrawerHeader>
+          <DrawerTitle>{drawerTitle}</DrawerTitle>
+        </DrawerHeader>
       {/* identity */}
       <div className="form-sect">
         <div className="form-sect-title">
@@ -140,6 +145,7 @@ export function CreateSecretDrawer({ open, onClose }: Props) {
           </div>
         </div>
       </div>
+      </DrawerContent>
     </Drawer>
   );
 }

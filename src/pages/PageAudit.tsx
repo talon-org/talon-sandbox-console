@@ -3,7 +3,7 @@
  * No mock data.
  */
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { PageHeader, Button, Segmented, EmptyState, FilterBar } from '@talon-sandbox/react';
+import { Button, SegmentedGroup, SegmentedItem, EmptyState, PageHeader } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { useAuditEvents, useAuditStream } from '../hooks';
@@ -118,31 +118,27 @@ export function PageAudit() {
 
       <div className="page-body">
         <div className="sbx-filters" style={{ marginBottom: 14 }}>
-          <FilterBar
-            groups={[{ items: [
-              { value: 'all',     label: t('audit.filterAll'),     count: typeCounts.all },
-              { value: 'sandbox', label: t('audit.filterSandbox'), count: typeCounts.sandbox },
-              { value: 'secret',  label: t('audit.filterSecret'),  count: typeCounts.secret },
-              { value: 'auth',    label: t('audit.filterAuth'),    count: typeCounts.auth },
-              { value: 'pty',     label: t('audit.filterPty'),     count: typeCounts.pty },
-              { value: 'image',   label: t('audit.filterImage'),   count: typeCounts.image },
-            ] }]}
-            value={filter}
-            onChange={setFilter}
-            actions={
-              <Segmented
-                value={range}
-                onChange={setRange}
-                size="sm"
-                options={[
-                  { value: '1h',  label: t('audit.range1h') },
-                  { value: '24h', label: t('audit.range24h') },
-                  { value: '7d',  label: t('audit.range7d') },
-                  { value: '30d', label: t('audit.range30d') },
-                ]}
-              />
-            }
-            search={{ value: search, onChange: setSearch, placeholder: t('audit.searchPlaceholder') }}
+          {/* type filter chip row */}
+          <div className="group">
+            {(['all','sandbox','secret','auth','pty','image'] as const).map(v => (
+              <button key={v} className={'filter-btn' + (filter === v ? ' active' : '')} onClick={() => setFilter(v)}>
+                {t(`audit.filter${v.charAt(0).toUpperCase() + v.slice(1)}`)}
+                {typeCounts[v] != null && <span className="count">{typeCounts[v]}</span>}
+              </button>
+            ))}
+          </div>
+          {/* range segmented */}
+          <SegmentedGroup value={range} size="sm">
+            {(['1h','24h','7d','30d'] as const).map(v => (
+              <SegmentedItem key={v} value={v} onClick={() => setRange(v)}>{t(`audit.range${v}`)}</SegmentedItem>
+            ))}
+          </SegmentedGroup>
+          {/* search */}
+          <input
+            className="sbx-search"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={t('audit.searchPlaceholder')}
           />
         </div>
 

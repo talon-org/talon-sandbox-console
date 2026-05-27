@@ -1,14 +1,19 @@
 /* Shell — Sidebar (220px) + TopBar (48px) + main content.
- * 1:1 port of shell.jsx prototype. Styles are inline via className
- * rules defined in src/styles/shell.css (injected once).
+ * 1:1 port of shell.jsx prototype. Styles defined in Shell.css.
+ * v0.3: PageHeader removed from local impl — now re-exported from @talon-sandbox/react.
+ *       TweaksPanel restored as local business shell (fixed bottom-right).
  */
 import { useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import ReactDOM from 'react-dom';
 import { useApp } from '../store';
 import { useT } from '../i18n/useT';
 import { TlnIcon, Mark } from '../icons/TlnIcon';
-import { CmdKOverlay, TweaksPanel, ToastViewport } from '@talon-sandbox/react';
+import {
+  CommandDialog, CommandInput, CommandList, CommandEmpty,
+  CommandGroup, CommandItem, CommandShortcut,
+  Toaster,
+} from '@talon-sandbox/react';
+import { TweaksPanel } from '../components/TweaksPanel';
 
 import './Shell.css';
 
@@ -33,15 +38,15 @@ const NAV_ADMIN = [
 function crumbsForPath(path: string, t: (key: string) => string): string[] {
   if (path.startsWith('/sandboxes/') && path.endsWith('/terminal')) {
     const id = path.split('/')[2];
-    return [t('nav.sandboxes'), id, t('common.terminal')];
+    return [t('nav.sandboxes'), id!, t('common.terminal')];
   }
   if (path.startsWith('/sandboxes/')) {
     const id = path.split('/')[2];
-    return [t('nav.sandboxes'), id];
+    return [t('nav.sandboxes'), id!];
   }
   if (path.startsWith('/recordings/')) {
     const id = path.split('/')[2];
-    return [t('nav.recordings'), id];
+    return [t('nav.recordings'), id!];
   }
   const map: Record<string, string> = {
     '/dashboard':  t('nav.dashboard'),
@@ -53,23 +58,17 @@ function crumbsForPath(path: string, t: (key: string) => string): string[] {
     '/tenants':    t('nav.tenants'),
   };
   const match = Object.keys(map).find(k => path.startsWith(k));
-  return match ? [map[match]] : ['—'];
+  return match ? [map[match]!] : ['—'];
 }
 
 export function Shell() {
-  const t = useT();
+  const t        = useT();
   const navigate = useNavigate();
   const location = useLocation();
-  const me = useApp(s => s.me);
-  const logout = useApp(s => s.logout);
+  const me       = useApp(s => s.me);
+  const logout   = useApp(s => s.logout);
   const cmdkOpen = useApp(s => s.cmdkOpen);
-  const setCmdK = useApp(s => s.setCmdK);
-  const theme = useApp(s => s.theme);
-  const mode = useApp(s => s.mode);
-  const density = useApp(s => s.density);
-  const font = useApp(s => s.font);
-  const lang = useApp(s => s.lang);
-  const setTweak = useApp(s => s.setTweak);
+  const setCmdK  = useApp(s => s.setCmdK);
 
   const crumbs = crumbsForPath(location.pathname, t);
 
@@ -86,19 +85,23 @@ export function Shell() {
   }, [cmdkOpen, setCmdK]);
 
   const cmdkItems = [
-    { group: t('cmdk.group.nav'), name: t('cmdk.nav.dashboard'),   icon: <TlnIcon name="home" size={15} />,   kbd: 'G D', action: () => navigate('/dashboard') },
-    { group: t('cmdk.group.nav'), name: t('cmdk.nav.sandboxes'),   icon: <TlnIcon name="box" size={15} />,    kbd: 'G S', action: () => navigate('/sandboxes') },
-    { group: t('cmdk.group.nav'), name: t('cmdk.nav.recordings'),  icon: <TlnIcon name="film" size={15} />,   kbd: 'G R', action: () => navigate('/recordings') },
-    { group: t('cmdk.group.nav'), name: t('cmdk.nav.secrets'),     icon: <TlnIcon name="key" size={15} />,    kbd: 'G K', action: () => navigate('/secrets') },
-    { group: t('cmdk.group.nav'), name: t('cmdk.nav.audit'),       icon: <TlnIcon name="scroll" size={15} />, kbd: 'G A', action: () => navigate('/audit') },
-    { group: t('cmdk.group.nav'), name: t('cmdk.nav.workers'),     icon: <TlnIcon name="server" size={15} />,            action: () => navigate('/workers') },
-    { group: t('cmdk.group.nav'), name: t('cmdk.nav.tenants'),     icon: <TlnIcon name="users" size={15} />,             action: () => navigate('/tenants') },
-    { group: t('cmdk.group.actions'), name: t('cmdk.action.newSandbox'), icon: <TlnIcon name="plus" size={15} />, kbd: 'C N', action: () => navigate('/sandboxes?new=1') },
-    { group: t('cmdk.group.actions'), name: t('cmdk.action.newSecret'),  icon: <TlnIcon name="key" size={15} />,           action: () => navigate('/secrets?new=1') },
-    { group: t('cmdk.group.actions'), name: t('cmdk.action.signOut'),    icon: <TlnIcon name="logout" size={15} />,        action: () => { logout(); navigate('/login'); } },
+    { group: t('cmdk.group.nav'), name: t('cmdk.nav.dashboard'),   icon: <TlnIcon name="home"    size={15} />, kbd: 'G D', action: () => navigate('/dashboard') },
+    { group: t('cmdk.group.nav'), name: t('cmdk.nav.sandboxes'),   icon: <TlnIcon name="box"     size={15} />, kbd: 'G S', action: () => navigate('/sandboxes') },
+    { group: t('cmdk.group.nav'), name: t('cmdk.nav.recordings'),  icon: <TlnIcon name="film"    size={15} />, kbd: 'G R', action: () => navigate('/recordings') },
+    { group: t('cmdk.group.nav'), name: t('cmdk.nav.secrets'),     icon: <TlnIcon name="key"     size={15} />, kbd: 'G K', action: () => navigate('/secrets') },
+    { group: t('cmdk.group.nav'), name: t('cmdk.nav.audit'),       icon: <TlnIcon name="scroll"  size={15} />, kbd: 'G A', action: () => navigate('/audit') },
+    { group: t('cmdk.group.nav'), name: t('cmdk.nav.workers'),     icon: <TlnIcon name="server"  size={15} />,             action: () => navigate('/workers') },
+    { group: t('cmdk.group.nav'), name: t('cmdk.nav.tenants'),     icon: <TlnIcon name="users"   size={15} />,             action: () => navigate('/tenants') },
+    { group: t('cmdk.group.actions'), name: t('cmdk.action.newSandbox'), icon: <TlnIcon name="plus"   size={15} />, kbd: 'C N', action: () => navigate('/sandboxes?new=1') },
+    { group: t('cmdk.group.actions'), name: t('cmdk.action.newSecret'),  icon: <TlnIcon name="key"    size={15} />,           action: () => navigate('/secrets?new=1') },
+    { group: t('cmdk.group.actions'), name: t('cmdk.action.signOut'),    icon: <TlnIcon name="logout" size={15} />,           action: () => { logout(); navigate('/login'); } },
   ];
 
-  const initials = me ? me.email[0].toUpperCase() : '?';
+  // Avatar initials: name → email → tenant_id prefix → '?'
+  const initials = (() => {
+    const src = me?.name || me?.email || me?.tenant_id || '';
+    return src ? src.replace(/^tnt_/, '').charAt(0).toUpperCase() : '?';
+  })();
 
   return (
     <div className="app-shell">
@@ -172,7 +175,8 @@ export function Shell() {
         <div className="sidebar-foot">
           <div className="me-avatar" aria-hidden="true">{initials}</div>
           <div className="me">
-            <span className="email">{me?.email ?? '—'}</span>
+            {/* API Key flow has no email — fallback to name, then tenant_id sans prefix */}
+            <span className="email">{me?.email ?? me?.name ?? me?.tenant_id?.replace(/^tnt_/, '') ?? '—'}</span>
             <span className="role">{me?.role ?? ''}</span>
           </div>
           <button
@@ -233,58 +237,45 @@ export function Shell() {
         </main>
       </div>
 
-      {/* CmdK overlay */}
-      <CmdKOverlay
-        open={cmdkOpen}
-        onClose={() => setCmdK(false)}
-        items={cmdkItems}
-        placeholder={t('cmdk.placeholder')}
-      />
+      {/* Tweaks panel — fixed bottom-right, collapsible */}
+      <TweaksPanel />
 
-      {/* Tweaks panel — closed-beta: always visible */}
-      <TweaksPanel
-        theme={theme}
-        mode={mode}
-        density={density}
-        font={font}
-        lang={lang}
-        onSet={(key, value) => setTweak(key as 'theme' | 'mode' | 'density' | 'font' | 'lang', value)}
-        defaultOpen={false}
-      />
+      {/* CmdK overlay */}
+      <CommandDialog open={cmdkOpen} onOpenChange={setCmdK}>
+        <CommandInput placeholder={t('cmdk.placeholder')} />
+        <CommandList>
+          <CommandEmpty>{t('cmdk.noResults', 'No results')}</CommandEmpty>
+          {(() => {
+            const groups: Record<string, typeof cmdkItems> = {};
+            for (const item of cmdkItems) {
+              if (!groups[item.group]) groups[item.group] = [];
+              groups[item.group]!.push(item);
+            }
+            return Object.entries(groups).map(([groupName, items]) => (
+              <CommandGroup key={groupName} heading={groupName}>
+                {items.map(it => (
+                  <CommandItem
+                    key={it.name}
+                    value={it.name}
+                    onSelect={() => { it.action(); setCmdK(false); }}
+                  >
+                    {it.icon && <span style={{ display: 'flex', alignItems: 'center' }}>{it.icon}</span>}
+                    <span>{it.name}</span>
+                    {it.kbd && <CommandShortcut>{it.kbd}</CommandShortcut>}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ));
+          })()}
+        </CommandList>
+      </CommandDialog>
 
       {/* Toast viewport */}
-      <ToastViewport />
+      <Toaster />
     </div>
   );
 }
 
-// ── PageHeader helper (reusable across pages) ─────────────────────────────────
-interface PageHeaderProps {
-  eyebrow?: string;
-  title: React.ReactNode;
-  num?: React.ReactNode;
-  desc?: React.ReactNode;
-  actions?: React.ReactNode;
-  noBorder?: boolean;
-}
-
-export function PageHeader({ eyebrow, title, num, desc, actions, noBorder }: PageHeaderProps) {
-  return (
-    <div className={'page-header' + (noBorder ? ' no-border' : '')}>
-      <div className="header-row">
-        <div style={{ minWidth: 0 }}>
-          {eyebrow && <div className="eyebrow">{eyebrow}</div>}
-          <h1 className="title" style={{ margin: 0 }}>
-            {title}
-            {num != null && <span className="num">{num}</span>}
-          </h1>
-          {desc && <div className="desc">{desc}</div>}
-        </div>
-        {actions && <div className="actions">{actions}</div>}
-      </div>
-    </div>
-  );
-}
-
-// ── Re-export ReactDOM.createPortal shim for dialogs/drawers ─────────────────
-export { ReactDOM };
+// PageHeader is now imported from @talon-sandbox/react wherever needed.
+// Re-export it here so existing imports from '../layouts/Shell' keep working.
+export { PageHeader } from '@talon-sandbox/react';

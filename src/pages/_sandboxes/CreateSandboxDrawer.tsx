@@ -1,6 +1,9 @@
 /* _sandboxes/CreateSandboxDrawer.tsx — create sandbox drawer form */
 import { useState, useId, useEffect } from 'react';
-import { Drawer, Button, Input, Select, Textarea, toast } from '@talon-sandbox/react';
+import {
+  Drawer, DrawerContent, DrawerHeader, DrawerTitle,
+  Button, Input, Select, Textarea, toast,
+} from '@talon-sandbox/react';
 import { useT } from '../../i18n/useT';
 import { TlnIcon } from '../../icons/TlnIcon';
 import { useCreateSandbox, useImages } from '../../hooks';
@@ -76,13 +79,16 @@ export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps)
   };
 
   return (
-    <Drawer
-      open={open}
-      onClose={onClose}
-      side="right"
-      width={580}
-      title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="box" size={16} style={{ color: 'var(--acc)' }} />{t('sbx.create.title')}</span>}
-    >
+    <Drawer open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DrawerContent side="right" style={{ width: 580 }}>
+        <DrawerHeader>
+          <DrawerTitle>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <TlnIcon name="box" size={16} style={{ color: 'var(--acc)' }} />
+              {t('sbx.create.title')}
+            </span>
+          </DrawerTitle>
+        </DrawerHeader>
       {/* basics */}
       <div className="form-sect">
         <div className="form-sect-title"><TlnIcon name="box" size={14} className="ic" />{t('sbx.create.basics')}</div>
@@ -226,6 +232,7 @@ export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps)
           </div>
         </div>
       </div>
+      </DrawerContent>
     </Drawer>
   );
 }

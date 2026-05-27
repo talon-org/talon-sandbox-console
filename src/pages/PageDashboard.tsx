@@ -1,11 +1,20 @@
 /* PageDashboard — metrics overview wired to useDashboard() hook. */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  PageHeader, Card, Button, ProgressBar,
-  DEFAULT_STATE_COLORS,
-  type SandboxState as DSState,
-} from '@talon-sandbox/react';
+import { Card, Button, ProgressBar, PageHeader } from '@talon-sandbox/react';
+import type { SandboxState as DSState } from '@talon-sandbox/react';
+
+// DEFAULT_STATE_COLORS was removed in v0.3; inline the palette used by the dashboard bar
+const DEFAULT_STATE_COLORS: Partial<Record<DSState, string>> = {
+  running:         'var(--ok)',
+  provisioning:    'var(--acc)',
+  'pulling-image': 'var(--info)',
+  idle:            'var(--warn)',
+  paused:          'var(--warn)',
+  terminating:     'var(--fg-3)',
+  evicted:         'var(--bg-3)',
+  failed:          'var(--err)',
+};
 import { useApp } from '../store';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';

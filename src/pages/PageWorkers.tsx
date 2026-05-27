@@ -3,7 +3,11 @@
  * Non-admin gets error EmptyState from hook 403 — no ACL logic here.
  */
 import { useState } from 'react';
-import { PageHeader, Button, ProgressBar, Dialog, toast } from '@talon-sandbox/react';
+import {
+  Button, ProgressBar, PageHeader,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  toast,
+} from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { useWorkers, useInviteWorker } from '../hooks/useWorkers';
@@ -136,39 +140,40 @@ export function PageWorkers() {
       </div>
 
       {/* G6: 邀请令牌展示弹窗 — token 仅展示一次，关闭后无法恢复 */}
-      <Dialog
-        open={!!inviteToken}
-        onClose={() => setInviteToken(null)}
-        title={
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <TlnIcon name="key" size={15} style={{ color: 'var(--acc)' }} />
-            {t('workers.inviteTitle')}
-          </span>
-        }
-        footer={
-          <Button variant="primary" onClick={() => {
-            if (inviteToken) navigator.clipboard.writeText(inviteToken).catch(() => {});
-            setInviteToken(null);
-          }}>
-            <TlnIcon name="check" size={14} />
-            {t('workers.inviteCopy')}
-          </Button>
-        }
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ fontSize: 12, color: 'var(--fg-2)' }}>{t('workers.inviteBody')}</div>
-          <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: 12, wordBreak: 'break-all',
-            background: 'var(--bg-3)', border: '1px solid var(--line)',
-            borderRadius: 'var(--r-2)', padding: '10px 12px', color: 'var(--fg-0)',
-            userSelect: 'all',
-          }}>
-            {inviteToken}
+      <Dialog open={!!inviteToken} onOpenChange={(o) => { if (!o) setInviteToken(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <TlnIcon name="key" size={15} style={{ color: 'var(--acc)' }} />
+                {t('workers.inviteTitle')}
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontSize: 12, color: 'var(--fg-2)' }}>{t('workers.inviteBody')}</div>
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: 12, wordBreak: 'break-all',
+              background: 'var(--bg-3)', border: '1px solid var(--line)',
+              borderRadius: 'var(--r-2)', padding: '10px 12px', color: 'var(--fg-0)',
+              userSelect: 'all',
+            }}>
+              {inviteToken}
+            </div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--fg-3)' }}>
+              {t('workers.inviteExpires')} {inviteExpires}
+            </div>
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--fg-3)' }}>
-            {t('workers.inviteExpires')} {inviteExpires}
-          </div>
-        </div>
+          <DialogFooter>
+            <Button variant="primary" onClick={() => {
+              if (inviteToken) navigator.clipboard.writeText(inviteToken).catch(() => {});
+              setInviteToken(null);
+            }}>
+              <TlnIcon name="check" size={14} />
+              {t('workers.inviteCopy')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </>
   );

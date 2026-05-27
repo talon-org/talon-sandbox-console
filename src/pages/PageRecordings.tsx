@@ -3,7 +3,7 @@
  */
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageHeader, Button, FilterBar, EmptyState } from '@talon-sandbox/react';
+import { Button, EmptyState, PageHeader } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { relTime } from '../lib/relTime';
@@ -115,11 +115,11 @@ export function PageRecordings() {
       <div className="page-body">
         {isAdmin && (
           <div className="sbx-filters" style={{ marginBottom: 14 }}>
-            <FilterBar
-              groups={[{ items: [{ value: 'all', label: t('recordings.filterAll') }] }]}
-              value={agentFilter}
-              onChange={setAgentFilter}
-            />
+            <div className="group">
+              <button className={'filter-btn' + (agentFilter === 'all' ? ' active' : '')} onClick={() => setAgentFilter('all')}>
+                {t('recordings.filterAll')}
+              </button>
+            </div>
           </div>
         )}
 

@@ -10,7 +10,10 @@
  *   />
  */
 import type { ReactNode } from 'react';
-import { Dialog, Button } from '@talon-sandbox/react';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Button,
+} from '@talon-sandbox/react';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -31,31 +34,32 @@ export function ConfirmDialog({
   onConfirm, loading, danger = true,
 }: ConfirmDialogProps) {
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      title={title}
-      footer={
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <Button variant="ghost" size="sm" onClick={onClose} disabled={loading}>
-            {cancelLabel}
-          </Button>
-          <Button
-            variant={danger ? 'danger' : 'primary'}
-            size="sm"
-            onClick={onConfirm}
-            loading={loading}
-          >
-            {confirmLabel}
-          </Button>
-        </div>
-      }
-    >
-      {description && (
-        <p style={{ margin: 0, fontSize: 14, color: 'var(--fg-2)', lineHeight: 1.6 }}>
-          {description}
-        </p>
-      )}
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        {description && (
+          <p style={{ margin: 0, fontSize: 14, color: 'var(--fg-2)', lineHeight: 1.6 }}>
+            {description}
+          </p>
+        )}
+        <DialogFooter>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <Button variant="ghost" size="sm" onClick={onClose} disabled={loading}>
+              {cancelLabel}
+            </Button>
+            <Button
+              variant={danger ? 'danger' : 'primary'}
+              size="sm"
+              onClick={onConfirm}
+              loading={loading}
+            >
+              {confirmLabel}
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 }
