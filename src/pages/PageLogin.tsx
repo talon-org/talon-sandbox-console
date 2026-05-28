@@ -165,6 +165,7 @@ export function PageLogin() {
           {/* Tab toggle */}
           <div className="login-tabs" role="tablist">
             <button
+              type="button"
               id="tab-email"
               role="tab"
               aria-selected={tab === 'email'}
@@ -175,6 +176,7 @@ export function PageLogin() {
               {t('login.tab.email')}
             </button>
             <button
+              type="button"
               id="tab-apikey"
               role="tab"
               aria-selected={tab === 'apikey'}

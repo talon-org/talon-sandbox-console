@@ -48,7 +48,7 @@ export function PageSecrets() {
   const rotateDue = all.filter(s => !s.last_rotated_at).length;
 
   const filterBtn = (val: string, label: string) => (
-    <button key={val} className="sbx-filter" aria-pressed={scope === val} onClick={() => setScope(val)}>
+    <button type="button" key={val} className="sbx-filter" aria-pressed={scope === val} onClick={() => setScope(val)}>
       {label}
     </button>
   );

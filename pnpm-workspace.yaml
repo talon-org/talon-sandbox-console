@@ -1,0 +1,5 @@
+# 供应链安全:只允许安装发布满 7 天的包版本。
+# 防止刚 publish 的恶意包(在被检测并 unpublish 之前)被装上。
+# 单包项目也可放此文件,只配置该字段不声明 packages,不会被识别为 monorepo。
+# 需要 pnpm v10.16+;低于该版本会忽略此字段。
+minimumReleaseAge: 10080

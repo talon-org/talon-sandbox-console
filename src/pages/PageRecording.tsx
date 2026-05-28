@@ -44,7 +44,7 @@ export function PageRecording() {
           title={t('recordings.notFound')}
           description={t('recordings.notFoundDesc')}
           action={
-            <button onClick={() => navigate('/recordings')} style={{ cursor: 'pointer' }}>
+            <button type="button" onClick={() => navigate('/recordings')} style={{ cursor: 'pointer' }}>
               {t('recordings.back')}
             </button>
           }

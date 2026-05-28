@@ -5,18 +5,10 @@ import { Button, Badge } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { relTime as sharedRelTime } from '../lib/relTime';
+import { typeKind } from '../lib/auditUtils';
 import type { AuditEventDTO } from '../api/types';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
-
-export function typeKind(type: string): string {
-  if (type.startsWith('sandbox')) return 'sandbox';
-  if (type.startsWith('secret'))  return 'secret';
-  if (type.startsWith('auth'))    return 'auth';
-  if (type.startsWith('pty'))     return 'pty';
-  if (type.startsWith('image'))   return 'image';
-  return 'system';
-}
 
 function actorIcon(actorKind: string): string {
   if (actorKind === 'user')    return 'user';
@@ -27,7 +19,7 @@ function actorIcon(actorKind: string): string {
 }
 
 /** 将流事件时间戳（RFC3339）或 AuditEventDTO.at（Unix 秒）换算为距今秒数 */
-export function auditSecAgo(atUnix: number): number {
+function auditSecAgo(atUnix: number): number {
   return Math.round(Date.now() / 1000 - atUnix);
 }
 
