@@ -1,0 +1,48 @@
+/* InlineEmpty — see component for design intent. */
+
+.inline-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--fg-3);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  padding: 16px;
+}
+
+/* Border is opt-in. Cards / tables already supply the container, so by
+ * default InlineEmpty just provides the iconography + text and inherits
+ * the surrounding boundary. */
+.inline-empty--bordered {
+  border: 1px dashed var(--line);
+  border-radius: var(--r-2);
+}
+
+.inline-empty--sm  { min-height: 80px;  }
+.inline-empty--md  { min-height: 160px; }
+
+.inline-empty__icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fg-3);
+  flex: 0 0 auto;
+}
+
+.inline-empty__text { min-width: 0; }
+
+.inline-empty__action {
+  margin-left: 4px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.inline-empty--error {
+  color: var(--err);
+}
+.inline-empty--bordered.inline-empty--error {
+  border-color: color-mix(in oklab, var(--err) 30%, var(--line));
+}
+.inline-empty--error .inline-empty__icon { color: var(--err); }

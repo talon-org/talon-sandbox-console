@@ -1,11 +1,20 @@
 /* _sandboxes/DetailTabs.tsx — PageSandboxDetail 各 tab 的主体组件 */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Button, KV, Badge, ResRow, Input, Dialog, toast } from '@talon-sandbox/react';
+import {
+  Card, CardHeader, CardTitle, CardAction, CardContent, CardFooter,
+  Button, KV, Badge, ResRow,
+  NumberInput, NumberInputField, NumberInputStepper,
+  CheckboxField,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  FormField, FormLabel, FormControl, FormDescription, FormGrid,
+  toast,
+} from '@talon-sandbox/react';
 import { useT } from '../../i18n/useT';
 import { TlnIcon } from '../../icons/TlnIcon';
 import { relTime } from '../../lib/relTime';
 import { EmptyState } from '../../components/EmptyState';
+import { InlineEmpty } from '../../components/InlineEmpty';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useSandboxProcesses } from '../../hooks/useSandboxProcesses';
 import { useSandboxPorts, useExposePort, useUnexposePort } from '../../hooks/useSandboxPorts';
@@ -30,30 +39,48 @@ function PortsPreviewCard({ sandboxId }: { sandboxId: string }) {
   const preview = ports.slice(0, 3);
 
   return (
-    <Card
-      title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="network" size={14} style={{ color: 'var(--info)' }} />{t('detail.tab.ports')}</span>}
-      footer={ports.length > 3 ? (
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)' }}>
-          +{ports.length - 3} {t('detail.more', 'more')}
-        </span>
-      ) : null}
-    >
-      {isLoading && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--fg-3)' }}>{t('common.loading')}</span>}
-      {isError && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--err)' }}>{t('common.loadFailed')}</span>}
-      {!isLoading && !isError && preview.length === 0 && (
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--fg-3)' }}>{t('detail.noPorts')}</span>
-      )}
-      {!isLoading && !isError && preview.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {preview.map(p => (
-            <a key={p.port} href={p.url} target="_blank" rel="noopener noreferrer"
-               style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--info)', textDecoration: 'none' }}>
-              <span style={{ color: 'var(--fg-2)' }}>:{p.port}</span>
-              <span style={{ color: 'var(--fg-3)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.url}</span>
-              <TlnIcon name="arrowRight" size={11} />
-            </a>
-          ))}
-        </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <TlnIcon name="network" size={14} style={{ color: 'var(--info)' }} />
+          {t('detail.tab.ports')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading && (
+          <InlineEmpty size="sm" icon={<TlnIcon name="refresh" size={14} />}>
+            {t('common.loading')}
+          </InlineEmpty>
+        )}
+        {isError && (
+          <InlineEmpty size="sm" tone="error" icon={<TlnIcon name="alert" size={14} />}>
+            {t('common.loadFailed')}
+          </InlineEmpty>
+        )}
+        {!isLoading && !isError && preview.length === 0 && (
+          <InlineEmpty size="sm" icon={<TlnIcon name="network" size={14} />}>
+            {t('detail.noPorts')}
+          </InlineEmpty>
+        )}
+        {!isLoading && !isError && preview.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {preview.map(p => (
+              <a key={p.port} href={p.url} target="_blank" rel="noopener noreferrer"
+                 style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--info)', textDecoration: 'none' }}>
+                <span style={{ color: 'var(--fg-2)' }}>:{p.port}</span>
+                <span style={{ color: 'var(--fg-3)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.url}</span>
+                <TlnIcon name="arrowRight" size={11} />
+              </a>
+            ))}
+          </div>
+        )}
+      </CardContent>
+      {ports.length > 3 && (
+        <CardFooter>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)' }}>
+            +{ports.length - 3} {t('detail.more', 'more')}
+          </span>
+        </CardFooter>
       )}
     </Card>
   );
@@ -86,36 +113,55 @@ export function TabOverview({ s }: { s: SandboxDTO }) {
         </div>
       )}
       <div className="sbx-2col">
-        <Card
-          title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="cpu" size={14} style={{ color: 'var(--fg-2)' }} />{t('detail.resources')}</span>}
-          footer={<span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-3)' }}>{t('detail.realtime')}</span>}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <ResRow label={t('detail.resourceVcpu')}   used={cpuUsed}  max={cpuCores || 2}  unit="vCPU" />
-            <ResRow label={t('detail.resourceMemory')} used={memUsed}  max={memGib || 4}    unit="GiB" />
-            <ResRow label={t('detail.resourceDisk')}   used={0}        max={1}              unit="GiB" color="ok" />
-            <ResRow label={t('detail.resourceEgress')} used={0}        max={5}              unit="MB/s" color="acc" />
-          </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <TlnIcon name="cpu" size={14} style={{ color: 'var(--fg-2)' }} />
+              {t('detail.resources')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <ResRow label={t('detail.resourceVcpu')}   used={cpuUsed} max={cpuCores || 2}  unit="vCPU" />
+              <ResRow label={t('detail.resourceMemory')} used={memUsed} max={memGib || 4}    unit="GiB"  />
+              <ResRow label={t('detail.resourceDisk')}   used={0}       max={1}              unit="GiB"  />
+              <ResRow label={t('detail.resourceEgress')} used={0}       max={5}              unit="MB/s" />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-3)' }}>{t('detail.realtime')}</span>
+          </CardFooter>
         </Card>
 
         <PortsPreviewCard sandboxId={s.id} />
       </div>
 
-      <Card
-        title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="key" size={14} style={{ color: 'var(--magenta, #c678dd)' }} />{t('detail.mountedSecrets')}</span>}
-        footer={<Button variant="ghost" size="sm" onClick={() => nav('/secrets')}>{t('detail.manage')}<TlnIcon name="arrowRight" size={12} /></Button>}
-      >
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {(s.secrets ?? []).map(sec => (
-            <span key={sec.secret_id} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 8px', borderRadius: 4, background: 'var(--magenta-soft, rgba(198,120,221,0.1))', color: 'var(--magenta, #c678dd)', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-              <TlnIcon name="key" size={11} />
-              {sec.name}
-            </span>
-          ))}
-          {(!s.secrets || s.secrets.length === 0) && (
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--fg-3)' }}>{t('detail.noSecrets')}</span>
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <TlnIcon name="key" size={14} style={{ color: 'var(--magenta, #c678dd)' }} />
+            {t('detail.mountedSecrets')}
+          </CardTitle>
+          <CardAction>
+            <Button variant="ghost" size="sm" onClick={() => nav('/secrets')}>{t('detail.manage')}<TlnIcon name="arrowRight" size={12} /></Button>
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+          {(!s.secrets || s.secrets.length === 0) ? (
+            <InlineEmpty size="sm" icon={<TlnIcon name="key" size={14} />}>
+              {t('detail.noSecrets')}
+            </InlineEmpty>
+          ) : (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {s.secrets.map(sec => (
+                <span key={sec.secret_id} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 8px', borderRadius: 4, background: 'var(--magenta-soft, rgba(198,120,221,0.1))', color: 'var(--magenta, #c678dd)', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                  <TlnIcon name="key" size={11} />
+                  {sec.name}
+                </span>
+              ))}
+            </div>
           )}
-        </div>
+        </CardContent>
       </Card>
 
       {/* detail.age、profile、ttl 均通过 i18n key 输出，不硬编码英文标签 */}
@@ -135,7 +181,8 @@ function fmtProcTime(ts: number): string {
 }
 
 export function TabProcesses({ s }: { s: SandboxDTO }) {
-  const t    = useT();
+  const t   = useT();
+  const nav = useNavigate();
   const { data, isLoading, error, refetch } = useSandboxProcesses(s.id);
   const processes = data?.processes ?? [];
 
@@ -150,12 +197,29 @@ export function TabProcesses({ s }: { s: SandboxDTO }) {
     );
   }
   if (processes.length === 0) {
-    return <EmptyState variant="empty" title={t('common.empty')} />;
+    // Idle sandbox → the next action a user almost always wants is "let me
+    // run something in here". Skip the generic empty-state and surface the
+    // shell entrypoint directly so this tab earns its existence on first
+    // visit instead of looking like a placeholder.
+    return (
+      <EmptyState
+        variant="empty"
+        className="tln-empty-sm"
+        title={t('detail.proc.empty.title')}
+        message={t('detail.proc.empty.desc')}
+        action={
+          <Button variant="primary" size="sm" onClick={() => nav('/sandboxes/' + s.id + '/terminal')}>
+            <TlnIcon name="terminal" size={13} />
+            {t('detail.openShell')}
+          </Button>
+        }
+      />
+    );
   }
 
   return (
     <Card>
-      <div className="tln-tbl" style={{ border: 0, borderRadius: 0, margin: '-16px' }}>
+      <div className="tln-tbl tln-tbl--bare">
         {/* 表头 */}
         <div className="tln-tbl-head tab-proc-row">
           <div>{t('detail.colPid')}</div>
@@ -169,7 +233,7 @@ export function TabProcesses({ s }: { s: SandboxDTO }) {
 
         {/* 进程行 */}
         {processes.map(proc => (
-          <div key={proc.id} className="tln-tbl-row tab-proc-row" style={{ cursor: 'default' }}>
+          <div key={proc.id} className="tln-tbl-row tab-proc-row no-click">
             {/* PID */}
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{proc.pid}</span>
             {/* Name（取 command 第一段作为进程名） */}
@@ -230,9 +294,11 @@ export function TabPorts({ s }: { s: SandboxDTO }) {
   const { data, isLoading, error } = useSandboxPorts(s.id);
   const ports = data?.ports ?? [];
 
-  // 暴露端口表单状态
+  // Expose-port form state. `portInput` is the typed numeric value or
+  // undefined when blank. Using NumberInput's number contract avoids the
+  // string→int parse dance we used to do on submit.
   const [exposeOpen, setExposeOpen] = useState(false);
-  const [portInput,  setPortInput]  = useState('');
+  const [portInput,  setPortInput]  = useState<number | undefined>(undefined);
   const [signInput,  setSignInput]  = useState(false);
   const exposeMut = useExposePort(s.id);
 
@@ -240,16 +306,17 @@ export function TabPorts({ s }: { s: SandboxDTO }) {
   const [deletePort, setDeletePort] = useState<number | null>(null);
   const unexposeMut = useUnexposePort(s.id);
 
-  /** 提交暴露端口请求 */
+  const portValid = portInput != null && portInput >= 1 && portInput <= 65535;
+
   const handleExpose = () => {
-    const portNum = parseInt(portInput, 10);
-    if (!portNum || portNum < 1 || portNum > 65535) return;
+    if (!portValid) return;
+    const portNum = portInput!;
     exposeMut.mutate(
       { port: portNum, sign: signInput },
       {
         onSuccess: () => {
           setExposeOpen(false);
-          setPortInput('');
+          setPortInput(undefined);
           setSignInput(false);
           toast.success(t('detail.exposePort') + ' :' + portNum);
         },
@@ -267,36 +334,37 @@ export function TabPorts({ s }: { s: SandboxDTO }) {
 
   return (
     <>
-      <Card
-        title={
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <Card>
+        <CardHeader>
+          <CardTitle>
             <TlnIcon name="network" size={14} style={{ color: 'var(--info)' }} />
             {t('detail.tab.ports')}
-          </span>
-        }
-        footer={
-          <Button variant="primary" size="sm" onClick={() => setExposeOpen(true)}>
-            <TlnIcon name="plus" size={12} />
-            {t('detail.exposePort')}
-          </Button>
-        }
-      >
-        {/* 加载中 */}
-        {isLoading && <EmptyState variant="loading" style={{ padding: '16px 0' }} />}
-
-        {/* 错误态 */}
-        {!isLoading && error && (
-          <EmptyState
-            variant="error"
-            message={error instanceof Error ? error.message : String(error)}
-          />
+          </CardTitle>
+          <CardAction>
+            <Button variant="primary" size="sm" onClick={() => setExposeOpen(true)}>
+              <TlnIcon name="plus" size={12} />
+              {t('detail.exposePort')}
+            </Button>
+          </CardAction>
+        </CardHeader>
+        <CardContent>
+        {/* Loading / error / empty all use InlineEmpty — they're routine
+         * states for a sub-card region. The actionable EmptyState is reserved
+         * for full-tab "you must take action" prompts (see TabProcesses). */}
+        {isLoading && (
+          <InlineEmpty size="sm" icon={<TlnIcon name="refresh" size={14} />}>
+            {t('common.loading')}
+          </InlineEmpty>
         )}
-
-        {/* 空态 */}
+        {!isLoading && error && (
+          <InlineEmpty size="sm" tone="error" icon={<TlnIcon name="alert" size={14} />}>
+            {error instanceof Error ? error.message : String(error)}
+          </InlineEmpty>
+        )}
         {!isLoading && !error && ports.length === 0 && (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--fg-3)' }}>
+          <InlineEmpty size="sm" icon={<TlnIcon name="network" size={14} />}>
             {t('detail.noPorts')}
-          </span>
+          </InlineEmpty>
         )}
 
         {/* 端口列表 */}
@@ -357,58 +425,66 @@ export function TabPorts({ s }: { s: SandboxDTO }) {
             ))}
           </div>
         )}
+        </CardContent>
       </Card>
 
-      {/* 暴露端口 Dialog */}
-      <Dialog
-        open={exposeOpen}
-        onClose={() => setExposeOpen(false)}
-        title={t('detail.ports.exposeDialogTitle')}
-        footer={
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <Button variant="ghost" size="sm" onClick={() => setExposeOpen(false)}>
+      {/* Expose-port dialog — uses default (md) sizing to match the
+       * CreateSandboxDrawer baseline. Single decision (port + sign toggle)
+       * but the system-wide form scale is md, not sm. */}
+      <Dialog open={exposeOpen} onOpenChange={(o) => { if (!o) setExposeOpen(false); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('detail.ports.exposeDialogTitle')}</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>{t('detail.ports.exposeDesc')}</DialogDescription>
+          {/* Form — uses ui-lib FormGrid (2-column) + FormField (label /
+           * control / description three-layer contract). Every dialog and
+           * drawer in the product composes from these primitives so the
+           * field structure stays consistent at the source. */}
+          <div className="dlg-form-body">
+            <FormGrid>
+              <FormField>
+                <FormLabel htmlFor="expose-port">{t('detail.ports.portLabel')}</FormLabel>
+                <FormControl>
+                  <NumberInput
+                    value={portInput}
+                    onValueChange={setPortInput}
+                    min={1}
+                    max={65535}
+                  >
+                    <NumberInputField id="expose-port" placeholder="8080" />
+                    <NumberInputStepper />
+                  </NumberInput>
+                </FormControl>
+                <FormDescription>{t('detail.ports.portHint')}</FormDescription>
+              </FormField>
+              <FormField>
+                <FormLabel>{t('detail.ports.accessLabel')}</FormLabel>
+                <FormControl>
+                  <CheckboxField
+                    checked={signInput}
+                    onCheckedChange={(v) => setSignInput(v === true)}
+                    label={t('detail.ports.signLabel')}
+                  />
+                </FormControl>
+                <FormDescription>{t('detail.ports.signHint')}</FormDescription>
+              </FormField>
+            </FormGrid>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setExposeOpen(false)}>
               {t('common.cancel')}
             </Button>
             <Button
               variant="primary"
-              size="sm"
               onClick={handleExpose}
               loading={exposeMut.isPending}
-              disabled={!portInput || exposeMut.isPending}
+              disabled={!portValid || exposeMut.isPending}
             >
               {t('detail.ports.submit')}
             </Button>
-          </div>
-        }
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 300 }}>
-          {/* 端口号输入 */}
-          <div>
-            <label className="ff-label" htmlFor="expose-port">
-              {t('detail.ports.portLabel')}
-            </label>
-            <Input
-              id="expose-port"
-              mono
-              type="number"
-              min={1}
-              max={65535}
-              value={portInput}
-              onChange={e => setPortInput(e.target.value)}
-              placeholder="8080"
-            />
-          </div>
-          {/* 签名 URL 复选 */}
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--fg-2)', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={signInput}
-              onChange={e => setSignInput(e.target.checked)}
-              style={{ accentColor: 'var(--acc)' }}
-            />
-            {t('detail.ports.signLabel')}
-          </label>
-        </div>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
 
       {/* 删除确认 Dialog */}
@@ -449,28 +525,44 @@ export function TabNetwork({ s }: { s: SandboxDTO }) {
   const hosts = s.network_allowed_hosts ?? [];
   return (
     <div className="sbx-2col">
-      <Card title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="shield" size={14} style={{ color: 'var(--info)' }} />{t('detail.networkPolicy')}</span>}>
-        <KV items={[
-          { label: t('detail.policy'),    value: s.network_policy ?? 'allow-all' },
-          { label: t('detail.blocked24h'), value: '—' },
-        ]} />
-        {/* G2：allowlist 模式下显示允许主机列表 */}
-        {hosts.length > 0 && (
-          <div className="hostlist" style={{ marginTop: 12 }}>
-            {hosts.map(h => (
-              <div key={h} className="hitem">
-                <TlnIcon name="globe" size={11} style={{ color: 'var(--fg-3)', flex: '0 0 auto' }} />
-                {h}
-              </div>
-            ))}
-          </div>
-        )}
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <TlnIcon name="shield" size={14} style={{ color: 'var(--info)' }} />
+            {t('detail.networkPolicy')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <KV rows={[
+            { k: t('detail.policy'),    v: s.network_policy ?? 'allow-all' },
+            { k: t('detail.blocked24h'), v: '—' },
+          ]} />
+          {/* G2：allowlist 模式下显示允许主机列表 */}
+          {hosts.length > 0 && (
+            <div className="hostlist" style={{ marginTop: 12 }}>
+              {hosts.map(h => (
+                <div key={h} className="hitem">
+                  <TlnIcon name="globe" size={11} style={{ color: 'var(--fg-3)', flex: '0 0 auto' }} />
+                  {h}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
       </Card>
-      <Card title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="alert" size={14} style={{ color: 'var(--warn)' }} />{t('detail.recentBlocked')}</span>}>
-        <div style={{ color: 'var(--fg-3)', fontSize: 12, fontFamily: 'var(--font-mono)', padding: '8px 0' }}>
-          {/* TODO: 封锁请求列表需要审计过滤端点（P2） */}
-          {t('common.comingSoon')}
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <TlnIcon name="alert" size={14} style={{ color: 'var(--warn)' }} />
+            {t('detail.recentBlocked')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {/* TODO: blocked-request stream needs an audit filter endpoint (P2). */}
+          <InlineEmpty size="sm" icon={<TlnIcon name="clock" size={14} />}>
+            {t('common.comingSoon')}
+          </InlineEmpty>
+        </CardContent>
       </Card>
     </div>
   );
@@ -481,7 +573,7 @@ export function TabAudit({ events }: { events: AuditEventDTO[] }) {
   const t = useT();
   return (
     <Card>
-      <div className="tln-tbl" style={{ border: 0, borderRadius: 0, margin: '-16px' }}>
+      <div className="tln-tbl tln-tbl--bare">
         <div className="tln-tbl-head det-audit-row">
           <div>{t('detail.colTime')}</div>
           <div>{t('detail.colEvent')}</div>
@@ -490,14 +582,16 @@ export function TabAudit({ events }: { events: AuditEventDTO[] }) {
           <div>{t('detail.colResult')}</div>
         </div>
         {events.length === 0 && (
-          <div style={{ padding: '24px 16px', color: 'var(--fg-3)', fontSize: 12, textAlign: 'center' }}>{t('common.empty')}</div>
+          <InlineEmpty size="sm" icon={<TlnIcon name="clock" size={14} />}>
+            {t('common.empty')}
+          </InlineEmpty>
         )}
         {events.map(e => {
           const secAgo      = Math.round(Date.now() / 1000 - e.at);
           // outcome 通过 i18n 翻译
           const outcomeLabel = t(`audit.outcome.${e.outcome}`, e.outcome);
           return (
-            <div key={e.id} className="tln-tbl-row det-audit-row" style={{ cursor: 'default' }}>
+            <div key={e.id} className="tln-tbl-row det-audit-row no-click">
               <span className="when">{relTime(secAgo, t)}</span>
               <span className="etype">{e.event_type}</span>
               <span className="actor">{e.actor ?? '—'}</span>

@@ -1,3 +1,18 @@
+/* LoginLayout replacement — v0.3 removed LoginLayout from the package */
+.login-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+  background: var(--bg-1);
+}
+.login-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 40px;
+  background: var(--bg-1);
+}
+
 .login-left {
   background: var(--bg-0);
   position: relative;

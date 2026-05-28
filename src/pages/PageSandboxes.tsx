@@ -1,7 +1,7 @@
 /* PageSandboxes — sandbox list + create drawer, wired to useSandboxes(). */
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { PageHeader, Button, Input, Badge, ProgressBar } from '@talon-sandbox/react';
+import { Button, Input, Badge, ProgressBar, PageHeader } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { EmptyState } from '../components/EmptyState';

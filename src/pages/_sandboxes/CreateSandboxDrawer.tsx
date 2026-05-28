@@ -1,31 +1,72 @@
 /* _sandboxes/CreateSandboxDrawer.tsx — create sandbox drawer form */
-import { useState, useId } from 'react';
-import { Drawer, Button, Input, Select, Textarea, toast } from '@talon-sandbox/react';
+import { useState, useEffect } from 'react';
+import {
+  Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter,
+  Button, Input, Textarea, toast,
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+  MultiSelect, MultiSelectTrigger, MultiSelectContent, MultiSelectItem, MultiSelectEmpty,
+  Slider, SliderTrack, SliderRange, SliderThumb,
+  FormField, FormLabel, FormControl, FormDescription, FormSection,
+} from '@talon-sandbox/react';
 import { useT } from '../../i18n/useT';
 import { TlnIcon } from '../../icons/TlnIcon';
-import { useCreateSandbox } from '../../hooks';
+import { useCreateSandbox, useImages } from '../../hooks';
 import { useSecrets } from '../../hooks';
+
+import './CreateSandboxDrawer.css';
 
 interface CreateSandboxDrawerProps {
   open: boolean;
   onClose: () => void;
 }
 
-const PRESET_IMAGES = [
-  'node:20-bookworm', 'node:22-alpine',
-  'python:3.12-slim', 'python:3.12',
-  'ubuntu:24.04', 'debian:12-slim',
-  'rust:1.78-slim', 'golang:1.23-alpine',
-];
+// Cost model: vCPU * memGiB * $0.012/hr — formula stays visible so the user
+// understands why bumping memory doubles the bill.
+function estimatedCost(cpu: number, mem: number): string {
+  return (cpu * mem * 0.012).toFixed(3).replace(/^0/, '');
+}
+
+// One resource row: tight 3-column grid (label · slider · value+unit).
+// Label is mono micro-text, value is the visual focus.
+function ResourceRow({
+  label, value, min, max, step, unit, onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  unit: string;
+  onChange: (n: number) => void;
+}) {
+  return (
+    <div className="csd-res-row">
+      <span className="csd-res-label">{label}</span>
+      <Slider
+        min={min}
+        max={max}
+        step={step}
+        value={[value]}
+        onValueChange={(vals) => onChange(vals[0] ?? value)}
+        className="csd-res-slider"
+      >
+        <SliderTrack><SliderRange /></SliderTrack>
+        <SliderThumb />
+      </Slider>
+      <span className="csd-res-val">
+        <span className="num">{value}</span>
+        <span className="unit">{unit}</span>
+      </span>
+    </div>
+  );
+}
 
 export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps) {
-  const t      = useT();
-  const cpuId  = useId();
-  const memId  = useId();
-  const diskId = useId();
+  const t = useT();
 
   const [name,        setName]        = useState('');
-  const [image,       setImage]       = useState('node:20-bookworm');
+  // image holds ImageDTO.id (short code), not the user-visible name.
+  const [image,       setImage]       = useState('');
   const [cpu,         setCpu]         = useState(2);
   const [mem,         setMem]         = useState(4);
   const [disk,        setDisk]        = useState(8);
@@ -33,12 +74,21 @@ export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps)
   const [allowed,     setAllowed]     = useState('api.acme.dev\nregistry.npmjs.org\n*.github.com');
   const [selectedSec, setSelectedSec] = useState<string[]>([]);
   const [env,         setEnv]         = useState('');
+  const [advOpen,     setAdvOpen]     = useState(false);
 
-  const create    = useCreateSandbox();
+  const create = useCreateSandbox();
   const { data: secretsData } = useSecrets();
-  const secrets   = secretsData?.secrets ?? [];
+  const secrets = secretsData?.secrets ?? [];
 
-  const estCost = (cpu * mem * 0.012).toFixed(3).slice(1);
+  const { data: imagesData, isLoading: imagesLoading, isError: imagesError } = useImages();
+  const images = imagesData?.images ?? [];
+
+  useEffect(() => {
+    if (!image && images.length > 0) {
+      const def = images.find(i => i.is_default) ?? images[0];
+      setImage(def.id);
+    }
+  }, [images, image]);
 
   const handleLaunch = () => {
     const envRecord: Record<string, string> = {};
@@ -53,6 +103,7 @@ export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps)
         image_id: image,
         resources: { cpu, memory: `${mem}GiB`, disk: `${disk}GiB` },
         network: policy === 'allow-all' ? 'open' : policy === 'block-all' ? 'sealed' : 'allowlist',
+        network_allowed_hosts: allowedHosts,
         env: Object.keys(envRecord).length ? envRecord : undefined,
         secrets: selectedSec.map(sid => ({ secret_id: sid, mount_type: 'env' as const, target: sid })),
       },
@@ -69,138 +120,194 @@ export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps)
     );
   };
 
+  const selectedImage = images.find(i => i.id === image);
+
   return (
-    <Drawer
-      open={open}
-      onClose={onClose}
-      side="right"
-      width={580}
-      title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="box" size={16} style={{ color: 'var(--acc)' }} />{t('sbx.create.title')}</span>}
-    >
-      {/* basics */}
-      <div className="form-sect">
-        <div className="form-sect-title"><TlnIcon name="box" size={14} className="ic" />{t('sbx.create.basics')}</div>
-        <div className="form-grid">
-          <div className="form-field">
-            <label className="ff-label" htmlFor="csd-name">{t('sbx.create.name')}</label>
-            <Input id="csd-name" value={name} onChange={e => setName(e.target.value)} placeholder={t('sbx.create.namePlaceholder')} />
-          </div>
-        </div>
-        <div className="form-field">
-          <label className="ff-label" htmlFor="csd-image">{t('sbx.colImage')}</label>
-          <Input id="csd-image" mono value={image} onChange={e => setImage(e.target.value)} prefix={<TlnIcon name="image" size={14} style={{ color: 'var(--fg-3)' }} />} />
-          <div className="image-suggest">
-            {PRESET_IMAGES.map(p => (
-              <button key={p} className={p === image ? 'on' : ''} onClick={() => setImage(p)}>{p}</button>
-            ))}
-          </div>
-        </div>
-      </div>
+    <Drawer open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DrawerContent side="right" style={{ width: 560 }}>
+        <DrawerHeader>
+          <DrawerTitle>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <TlnIcon name="box" size={16} style={{ color: 'var(--acc)' }} />
+              {t('sbx.create.title')}
+            </span>
+          </DrawerTitle>
+        </DrawerHeader>
 
-      {/* resources */}
-      <div className="form-sect">
-        <div className="form-sect-title">
-          <TlnIcon name="cpu" size={14} className="ic" />{t('sbx.create.resources')}
-          <span className="hint">{cpu} vCPU · {mem} GiB · {disk} GiB</span>
-        </div>
-        <div className="form-grid">
-          <div className="form-field">
-            <label className="ff-label" htmlFor={cpuId}>{t('sbx.create.vcpu')} <span style={{ fontFamily: 'var(--font-mono)', float: 'right' }}>{cpu}</span></label>
-            <input id={cpuId} type="range" min={1} max={16} step={1} value={cpu} onChange={e => setCpu(+e.target.value)} style={{ width: '100%' }} />
-          </div>
-          <div className="form-field">
-            <label className="ff-label" htmlFor={memId}>{t('sbx.create.memGib')} <span style={{ fontFamily: 'var(--font-mono)', float: 'right' }}>{mem}</span></label>
-            <input id={memId} type="range" min={1} max={32} step={1} value={mem} onChange={e => setMem(+e.target.value)} style={{ width: '100%' }} />
-          </div>
-          <div className="form-field">
-            <label className="ff-label" htmlFor={diskId}>{t('sbx.create.diskGib')} <span style={{ fontFamily: 'var(--font-mono)', float: 'right' }}>{disk}</span></label>
-            <input id={diskId} type="range" min={4} max={64} step={4} value={disk} onChange={e => setDisk(+e.target.value)} style={{ width: '100%' }} />
-          </div>
-        </div>
-      </div>
-
-      {/* network */}
-      <div className="form-sect">
-        <div className="form-sect-title"><TlnIcon name="network" size={14} className="ic" />{t('sbx.create.network')}</div>
-        <div className="policy-radio">
-          {([
-            { v: 'allow-all', title: t('sbx.create.allowAll'),    desc: t('sbx.create.allowAllDesc') },
-            { v: 'allowlist', title: t('sbx.create.allowlist'),    desc: t('sbx.create.allowlistDesc') },
-            { v: 'block-all', title: t('sbx.create.blockAll'),     desc: t('sbx.create.blockAllDesc') },
-          ] as const).map(p => (
-            <label key={p.v} data-active={policy === p.v}>
-              <input type="radio" checked={policy === p.v} onChange={() => setPolicy(p.v)} />
-              <div className="title">{p.title}</div>
-              <div className="desc">{p.desc}</div>
-            </label>
-          ))}
-        </div>
-        {policy === 'allowlist' && (
-          <div className="form-field">
-            <label className="ff-label">{t('sbx.create.allowedHosts')}</label>
-            <Textarea value={allowed} onChange={e => setAllowed(e.target.value)} rows={4} />
-            <div className="ff-hint">{t('sbx.create.allowedHint')}</div>
-          </div>
-        )}
-      </div>
-
-      {/* secrets */}
-      <div className="form-sect">
-        <div className="form-sect-title">
-          <TlnIcon name="key" size={14} className="ic" />{t('sbx.create.secrets')}
-          <span className="hint">{t('sbx.create.secretsHint')}</span>
-        </div>
-        <div className="chip-multi">
-          {selectedSec.map(sid => {
-            const s = secrets.find(x => x.id === sid);
-            return (
-              <span key={sid} className="chip">
-                {s?.name ?? sid}
-                <TlnIcon name="x" size={10} className="x" onClick={() => setSelectedSec(prev => prev.filter(x => x !== sid))} />
-              </span>
-            );
-          })}
-          <Select
-            size="sm"
-            value=""
-            onChange={e => {
-              const v = e.target.value;
-              if (v && !selectedSec.includes(v)) setSelectedSec(prev => [...prev, v]);
-            }}
-            style={{ minWidth: 0, flex: 1 }}
+        <div className="tln-drawer-body csd-body">
+          <FormSection
+            icon={<TlnIcon name="box" size={13} />}
+            title={t('sbx.create.basics')}
           >
-            <option value="">{t('sbx.create.addSecret')}</option>
-            {secrets.filter(s => !selectedSec.includes(s.id)).map(s => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </Select>
-        </div>
-      </div>
+            <FormField>
+              <FormLabel>{t('sbx.create.name')}</FormLabel>
+              <FormControl>
+                <Input
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder={t('sbx.create.namePlaceholder')}
+                />
+              </FormControl>
+            </FormField>
 
-      {/* env vars */}
-      <div className="form-sect">
-        <div className="form-sect-title">
-          <TlnIcon name="fileText" size={14} className="ic" />{t('sbx.create.env')}
-          <span className="hint">{t('sbx.create.envHint')}</span>
-        </div>
-        <Textarea value={env} onChange={e => setEnv(e.target.value)} rows={3} />
-      </div>
+            <FormField>
+              <FormLabel>{t('sbx.colImage')}</FormLabel>
+              <FormControl>
+                <Select
+                  value={image}
+                  onValueChange={setImage}
+                  disabled={imagesLoading || imagesError || images.length === 0}
+                >
+                  <SelectTrigger mono>
+                    <SelectValue
+                      placeholder={
+                        imagesLoading ? t('common.loading')
+                        : imagesError ? t('common.loadFailed')
+                        : images.length === 0 ? t('sbx.create.noImages')
+                        : t('sbx.create.imagePlaceholder', 'Pick an image')
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {images.map(img => (
+                      <SelectItem key={img.id} value={img.id}>
+                        <span className="csd-image-item">
+                          <span className="name">{img.name}</span>
+                          {img.is_default && <span className="default-tag">{t('sbx.create.defaultImage')}</span>}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              {/* Description for the selected image — appears only here, not duplicated in trigger. */}
+              {selectedImage?.description && (
+                <FormDescription>{selectedImage.description}</FormDescription>
+              )}
+            </FormField>
+          </FormSection>
 
-      {/* footer */}
-      <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--line-soft)' }}>
-        <div className="drawer-footer">
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)' }}>
-            {t('sbx.create.estimate')} · <span style={{ color: 'var(--fg-1)' }}>${estCost}/hr</span>
-          </span>
-          <div className="right">
-            <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-            <Button variant="primary" loading={create.isPending} disabled={create.isPending} onClick={handleLaunch}>
-              <TlnIcon name="zap" size={14} />
-              {t('sbx.create.launch')}
-            </Button>
+          <FormSection
+            icon={<TlnIcon name="cpu" size={13} />}
+            title={t('sbx.create.resources')}
+            hint={
+              <span className="csd-cost">
+                ~ <span className="cost">${estimatedCost(cpu, mem)}</span>/hr
+              </span>
+            }
+          >
+            <div className="csd-res-stack">
+              <ResourceRow label="vCPU"   value={cpu}  min={1} max={16} step={1} unit="vCPU" onChange={setCpu} />
+              <ResourceRow label="MEMORY" value={mem}  min={1} max={32} step={1} unit="GiB"  onChange={setMem} />
+              <ResourceRow label="DISK"   value={disk} min={4} max={64} step={4} unit="GiB"  onChange={setDisk} />
+            </div>
+          </FormSection>
+
+          <FormSection
+            icon={<TlnIcon name="network" size={13} />}
+            title={t('sbx.create.network')}
+          >
+            <div className="csd-policy">
+              {([
+                { v: 'allow-all', title: t('sbx.create.allowAll'), desc: t('sbx.create.allowAllDesc') },
+                { v: 'allowlist', title: t('sbx.create.allowlist'), desc: t('sbx.create.allowlistDesc') },
+                { v: 'block-all', title: t('sbx.create.blockAll'),  desc: t('sbx.create.blockAllDesc') },
+              ] as const).map(p => (
+                <label key={p.v} data-active={policy === p.v}>
+                  <input type="radio" checked={policy === p.v} onChange={() => setPolicy(p.v)} />
+                  <span className="title">{p.title}</span>
+                  <span className="desc">{p.desc}</span>
+                </label>
+              ))}
+            </div>
+
+            {policy === 'allowlist' && (
+              <FormField className="csd-field-inset">
+                <FormLabel>{t('sbx.create.allowedHosts')}</FormLabel>
+                <FormControl>
+                  <Textarea
+                    value={allowed}
+                    onChange={e => setAllowed(e.target.value)}
+                    rows={4}
+                    style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}
+                  />
+                </FormControl>
+                <FormDescription>{t('sbx.create.allowedHint')}</FormDescription>
+              </FormField>
+            )}
+          </FormSection>
+
+          {/* ─────────────── L1: Advanced (collapsible) ───────────────
+           * Stays as `.csd-block` because FormSection has a static title;
+           * the collapsible toggle here is the section header itself. */}
+          <div className="csd-block csd-block--collapsible">
+            <button
+              type="button"
+              className="csd-adv-toggle"
+              aria-expanded={advOpen}
+              onClick={() => setAdvOpen(v => !v)}
+            >
+              <TlnIcon name="settings" size={13} className="ic" />
+              <span>{t('sbx.create.advanced', '高级选项')}</span>
+              <TlnIcon name={advOpen ? 'chevronDown' : 'chevronRight'} size={12} className="csd-adv-chev" />
+              {(selectedSec.length > 0 || env.trim().length > 0) && (
+                <span className="csd-adv-count">
+                  {selectedSec.length + (env.trim() ? 1 : 0)}
+                </span>
+              )}
+            </button>
+
+            {advOpen && (
+              <div className="csd-adv-body">
+                <FormField>
+                  <FormLabel>{t('sbx.create.secrets')}</FormLabel>
+                  <FormControl>
+                    <MultiSelect value={selectedSec} onValueChange={setSelectedSec}>
+                      <MultiSelectTrigger placeholder={t('sbx.create.addSecret')} />
+                      <MultiSelectContent>
+                        <MultiSelectEmpty>{t('sbx.create.noSecrets', '没有可用凭据')}</MultiSelectEmpty>
+                        {secrets.map(s => (
+                          <MultiSelectItem key={s.id} value={s.id}>
+                            {s.name}
+                          </MultiSelectItem>
+                        ))}
+                      </MultiSelectContent>
+                    </MultiSelect>
+                  </FormControl>
+                  <FormDescription>{t('sbx.create.secretsHint')}</FormDescription>
+                </FormField>
+
+                <FormField>
+                  <FormLabel>{t('sbx.create.env')}</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      value={env}
+                      onChange={e => setEnv(e.target.value)}
+                      rows={3}
+                      placeholder="KEY=value"
+                      style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}
+                    />
+                  </FormControl>
+                  <FormDescription>{t('sbx.create.envHint')}</FormDescription>
+                </FormField>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+
+        <DrawerFooter>
+          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button
+            variant="primary"
+            loading={create.isPending}
+            disabled={create.isPending || !image}
+            onClick={handleLaunch}
+          >
+            <TlnIcon name="zap" size={14} />
+            {t('sbx.create.launch')}
+          </Button>
+        </DrawerFooter>
+      </DrawerContent>
     </Drawer>
   );
 }

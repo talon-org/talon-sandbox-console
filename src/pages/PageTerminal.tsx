@@ -1,23 +1,24 @@
 /* PageTerminal — full-bleed PTY terminal page.
- * Uses @talon-sandbox/react TerminalChrome as the visual frame.
+ * Shell: TerminalChrome local business component (topbar + body + status-bar).
  * xterm.js wiring lives in TerminalBody (extracted subcomponent).
  * WebSocket via sandboxPtyUrl(id) from src/api/sandboxes.ts.
  * Sandbox metadata from useSandbox(id).
  */
 import { useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { TerminalChrome, Button } from '@talon-sandbox/react';
+import { Button } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { useSandbox } from '../hooks';
 import { TerminalBody } from './TerminalBody';
+import { TerminalChrome } from '../components/TerminalChrome';
 
 import './PageTerminal.css';
 
 export function PageTerminal() {
-  const { id }  = useParams<{ id: string }>();
-  const nav     = useNavigate();
-  const t       = useT();
+  const { id } = useParams<{ id: string }>();
+  const nav    = useNavigate();
+  const t      = useT();
 
   const sandboxId = id ?? '';
   const { data: sandbox } = useSandbox(sandboxId);
@@ -30,6 +31,7 @@ export function PageTerminal() {
 
   const reconnect = useCallback(() => setConnectKey(k => k + 1), []);
 
+  // Status bar content for the bottom chrome strip
   const bottomStatus = (
     <div className="term-bot-status">
       <span className="bleft">
@@ -57,35 +59,38 @@ export function PageTerminal() {
     </div>
   );
 
+  // Top-bar action buttons
+  const topActions = (
+    <>
+      {!connected && (
+        <Button variant="ghost" size="sm" onClick={reconnect}>
+          <TlnIcon name="refresh" size={14} />
+          {t('term.reconnect')}
+        </Button>
+      )}
+      <Button variant="ghost" size="sm">
+        <TlnIcon name="plus" size={14} />
+        {t('term.newShell')}
+      </Button>
+      <Button variant="ghost" size="sm">
+        <TlnIcon name="external" size={14} />
+        {t('term.detach')}
+      </Button>
+      <Button variant="ghost" size="sm" iconOnly aria-label="More">
+        <TlnIcon name="more" size={14} />
+      </Button>
+    </>
+  );
+
   return (
     <TerminalChrome
-      sandbox={{ id: sandboxId, name: sandbox?.profile }}
+      sandboxId={sandboxId}
+      sandboxName={sandbox?.profile}
       onBack={() => nav('/sandboxes/' + sandboxId)}
       recording={recording}
       onToggleRecord={() => setRecording(r => !r)}
-      topActions={
-        <>
-          {!connected && (
-            <Button variant="ghost" size="sm" onClick={reconnect}>
-              <TlnIcon name="refresh" size={14} />
-              {t('term.reconnect')}
-            </Button>
-          )}
-          <Button variant="ghost" size="sm">
-            <TlnIcon name="plus" size={14} />
-            {t('term.newShell')}
-          </Button>
-          <Button variant="ghost" size="sm">
-            <TlnIcon name="external" size={14} />
-            {t('term.detach')}
-          </Button>
-          <Button variant="ghost" size="sm" iconOnly aria-label="More">
-            <TlnIcon name="more" size={14} />
-          </Button>
-        </>
-      }
+      topActions={topActions}
       bottomStatus={bottomStatus}
-      className="term-page"
     >
       <TerminalBody
         sandboxId={sandboxId}

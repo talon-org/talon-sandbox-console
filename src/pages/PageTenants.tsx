@@ -3,7 +3,7 @@
  * Data: useTenants() from src/hooks/useTenants.ts
  */
 import { useState } from 'react';
-import { PageHeader, Button, ProgressBar } from '@talon-sandbox/react';
+import { Button, ProgressBar, PageHeader } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { useTenants } from '../hooks/useTenants';

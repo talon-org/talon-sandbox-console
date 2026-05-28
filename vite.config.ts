@@ -44,13 +44,22 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5274,
       strictPort: true,
+      fs: {
+        // Allow Vite to serve files from the linked @talon-sandbox/react package
+        // (../talon-sandbox-ui/packages/react). Without this, fonts referenced
+        // by the package's dist CSS are blocked by Vite's fs.allow default.
+        allow: ['..', '../talon-sandbox-ui'],
+      },
       proxy: {
         // dev-only: forward /v1/* to local sandbox-api so the browser sees
         // same-origin (cookie + no CORS). Prod uses Caddy /api → 18080 and
         // VITE_API_BASE='/api'.
+        // ws: true is required for the /v1/sandboxes/{id}/pty WebSocket
+        // endpoint; without it Vite never upgrades and the browser fails.
         '/v1': {
           target: 'http://127.0.0.1:18080',
           changeOrigin: false,
+          ws: true,
         },
       },
     },

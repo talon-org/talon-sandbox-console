@@ -2,6 +2,7 @@
 export const common = {
   'common.new':            { en: 'New', zh: '新建' },
   'common.cancel':         { en: 'Cancel', zh: '取消' },
+  'common.close':          { en: 'Close', zh: '关闭' },
   'common.save':           { en: 'Save', zh: '保存' },
   'common.refresh':        { en: 'Refresh', zh: '刷新' },
   'common.export':         { en: 'Export', zh: '导出' },
@@ -30,6 +31,7 @@ export const common = {
   'state.running':         { en: 'Running', zh: '运行中' },
   'state.pulling-image':   { en: 'Pulling', zh: '拉取镜像' },
   'state.provisioning':    { en: 'Provisioning', zh: '调度中' },
+  'state.created':         { en: 'Created', zh: '已创建' },
   'state.idle':            { en: 'Idle', zh: '空闲' },
   'state.paused':          { en: 'Paused', zh: '已暂停' },
   'state.terminating':     { en: 'Terminating', zh: '终止中' },

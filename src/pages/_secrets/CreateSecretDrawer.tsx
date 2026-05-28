@@ -1,9 +1,16 @@
 /* src/pages/_secrets/CreateSecretDrawer.tsx
  * Drawer form for creating a new secret.
+ *
+ * Scope is fixed to "tenant" — the backend doesn't yet distinguish
+ * tenant/sandbox secret scope on POST /v1/secrets. Auto-rotation is also
+ * not wired up server-side, so we don't show the toggle until that
+ * capability lands. Don't render UI for fields the backend can't save.
  */
 import { useState } from 'react';
 import {
-  Drawer, Button, Input, Select, Textarea, Switch, toast,
+  Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter,
+  Button, Input, Textarea, toast,
+  FormField, FormLabel, FormControl, FormDescription, FormSection,
 } from '@talon-sandbox/react';
 import { useT } from '../../i18n/useT';
 import { TlnIcon } from '../../icons/TlnIcon';
@@ -18,11 +25,9 @@ export function CreateSecretDrawer({ open, onClose }: Props) {
   const t = useT();
   const createMutation = useCreateSecret();
 
-  const [name,       setName]       = useState('');
-  const [value,      setValue]      = useState('');
-  const [scope,      setScope]      = useState('tenant');
-  const [autoRotate, setAutoRotate] = useState(false);
-  const [showValue,  setShowValue]  = useState(false);
+  const [name,      setName]      = useState('');
+  const [value,     setValue]     = useState('');
+  const [showValue, setShowValue] = useState(false);
 
   const valid = /^[A-Z][A-Z0-9_]+$/.test(name) && value.length > 0;
   const busy  = createMutation.isPending;
@@ -36,8 +41,6 @@ export function CreateSecretDrawer({ open, onClose }: Props) {
           toast.success(name + ' ' + t('secrets.create.submit').toLowerCase());
           setName('');
           setValue('');
-          setScope('tenant');
-          setAutoRotate(false);
           onClose();
         },
         onError: () => {
@@ -55,91 +58,71 @@ export function CreateSecretDrawer({ open, onClose }: Props) {
   );
 
   return (
-    <Drawer open={open} onClose={onClose} side="right" width={520} title={drawerTitle}>
-      {/* identity */}
-      <div className="form-sect">
-        <div className="form-sect-title">
-          <TlnIcon name="key" size={14} className="ic" />
-          {t('secrets.create.identity')}
-        </div>
-        <div className="form-field">
-          <label className="ff-label" htmlFor="sec-name">{t('secrets.create.nameLabel')}</label>
-          <Input
-            id="sec-name"
-            mono
-            value={name}
-            onChange={e => setName(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ''))}
-            placeholder={t('secrets.create.namePlaceholder')}
-          />
-          <div className="ff-hint">{t('secrets.create.nameHint')}</div>
-        </div>
-        <div className="form-field">
-          <label className="ff-label" htmlFor="sec-scope">{t('secrets.create.scopeLabel')}</label>
-          <Select id="sec-scope" value={scope} onChange={e => setScope(e.target.value)}>
-            <option value="tenant">{t('secrets.scopeTenant')}</option>
-            <option value="sandbox">{t('secrets.create.scopeSandbox')}</option>
-          </Select>
-          <div className="ff-hint">{t('secrets.create.scopeHint')}</div>
-        </div>
-      </div>
+    <Drawer open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DrawerContent side="right" style={{ width: 520 }}>
+        <DrawerHeader>
+          <DrawerTitle>{drawerTitle}</DrawerTitle>
+        </DrawerHeader>
+      <div className="tln-drawer-body">
+        <FormSection
+          icon={<TlnIcon name="key" size={14} />}
+          title={t('secrets.create.identity')}
+        >
+          <FormField>
+            <FormLabel htmlFor="sec-name">{t('secrets.create.nameLabel')}</FormLabel>
+            <FormControl>
+              <Input
+                id="sec-name"
+                mono
+                value={name}
+                onChange={e => setName(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ''))}
+                placeholder={t('secrets.create.namePlaceholder')}
+              />
+            </FormControl>
+            <FormDescription>{t('secrets.create.nameHint')}</FormDescription>
+          </FormField>
+        </FormSection>
 
-      {/* value */}
-      <div className="form-sect">
-        <div className="form-sect-title">
-          <TlnIcon name="lock" size={14} className="ic" />
-          {t('secrets.create.value')}
-          <span className="hint">
+        <FormSection
+          icon={<TlnIcon name="lock" size={14} />}
+          title={t('secrets.create.value')}
+          hint={
             <Button variant="ghost" size="sm" onClick={() => setShowValue(v => !v)}>
               <TlnIcon name={showValue ? 'eyeOff' : 'eye'} size={13} />
               {showValue ? t('secrets.create.hideValue') : t('secrets.create.showValue')}
             </Button>
-          </span>
-        </div>
-        <Textarea
-          value={showValue ? value : value.replace(/./g, '•')}
-          onChange={e => { if (showValue) setValue(e.target.value); }}
-          placeholder={showValue ? t('secrets.create.valuePlaceholder') : t('secrets.create.valuePlaceholderHide')}
-          rows={5}
-        />
-        <div className="ff-hint">{t('secrets.create.valueHint')}</div>
+          }
+        >
+          <FormField>
+            <FormControl>
+              <Textarea
+                value={showValue ? value : value.replace(/./g, '•')}
+                onChange={e => { if (showValue) setValue(e.target.value); }}
+                placeholder={showValue ? t('secrets.create.valuePlaceholder') : t('secrets.create.valuePlaceholderHide')}
+                rows={5}
+              />
+            </FormControl>
+            <FormDescription>{t('secrets.create.valueHint')}</FormDescription>
+          </FormField>
+        </FormSection>
       </div>
-
-      {/* rotation */}
-      <div className="form-sect">
-        <div className="form-sect-title">
-          <TlnIcon name="refresh" size={14} className="ic" />
-          {t('secrets.create.rotation')}
+      <DrawerFooter>
+        <span style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)',
+          display: 'flex', alignItems: 'center', gap: 5, marginRight: 'auto',
+        }}>
+          <TlnIcon name="lock" size={11} />
+          {t('secrets.create.kmsNote')}
+        </span>
+        <div className="right">
+          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button variant="primary" disabled={!valid || busy} loading={busy} onClick={handleCreate}>
+            <TlnIcon name="check" size={14} />
+            {t('secrets.create.submit')}
+          </Button>
         </div>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '4px 0' }}>
-          <Switch checked={autoRotate} onChange={setAutoRotate} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: 'var(--fg-0)' }}>{t('secrets.create.autoRotate')}</div>
-            <div style={{ fontSize: 11.5, color: 'var(--fg-3)', marginTop: 2 }}>
-              {t('secrets.create.autoRotateDesc')}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* footer */}
-      <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--line-soft)' }}>
-        <div className="drawer-footer">
-          <span style={{
-            fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)',
-            display: 'flex', alignItems: 'center', gap: 5,
-          }}>
-            <TlnIcon name="lock" size={11} />
-            {t('secrets.create.kmsNote')}
-          </span>
-          <div className="right">
-            <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-            <Button variant="primary" disabled={!valid || busy} loading={busy} onClick={handleCreate}>
-              <TlnIcon name="check" size={14} />
-              {t('secrets.create.submit')}
-            </Button>
-          </div>
-        </div>
-      </div>
+      </DrawerFooter>
+      </DrawerContent>
     </Drawer>
   );
 }

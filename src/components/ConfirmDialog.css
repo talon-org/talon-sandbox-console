@@ -1,0 +1,45 @@
+/* ConfirmDialog — visual tuning over the library Dialog.
+ *
+ * The library Dialog is intentionally generic; for destructive confirmation
+ * we want a few specific behaviors:
+ *
+ *   - Description sits closer to the title (12px gap, not 20px) so the
+ *     whole modal feels like one focused decision instead of a stack of
+ *     paragraphs.
+ *
+ *   - Description font is small + fg-3 — it explains, it doesn't compete
+ *     with the question.
+ *
+ *   - Danger button becomes filled (white text on `--err` ground). The
+ *     library default is an outline danger button — fine in toolbars, but
+ *     in a confirm dialog the danger button is the *only* affirmative
+ *     answer, so the user must be able to tell it apart from "Cancel" at
+ *     a glance. Filled red gives that affordance.
+ */
+
+/* Dialog typography (title size, desc font/line-height, head/foot
+ * padding) now lives in the ui-lib Dialog.css. ConfirmDialog only owns
+ * the destructive-action affordance below. */
+
+.confirm-dialog .confirm-dialog-desc {
+  margin: 0;
+  padding: 0 20px 12px;
+  font-size: 12.5px;
+  color: var(--fg-3);
+  line-height: 1.55;
+}
+
+/* Filled danger — see file header. We only escalate when the caller opted
+ * in via the `confirm-dialog-danger` modifier so other danger buttons in
+ * the app keep their outline style. */
+.tln-btn.tln-btn-danger.confirm-dialog-danger {
+  background: var(--err);
+  border-color: var(--err);
+  color: #fff;
+}
+.tln-btn.tln-btn-danger.confirm-dialog-danger:hover {
+  background: var(--err-strong, var(--err));
+  border-color: var(--err-strong, var(--err));
+  color: #fff;
+  filter: brightness(0.95);
+}

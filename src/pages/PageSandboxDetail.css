@@ -1,23 +1,72 @@
+/* Header — task is the H1, identity/quota collapsed into a single mono meta
+ * row separated by `·`. Empty optional fields are dropped at the React level
+ * rather than rendered as `—` placeholders so the row stays scannable. */
 .sbx-detail-head {
-  padding: 24px 32px 16px;
+  padding: 22px 32px 14px;
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 24px;
-}
-.sbx-detail-head .id-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
-.sbx-detail-head .id-row .sbxid { font-family: var(--font-mono); font-size: 22px; color: var(--fg-0); font-weight: 500; letter-spacing: -0.02em; }
-.sbx-detail-head .name-row { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--fg-2); }
-.sbx-detail-head .det-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-
-.sbx-info-row {
-  padding: 0 32px 18px;
-  display: flex; gap: 24px; flex-wrap: wrap;
   border-bottom: 1px solid var(--line-soft);
 }
-.sbx-info-row .item { display: flex; flex-direction: column; gap: 3px; }
-.sbx-info-row .item .k { font-family: var(--font-mono); font-size: 9.5px; color: var(--fg-3); text-transform: uppercase; letter-spacing: 0.1em; }
-.sbx-info-row .item .v { font-family: var(--font-mono); font-size: 12px; color: var(--fg-1); }
+.sbx-detail-head .head-main { min-width: 0; flex: 1; }
 
-.sbx-tabs-wrap { padding: 0 32px; border-bottom: 1px solid var(--line); }
+.sbx-detail-head .title-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.sbx-detail-head .title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--fg-0);
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  /* Multi-line clamp — task descriptions can be long; cap at 2 lines so the
+   * header doesn't grow unbounded but a 80-char task is still readable. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sbx-detail-head .meta-row {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--fg-2);
+  min-width: 0;
+}
+.sbx-detail-head .meta-row .sbxid { color: var(--fg-1); }
+.sbx-detail-head .meta-row .dot { color: var(--fg-4, var(--fg-3)); }
+.sbx-detail-head .meta-row .meta-k {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--fg-3);
+}
+
+.sbx-detail-head .det-actions {
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0;
+}
+/* Secondary icon group — keep tight together so they read as one cluster
+ * of "less important controls", visually separated from the primary CTA
+ * by the outer gap and from "Kill" by the danger styling. */
+.sbx-detail-head .det-actions-sec {
+  display: flex; align-items: center; gap: 2px;
+  padding: 0 4px;
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+}
+/* Kill is a destructive action: use ghost-with-danger-color, so it's clearly
+ * legible but not visually competing with the primary "Open shell" CTA. */
+.sbx-detail-head .det-kill-btn {
+  color: var(--err) !important;
+}
+.sbx-detail-head .det-kill-btn:hover {
+  background: var(--err-soft) !important;
+}
+
+.sbx-tabs-wrap { padding: 0 32px; border-bottom: 0px solid var(--line); }
 .sbx-tab-body  { padding: 20px 32px 56px; }
 .sbx-2col { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
 @media (max-width: 1100px) { .sbx-2col { grid-template-columns: 1fr; } }
@@ -133,61 +182,36 @@
 .tab-files-bc-current { color: var(--fg-1); font-weight: 500; padding: 0 3px; }
 .tab-files-bc-seg { display: inline-flex; align-items: center; }
 
-.tab-files-tbl-head {
-  display: grid;
+/* File browser table layout — column template shared by header + rows.
+ * Visuals (border, padding, hover) come from .tln-tbl-head / .tln-tbl-row
+ * in @talon-sandbox/react; this only defines the column geometry and the
+ * file-name cell that needs a special icon + ellipsis treatment. */
+.tab-files-row {
   grid-template-columns: 1fr 80px 120px;
   gap: 8px;
-  padding: 6px 0;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--fg-3);
-  border-bottom: 1px solid var(--line);
-  margin-bottom: 2px;
 }
+.tab-files-row--selected { background: var(--acc-soft); }
 
-.tab-files-entry-row {
-  display: grid;
-  grid-template-columns: 1fr 80px 120px;
-  gap: 8px;
-  align-items: center;
-  padding: 6px 0;
-  cursor: pointer;
-  border-radius: var(--r-1);
-  font-size: 12px;
-}
-.tab-files-entry-row:hover { background: var(--bg-hover); }
-.tab-files-entry-row--selected { background: var(--acc-soft); }
 .tab-files-entry-name {
   display: flex;
   align-items: center;
   gap: 6px;
   font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-1);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.tab-files-entry-size {
+
+.tab-files-col-right {
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--fg-3);
   text-align: right;
 }
-.tab-files-entry-mtime {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--fg-3);
-  text-align: right;
-}
+.tab-files-col-mtime { font-size: 10.5px; }
 
-.tab-files-preview-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 0;
-  color: var(--fg-4, var(--fg-3));
-}
 .tab-files-preview-pre {
   margin: 0;
   padding: 0;
@@ -200,3 +224,6 @@
   max-height: 600px;
   overflow-y: auto;
 }
+
+/* Dialog form body padding lives in src/styles/overrides.css now — it
+ * applies to every Dialog content area in the app, not just this page. */

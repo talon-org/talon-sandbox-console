@@ -1,4 +1,3 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
@@ -9,8 +8,8 @@ if (import.meta.env.DEV) {
   import('react-grab')
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+// StrictMode disabled temporarily: the xterm PTY page reuses a singleton
+// terminal across effect runs, and the double-mount pattern makes that
+// hand-off subtle to reason about. Re-enable after the terminal effect is
+// fully audited.
+createRoot(document.getElementById('root')!).render(<App />)

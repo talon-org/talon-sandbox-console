@@ -17,6 +17,26 @@ export interface MeResponse {
   preview_suffix?: string;
 }
 
+// ── Baseimages ────────────────────────────────────────────────────────────────
+
+/** Baseimage 从 GET /v1/images. dto.go ImageDTO 的 console 侧契约 */
+export interface ImageDTO {
+  id: string;
+  name: string;
+  url: string;
+  sha256: string;
+  os: string;            // "linux"
+  arch: string;          // "amd64" / "arm64"
+  source: 'builtin' | 'admin';
+  is_default: boolean;
+  description?: string;
+  created_at: number;    // unix epoch sec
+}
+
+export interface ImageListResponse {
+  images: ImageDTO[];
+}
+
 // ── Sandboxes ─────────────────────────────────────────────────────────────────
 
 export type SandboxState =
@@ -70,6 +90,10 @@ export interface CreateSandboxRequest {
   timeout?: string;  // "30m"
   ttl?: string;      // "6h"
   network?: string;  // "allowlist" | "open" | "sealed"
+  // Used with network="allowlist" to whitelist outbound hosts (supports * wildcard).
+  // Field name mirrors backend dto.CreateRequest; backend uses DisallowUnknownFields
+  // so any alias will be rejected with 400.
+  network_allowed_hosts?: string[];
   env?: Record<string, string>;
   secrets?: Array<{ secret_id: string; mount_type: 'env' | 'file'; target: string }>;
 }

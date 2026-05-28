@@ -11,7 +11,14 @@
  *   <EmptyState title="…" description="…" icon={<Icon />} action={…} />
  */
 import type { ReactNode, CSSProperties } from 'react';
-import { EmptyState as TlnEmptyState } from '@talon-sandbox/react';
+import {
+  EmptyState as TlnEmptyState,
+  EmptyStateIcon,
+  EmptyStateEyebrow,
+  EmptyStateHeading,
+  EmptyStateDescription,
+  EmptyStateActions,
+} from '@talon-sandbox/react';
 
 // ── Preset config ─────────────────────────────────────────────────────────────
 
@@ -91,15 +98,13 @@ export function EmptyState(props: EmptyStateProps) {
   const action     = props.action;
 
   const inner = (
-    <TlnEmptyState
-      eyebrow={eyebrow}
-      icon={icon}
-      title={title!}
-      description={desc}
-      action={action}
-      className={className}
-      style={style}
-    />
+    <TlnEmptyState className={className} style={style}>
+      {icon     && <EmptyStateIcon>{icon}</EmptyStateIcon>}
+      {eyebrow  && <EmptyStateEyebrow>{eyebrow}</EmptyStateEyebrow>}
+      {title    && <EmptyStateHeading>{title}</EmptyStateHeading>}
+      {desc     && <EmptyStateDescription>{desc}</EmptyStateDescription>}
+      {action   && <EmptyStateActions>{action}</EmptyStateActions>}
+    </TlnEmptyState>
   );
 
   if (!variant) return inner;

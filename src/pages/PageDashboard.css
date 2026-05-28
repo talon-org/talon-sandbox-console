@@ -105,3 +105,20 @@
 @media (max-width: 720px) {
   .states-legend { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* Empty-state for sandbox states card (when total count == 0). */
+.states-empty {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
+}
+.states-empty .head { font-size: 13px; color: var(--fg-1); font-weight: 500; }
+.states-empty .desc { font-size: 11.5px; color: var(--fg-3); margin-top: 2px; }
+
+/* Placeholder bar that visually substitutes a ProgressBar when limit is 0. */
+.qi-unset {
+  height: 6px; width: 100%;
+  background: var(--bg-3);
+  border-radius: 4px;
+  opacity: 0.5;
+}

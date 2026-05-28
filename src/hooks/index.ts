@@ -1,6 +1,7 @@
 /* src/hooks/index.ts — barrel */
 export * from './useSandboxes';
 export * from './useSandbox';
+export * from './useImages';
 export * from './useSecrets';
 export * from './useWorkers';
 export * from './useTenants';
