@@ -1,3 +1,22 @@
+/* Dialog form body — matches DialogHeader/DialogDescription's 20px
+ * horizontal inset (Dialog.css), so the form aligns to the same gutter
+ * as the title and description above. The actual field structure (label
+ * / control / hint, single vs. two-column) is owned by the ui-lib
+ * FormField / FormGrid primitives.
+ *
+ * When stacking 2+ FormFields directly (no FormSection), the body needs
+ * a vertical rhythm — 14px matches the gap inside FormSection so single-
+ * section dialogs (Workspace, Expose-port) feel identical to multi-
+ * section drawers. min-width keeps the dialog from collapsing too narrow
+ * with short field labels. */
+.dlg-form-body {
+  padding: 4px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 360px;
+}
+
 /* Console-side overrides for @talon-sandbox/react.
  *
  * Don't touch DS library; tune component sizing here.
@@ -27,4 +46,57 @@
 .tln-page-header__actions {
   gap: 6px;
   margin-top: 0;
+}
+
+/* ── Command palette — strengthen hierarchy in light mode.
+ * Library defaults assume dark theme where bg-1/2/3 contrast is strong.
+ * In light mode bg-1=#fdfdff, bg-2=#f4f5f9, bg-3=#eaebef — too close to
+ * read as layers. Boost:
+ *   - panel keeps bg-1 (clean) but stronger border + shadow
+ *   - input area gets a faint bg-2 tint so it reads as a distinct zone
+ *   - active/highlighted items use --acc-soft (clearly tinted) instead of bg-2
+ *   - kbd chips sit on bg-2 with subtler border so they don't compete
+ */
+.tln-cmdk {
+  border: 1px solid var(--line-strong);
+  box-shadow:
+    0 1px 0 var(--line) inset,
+    0 24px 48px -12px rgba(0, 0, 0, 0.18),
+    0 12px 24px -8px rgba(0, 0, 0, 0.10);
+  /* Override the default tln-fade-in keyframe which animates translateY and
+   * clobbers our translateX(-50%) centering — causing the panel to fly in
+   * from the right. Use a centered fade keyframe instead. */
+  animation: csd-cmdk-fade-in var(--dur-fast) var(--ease-out);
+}
+@keyframes csd-cmdk-fade-in {
+  from { opacity: 0; transform: translate(-50%, 4px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+.tln-cmdk-input {
+  background: var(--bg-2);
+}
+.tln-cmdk-list {
+  background: var(--bg-1);
+}
+.tln-cmdk-section {
+  color: var(--fg-3);
+  padding: 12px 12px 6px;
+}
+.tln-cmdk-item.active,
+.tln-cmdk-item[data-selected='true'] {
+  background: var(--acc-soft);
+  color: var(--fg-0);
+}
+.tln-cmdk-item.active .ic,
+.tln-cmdk-item[data-selected='true'] .ic {
+  color: var(--acc-strong);
+}
+/* Keycap visuals now live in the @talon-sandbox/react Shortcut/Kbd components.
+ * When the cmd palette item is highlighted, fade the Kbd surface into the
+ * panel for clear "this is the active row" feedback. */
+.tln-cmdk-item.active .tln-kbd,
+.tln-cmdk-item[data-selected='true'] .tln-kbd {
+  color: var(--fg-1);
+  background: var(--bg-1);
+  border-color: var(--line-strong);
 }

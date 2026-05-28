@@ -134,7 +134,13 @@ export function PageWorkers() {
               <RegionGroup key={region} region={region} workers={workers} />
             ))}
 
-            {ws.length === 0 && <EmptyState variant="empty" title={t('common.empty')} />}
+            {ws.length === 0 && (
+              <EmptyState
+                variant="empty"
+                title={t('workers.emptyTitle')}
+                message={t('workers.emptyDesc')}
+              />
+            )}
           </>
         )}
       </div>

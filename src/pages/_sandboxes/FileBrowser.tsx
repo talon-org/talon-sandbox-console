@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Card, Button } from '@talon-sandbox/react';
 import { useT } from '../../i18n/useT';
 import { TlnIcon } from '../../icons/TlnIcon';
-import { EmptyState } from '../../components/EmptyState';
+import { InlineEmpty } from '../../components/InlineEmpty';
 import { useSandboxFsList, useSandboxFileContent } from '../../hooks/useSandboxFiles';
 import type { FSEntry } from '../../api/types';
 
@@ -94,7 +94,7 @@ function EntryRow({ entry, isSelected, onClickDir, onClickFile, t }: EntryRowPro
 
   return (
     <div
-      className={`tab-files-entry-row${isSelected ? ' tab-files-entry-row--selected' : ''}`}
+      className={`tln-tbl-row tab-files-row${isSelected ? ' tab-files-row--selected' : ''}`}
       onClick={handleClick}
       role="button"
       tabIndex={0}
@@ -110,12 +110,12 @@ function EntryRow({ entry, isSelected, onClickDir, onClickFile, t }: EntryRowPro
         <span>{entry.name}</span>
         {entry.is_dir && <TlnIcon name="arrowRight" size={10} style={{ color: 'var(--fg-4, var(--fg-3))', marginLeft: 'auto' }} />}
       </span>
-      {/* 文件大小（目录不显示） */}
-      <span className="tab-files-entry-size">
+      {/* Size column (blank for directories). */}
+      <span className="tab-files-col-right tab-files-col-size">
         {entry.is_dir ? '' : fmtSize(entry.size)}
       </span>
-      {/* 修改时间 */}
-      <span className="tab-files-entry-mtime">
+      {/* Modified-time column. */}
+      <span className="tab-files-col-right tab-files-col-mtime">
         {fmtModTime(entry.mod_time)}
       </span>
     </div>
@@ -181,39 +181,45 @@ export function FileBrowser({ sandboxId }: Props) {
         ) : undefined
       }
     >
-      {/* 目录表头 */}
-      <div className="tab-files-tbl-head">
-        <span>{t('detail.files.name')}</span>
-        <span className="tab-files-entry-size">{t('detail.files.size')}</span>
-        <span className="tab-files-entry-mtime">{t('detail.files.modified')}</span>
-      </div>
+      {/* Table: shares .tln-tbl-head / .tln-tbl-row primitives with every
+       * other list in the app (sandbox list, processes, audit). `--bare`
+       * drops the border so the surrounding Card supplies the boundary. */}
+      <div className="tln-tbl tln-tbl--bare">
+        <div className="tln-tbl-head tab-files-row">
+          <span>{t('detail.files.name')}</span>
+          <span className="tab-files-col-right">{t('detail.files.size')}</span>
+          <span className="tab-files-col-right">{t('detail.files.modified')}</span>
+        </div>
 
-      {/* 内容区三态 */}
-      {dirLoading && <EmptyState variant="loading" style={{ padding: '16px 0' }} />}
-      {!dirLoading && dirError && (
-        <EmptyState
-          variant="error"
-          message={dirError instanceof Error ? dirError.message : String(dirError)}
-          style={{ padding: '16px 0' }}
-        />
-      )}
-      {!dirLoading && !dirError && entries.length === 0 && (
-        <EmptyState
-          variant="empty"
-          title={t('detail.files.noEntries')}
-          style={{ padding: '16px 0' }}
-        />
-      )}
-      {!dirLoading && !dirError && entries.map(entry => (
-        <EntryRow
-          key={entry.name}
-          entry={entry}
-          isSelected={selectedFile === (currentPath ? `${currentPath}/${entry.name}` : entry.name) && !entry.is_dir}
-          onClickDir={enterDir}
-          onClickFile={selectFile}
-          t={t}
-        />
-      ))}
+        {/* Empty / loading / error use InlineEmpty (no border — Card already
+         * supplies one). Real entries follow the same grid template as the
+         * header so columns line up. */}
+        {dirLoading && (
+          <InlineEmpty size="sm" icon={<TlnIcon name="refresh" size={14} />}>
+            {t('common.loading')}
+          </InlineEmpty>
+        )}
+        {!dirLoading && dirError && (
+          <InlineEmpty size="sm" tone="error" icon={<TlnIcon name="alert" size={14} />}>
+            {dirError instanceof Error ? dirError.message : String(dirError)}
+          </InlineEmpty>
+        )}
+        {!dirLoading && !dirError && entries.length === 0 && (
+          <InlineEmpty size="sm" icon={<TlnIcon name="folder" size={14} />}>
+            {t('detail.files.noEntries')}
+          </InlineEmpty>
+        )}
+        {!dirLoading && !dirError && entries.map(entry => (
+          <EntryRow
+            key={entry.name}
+            entry={entry}
+            isSelected={selectedFile === (currentPath ? `${currentPath}/${entry.name}` : entry.name) && !entry.is_dir}
+            onClickDir={enterDir}
+            onClickFile={selectFile}
+            t={t}
+          />
+        ))}
+      </div>
     </Card>
   );
 
@@ -234,25 +240,27 @@ export function FileBrowser({ sandboxId }: Props) {
         )
       }
     >
-      {/* 文件未选中 */}
+      {/* Resting state — md size because the preview pane occupies a full
+       * card column, so a too-small placeholder reads as a render bug.
+       * Card title already says "select a file to preview"; body uses a
+       * shorter complementary cue rather than repeating the same sentence. */}
       {!selectedFile && (
-        <div className="tab-files-preview-empty">
-          <TlnIcon name="fileText" size={28} style={{ color: 'var(--fg-4, var(--fg-3))' }} />
-        </div>
+        <InlineEmpty size="md" icon={<TlnIcon name="fileText" size={16} />}>
+          {t('detail.files.previewIdle')}
+        </InlineEmpty>
       )}
 
-      {/* 加载中 */}
+      {/* Loading / error states for the actual file content. */}
       {selectedFile && fileLoading && (
-        <EmptyState variant="loading" style={{ padding: '24px 0' }} />
+        <InlineEmpty size="md" icon={<TlnIcon name="refresh" size={14} />}>
+          {t('common.loading')}
+        </InlineEmpty>
       )}
 
-      {/* 读取错误 */}
       {selectedFile && !fileLoading && fileError && (
-        <EmptyState
-          variant="error"
-          message={fileError instanceof Error ? fileError.message : String(fileError)}
-          style={{ padding: '16px 0' }}
-        />
+        <InlineEmpty size="md" tone="error" icon={<TlnIcon name="alert" size={14} />}>
+          {fileError instanceof Error ? fileError.message : String(fileError)}
+        </InlineEmpty>
       )}
 
       {/* 文件内容 */}

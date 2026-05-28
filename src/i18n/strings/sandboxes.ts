@@ -115,7 +115,11 @@ export const sandboxes = {
   'detail.ports.deleteConfirmDesc':  { en: 'The port will no longer be accessible externally.', zh: '该端口将不再对外开放。' },
   'detail.ports.exposeDialogTitle':  { en: 'Expose a port', zh: '暴露端口' },
   'detail.ports.portLabel':  { en: 'Port number', zh: '端口号' },
-  'detail.ports.signLabel':  { en: 'Signed URL (token required)', zh: '签名 URL（需要 token）' },
+  'detail.ports.portHint':   { en: 'Internal listener inside the sandbox (1–65535)', zh: 'sandbox 内部监听端口（1–65535）' },
+  'detail.ports.accessLabel': { en: 'Access', zh: '访问控制' },
+  'detail.ports.signLabel':  { en: 'Signed URL', zh: '签名 URL' },
+  'detail.ports.signHint':   { en: 'Require a short-lived access token to open this URL', zh: '访问该 URL 需要短期 token' },
+  'detail.ports.exposeDesc': { en: 'Map an internal port to a public URL. Anyone with the URL can reach it unless you sign it.', zh: '把 sandbox 内部端口映射到公网 URL。除非启用签名，否则任何拿到 URL 的人都能访问。' },
   'detail.ports.submit':     { en: 'Expose', zh: '确认暴露' },
   'detail.ports.copyUrl':    { en: 'Copy URL', zh: '复制链接' },
   'detail.ports.urlCopied':  { en: 'Copied!', zh: '已复制！' },
@@ -127,7 +131,8 @@ export const sandboxes = {
   'detail.files.name':       { en: 'Name', zh: '名称' },
   'detail.files.size':       { en: 'Size', zh: '大小' },
   'detail.files.modified':   { en: 'Modified', zh: '修改时间' },
-  'detail.files.selectFile': { en: 'Select a file to preview', zh: '选择文件以预览' },
+  'detail.files.selectFile':     { en: 'Select a file to preview', zh: '选择文件以预览' },
+  'detail.files.previewIdle':    { en: 'Pick a file on the left', zh: '在左侧选择一个文件' },
   'detail.files.binary':     { en: '(binary file — preview unavailable)', zh: '（二进制文件，无法预览）' },
   'detail.files.noEntries':  { en: 'Empty directory', zh: '空目录' },
   'detail.files.back':       { en: 'Back', zh: '返回上级' },
@@ -135,4 +140,16 @@ export const sandboxes = {
   // Processes tab 新增列标题
   'detail.colStarted':       { en: 'Started', zh: '启动时间' },
   'detail.colStatus':        { en: 'Status', zh: '状态' },
+
+  // Detail header — 头部信息架构（按业务高频问题排序）
+  'detail.untitled':         { en: 'Untitled sandbox', zh: '未命名 sandbox' },
+  'detail.quota':            { en: 'Quota', zh: '配额' },
+  'detail.ttlNone':          { en: 'no auto-expire', zh: '不自动过期' },
+  // Pattern caller interpolates with %s.
+  'detail.ttlRemaining':     { en: '%s left', zh: '剩余 %s' },
+  'detail.ttlExpired':       { en: 'TTL elapsed', zh: 'TTL 已到' },
+
+  // Processes empty CTA — 把空态变成"下一步行动"
+  'detail.proc.empty.title': { en: 'Sandbox is idle', zh: 'Sandbox 已就绪，还没有跑任何进程' },
+  'detail.proc.empty.desc':  { en: 'Open a shell and the processes you start will show up here.', zh: '在 shell 中启动的进程会出现在这里。' },
 } as const;

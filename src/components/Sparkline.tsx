@@ -12,10 +12,35 @@ interface SparklineProps {
 }
 
 export function Sparkline({ data, height = 36, color = 'var(--acc-strong)', className, style }: SparklineProps) {
-  if (!data || data.length < 2) return null;
-
   const w = 100; // viewBox width (percent-based)
   const h = height;
+
+  // Empty state: render a dim dashed mid-line so the metric card keeps its
+  // visual rhythm instead of collapsing. Avoids the layout shift caused by
+  // returning null when a series happens to be empty.
+  if (!data || data.length < 2) {
+    const midY = (h / 2).toFixed(2);
+    return (
+      <svg
+        width="100%"
+        height={h}
+        viewBox={`0 0 ${w} ${h}`}
+        preserveAspectRatio="none"
+        className={className}
+        style={style}
+        aria-hidden="true"
+      >
+        <line
+          x1="0" y1={midY} x2={w} y2={midY}
+          stroke="var(--fg-4, var(--fg-3))"
+          strokeWidth="1"
+          strokeDasharray="3 3"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+    );
+  }
+
   const min = Math.min(...data);
   const max = Math.max(...data);
   const range = max - min || 1;

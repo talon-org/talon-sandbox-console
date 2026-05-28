@@ -2,6 +2,8 @@
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
   height: 100vh;
+  width: 100vw;
+  overflow: hidden;
   background: var(--bg-1);
 }
 .sidebar {
@@ -9,6 +11,8 @@
   background: var(--bg-1);
   display: flex; flex-direction: column;
   min-width: 0;
+  height: 100vh;
+  overflow: hidden;
 }
 .sidebar-head {
   padding: 16px 14px 12px;
@@ -120,10 +124,8 @@
   transition: border-color var(--dur-fast), background var(--dur-fast);
 }
 .topbar-cmdk button:hover { border-color: var(--line-strong); background: var(--bg-3); }
-.topbar-cmdk button .kbd {
-  margin-left: auto; padding: 1px 5px;
-  border: 1px solid var(--line); border-radius: 3px;
-  font-family: var(--font-mono); font-size: 10px; color: var(--fg-2);
+.topbar-cmdk button .tln-shortcut {
+  margin-left: auto;
 }
 .topbar-actions { display: flex; align-items: center; gap: 4px; }
 .topbar-actions .ic-btn {

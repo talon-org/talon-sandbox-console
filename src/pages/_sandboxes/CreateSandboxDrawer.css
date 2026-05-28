@@ -1,0 +1,214 @@
+/* CreateSandboxDrawer — page-specific bits only. The 3-tier visual
+ * hierarchy is now owned by ui-lib:
+ *
+ *   L1 SECTION title   → FormSection (13px fg-0 weight 500, border-top divider)
+ *   L2 field label     → FormLabel   (10.5px fg-2 mono uppercase)
+ *   L3 hint            → FormDescription (11.5px fg-3)
+ *
+ * This file keeps: the drawer body gutter, the image-select option
+ * decoration, the resource-row layout, the network-policy radio card,
+ * and the advanced-collapsible block (which is intentionally not a
+ * FormSection because its header is a toggle).
+ */
+
+.csd-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 24px 24px 28px;
+}
+.csd-cost {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+}
+.csd-cost .cost {
+  color: var(--fg-1);
+  font-weight: 500;
+}
+
+/* Field structure (label / control / hint, mono uppercase typography) now
+ * comes from the ui-lib FormField / FormLabel / FormDescription primitives
+ * — see @talon-sandbox/react. The page-local `.csd-field-inset` modifier
+ * is the only thing left here, used for the "Allowed hosts" textarea that
+ * appears conditionally inside the network policy block and needs extra
+ * top spacing to separate it from the policy radio group above. */
+.tln-field.csd-field-inset {
+  margin-top: 10px;
+}
+
+/* ── Image select item (dropdown options) ──
+ * Trigger and dropdown both show only `name + default tag`.
+ * The description appears ONCE as a hint below the trigger (not in the popup).
+ */
+.csd-image-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.csd-image-item .name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-0);
+}
+.csd-image-item .default-tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--acc-strong);
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid color-mix(in oklab, var(--acc) 30%, transparent);
+}
+
+/* Advanced (collapsible) block — kept as a page-local class because its
+ * header is a toggle (not a static title), so FormSection doesn't fit.
+ * Matches FormSection's 18px top padding + line-soft separator so it
+ * sits visually flush with the surrounding sections. */
+.csd-block--collapsible {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* ── Resources ── */
+.csd-res-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.csd-res-row {
+  display: grid;
+  grid-template-columns: 56px 1fr 76px;
+  align-items: center;
+  gap: 14px;
+}
+.csd-res-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+}
+.csd-res-slider { width: 100%; }
+.csd-res-val {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+.csd-res-val .num {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--fg-0);
+  font-weight: 500;
+}
+.csd-res-val .unit {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--fg-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Network policy — restrained selected state ── */
+.csd-policy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.csd-policy label {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  row-gap: 2px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.csd-policy label:hover {
+  border-color: var(--line-strong);
+  background: var(--bg-2);
+}
+.csd-policy label[data-active='true'] {
+  border-color: var(--acc);
+  background: color-mix(in oklab, var(--acc) 4%, transparent);
+}
+.csd-policy input[type='radio'] {
+  grid-row: 1 / span 2;
+  grid-column: 1;
+  width: 14px;
+  height: 14px;
+  accent-color: var(--acc);
+  margin: 0;
+}
+.csd-policy .title {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 12.5px;
+  color: var(--fg-0);
+  font-weight: 500;
+}
+.csd-policy .desc {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 11px;
+  color: var(--fg-3);
+  line-height: 1.4;
+}
+
+/* ── Advanced (collapsible) ── */
+/* "Advanced" is a toggle, not a required section title.
+ * Intentionally lighter (12.5px / weight 400 / fg-2) so users feel free to skip it.
+ * Section titles above are 13.5px / weight 500 / fg-0 — they pull the eye in,
+ * this one steps back. */
+.csd-adv-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--fg-2);
+  font-weight: 400;
+  font-family: inherit;
+  text-align: left;
+}
+.csd-adv-toggle .ic { color: var(--fg-3); flex-shrink: 0; }
+.csd-adv-toggle .csd-adv-chev {
+  color: var(--fg-3);
+  transition: transform 0.15s;
+}
+.csd-adv-toggle:hover {
+  color: var(--fg-1);
+}
+.csd-adv-toggle:hover .ic,
+.csd-adv-toggle:hover .csd-adv-chev { color: var(--fg-2); }
+.csd-adv-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-3);
+  background: var(--bg-3);
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+.csd-adv-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 4px;
+}

@@ -19,4 +19,8 @@ export const dashboard = {
   'dash.viewAllAudit':    { en: 'View all', zh: '查看全部' },
   'dash.viewAllSandboxes':{ en: 'View all', zh: '查看全部' },
   'dash.loadFailed':      { en: 'Dashboard failed to load', zh: '仪表盘加载失败' },
+  'dash.unset':           { en: 'Unset', zh: '未设置' },
+  'dash.statesEmpty.head':{ en: 'No sandboxes yet', zh: '暂无 sandbox' },
+  'dash.statesEmpty.desc':{ en: 'Spin one up to start exploring.', zh: '新建一个开始' },
+  'dash.statesEmpty.cta': { en: 'New sandbox', zh: '新建 sandbox' },
 } as const;

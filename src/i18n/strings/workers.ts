@@ -30,4 +30,6 @@ export const workers = {
   'workers.inviteBody':     { en: 'Copy this one-time token and pass it to the worker node during registration. It expires in 24 hours and cannot be recovered after closing this dialog.', zh: '复制此单次令牌并在 Worker 节点注册时使用。令牌 24 小时后失效，关闭弹窗后无法恢复。' },
   'workers.inviteCopy':     { en: 'Copy & close', zh: '复制并关闭' },
   'workers.inviteExpires':  { en: 'Expires:', zh: '过期时间：' },
+  'workers.emptyTitle':     { en: 'No worker nodes registered', zh: '尚未注册任何 worker 节点' },
+  'workers.emptyDesc':      { en: 'Click "Join node" above to issue a one-time invite token.', zh: '点击上方"加入节点"获取一次性邀请令牌。' },
 } as const;

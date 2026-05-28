@@ -1,4 +1,15 @@
-/* PageSandboxDetail — 6-tab detail view, wired to useSandbox() + useAuditEvents(). */
+/* PageSandboxDetail — 6-tab detail view, wired to useSandbox() + useAuditEvents().
+ *
+ * Header information architecture is driven by the questions a developer or
+ * operator opens this page to answer (in descending frequency):
+ *   1. Is it alive right now?       → state badge, prominent
+ *   2. What is it doing for me?     → task / name as the H1
+ *   3. Can I get into it?           → primary "Open shell" CTA
+ *   4. When does it die on its own? → age + ttl-remaining derived inline
+ *   5. Who owns it / what image?    → secondary mono row
+ * Anything that doesn't help with these (node id, empty optional fields) is
+ * omitted rather than rendered as a `—` placeholder.
+ */
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Badge } from '@talon-sandbox/react';
@@ -7,30 +18,61 @@ import { TlnIcon } from '../icons/TlnIcon';
 import { EmptyState } from '../components/EmptyState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useSandbox, useDeleteSandbox, useAuditEvents } from '../hooks';
-import type { SandboxState } from '../api/types';
+import type { SandboxState, SandboxDTO } from '../api/types';
 import { TabOverview, TabProcesses, TabPorts, TabFiles, TabNetwork, TabAudit } from './_sandboxes/DetailTabs';
 
 import './PageSandboxDetail.css';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
-function fmtStarted(ts?: number): string {
-  if (!ts) return '—';
-  return new Date(ts * 1000).toISOString().slice(0, 19).replace('T', ' ') + ' UTC';
+function fmtDuration(secs: number): string {
+  if (secs < 60) return secs + 's';
+  if (secs < 3600) return Math.floor(secs / 60) + 'm';
+  if (secs < 86400) {
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    return m === 0 ? h + 'h' : h + 'h ' + m + 'm';
+  }
+  return Math.floor(secs / 86400) + 'd';
 }
 
 function fmtCpu(millis?: number): string {
-  return millis ? (millis / 1000).toFixed(1) + ' vCPU' : '—';
+  return millis ? (millis / 1000).toFixed(1) + ' vCPU' : '';
 }
 
 function fmtMem(bytes?: number): string {
-  return bytes ? (bytes / (1024 ** 3)).toFixed(1) + ' GiB' : '—';
+  return bytes ? (bytes / (1024 ** 3)).toFixed(1) + ' GiB' : '';
 }
 
-function stateVariant(s: SandboxState): 'success' | 'warning' | 'danger' | 'neutral' {
-  if (s === 'running') return 'success';
-  if (['pulling-image', 'provisioning', 'terminating', 'paused', 'idle'].includes(s)) return 'warning';
-  if (s === 'failed') return 'danger';
-  return 'neutral';
+// Badge variant must use one of the ui-lib's accepted values
+// ('ok' | 'warn' | 'err' | 'info' | 'magenta' | 'teal' | 'muted' | 'default').
+// Earlier code used semantic shadcn-style names ('success' / 'warning' / 'danger' / 'neutral')
+// which fell through to the default fallback and rendered the badge in plain gray.
+function stateVariant(s: SandboxState): 'ok' | 'warn' | 'err' | 'muted' {
+  if (s === 'running') return 'ok';
+  if (['pulling-image', 'provisioning', 'terminating', 'paused', 'idle'].includes(s)) return 'warn';
+  if (s === 'failed') return 'err';
+  return 'muted';
+}
+
+// Decide what TTL to show on the header. The raw `ttl_seconds` field is the
+// configured limit; the user actually wants to know "how long until this dies
+// on its own". Returns null when the sandbox has no TTL configured, so the
+// caller can render nothing instead of a misleading "—".
+function ttlLabel(s: SandboxDTO, t: ReturnType<typeof useT>): string | null {
+  const ttl = s.ttl_seconds;
+  if (ttl == null || ttl === 0) return null;
+  if (!s.created_at) return fmtDuration(ttl);
+  const elapsed = Math.floor(Date.now() / 1000 - s.created_at);
+  const remaining = ttl - elapsed;
+  if (remaining <= 0) return t('detail.ttlExpired');
+  return t('detail.ttlRemaining').replace('%s', fmtDuration(remaining));
+}
+
+// fmtAge: pretty duration since `created_at`. Returns null when timestamp is
+// missing — caller drops the field instead of rendering a placeholder.
+function ageLabel(createdAt?: number): string | null {
+  if (!createdAt) return null;
+  return fmtDuration(Math.floor(Date.now() / 1000 - createdAt));
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -72,66 +114,77 @@ export function PageSandboxDetail() {
   }
 
 
+  // The display name is chosen for human recall, not machine identity: prefer
+  // the task description (what this sandbox is *for*), then the user-provided
+  // name, then profile. Sandbox id is shown separately as a mono micro-label.
+  const displayName = s.task || s.name || s.profile || t('detail.untitled');
+  const quota = [fmtCpu(s.cpu_millis), fmtMem(s.memory_bytes)].filter(Boolean).join(' · ');
+  const ttl = ttlLabel(s, t);
+  const age = ageLabel(s.created_at);
+
   return (
     <>
-      {/* header */}
+      {/* Header — task as H1 + state badge, secondary mono row for identity. */}
       <div className="sbx-detail-head">
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div className="id-row">
-            <span className="sbxid">{s.id}</span>
-            {/* 租户标签：G2 tenant_id 字段 */}
-            {s.tenant_id && (
-              <Badge variant="neutral">{s.tenant_id}</Badge>
-            )}
-            {/* 状态通过 i18n 翻译，不渲染原始 API 字符串 */}
-            <Badge variant={stateVariant(s.state)} dot={s.state === 'running'}>{t(`state.${s.state}`, s.state)}</Badge>
+        <div className="head-main">
+          <div className="title-row">
+            <h1 className="title" title={typeof displayName === 'string' ? displayName : undefined}>
+              {displayName}
+            </h1>
+            <Badge variant={stateVariant(s.state)} dot={s.state === 'running'}>
+              {t(`state.${s.state}`, s.state)}
+            </Badge>
           </div>
-          <div className="name-row">
-            <TlnIcon name="box" size={14} style={{ color: 'var(--fg-3)' }} />
-            {/* G2 name 字段：有值则显示用户命名，否则回退 profile */}
-            <span>{s.name || s.profile}</span>
-            {s.image_id && (
+          <div className="meta-row">
+            <span className="sbxid" title={s.id}>{s.id}</span>
+            {s.image_id && (<><span className="dot">·</span><span>{s.image_id}</span></>)}
+            {s.profile && (<><span className="dot">·</span><span>{s.profile}</span></>)}
+            {quota && (
               <>
-                <span style={{ color: 'var(--fg-4, var(--fg-3))' }}>·</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--fg-3)' }}>{s.image_id}</span>
+                <span className="dot">·</span>
+                <span className="meta-k">{t('detail.quota')}</span>
+                <span>{quota}</span>
+              </>
+            )}
+            {age && (
+              <>
+                <span className="dot">·</span>
+                <span className="meta-k">{t('detail.age')}</span>
+                <span>{age}</span>
+              </>
+            )}
+            {ttl && (
+              <>
+                <span className="dot">·</span>
+                <span>{ttl}</span>
               </>
             )}
           </div>
         </div>
+        {/* Action group order: positive primary first, secondary ghost icons,
+         * destructive last with extra separation so it doesn't sit next to
+         * "Open shell" — keeps "ship it" away from "burn it down". */}
         <div className="det-actions">
-          <Button variant="ghost" onClick={() => nav('/sandboxes/' + s.id + '/terminal')}>
+          <Button variant="primary" onClick={() => nav('/sandboxes/' + s.id + '/terminal')}>
             <TlnIcon name="terminal" size={14} />
             {t('detail.openShell')}
           </Button>
-          <Button variant="ghost" iconOnly aria-label={t('common.recordings')}>
-            <TlnIcon name="film" size={14} />
-          </Button>
-          <Button variant="ghost" iconOnly aria-label={t('common.restart')}>
-            <TlnIcon name="refresh" size={14} />
-          </Button>
-          <Button variant="ghost" iconOnly aria-label={t('common.pause')}>
-            <TlnIcon name="pause" size={14} />
-          </Button>
-          <Button variant="danger" onClick={() => setConfirmKill(true)}>
+          <div className="det-actions-sec">
+            <Button variant="ghost" iconOnly aria-label={t('common.recordings')} title={t('common.recordings')}>
+              <TlnIcon name="film" size={14} />
+            </Button>
+            <Button variant="ghost" iconOnly aria-label={t('common.restart')} title={t('common.restart')}>
+              <TlnIcon name="refresh" size={14} />
+            </Button>
+            <Button variant="ghost" iconOnly aria-label={t('common.pause')} title={t('common.pause')}>
+              <TlnIcon name="pause" size={14} />
+            </Button>
+          </div>
+          <Button variant="ghost" onClick={() => setConfirmKill(true)} className="det-kill-btn">
             <TlnIcon name="stop" size={14} />
             {t('common.kill')}
           </Button>
         </div>
-      </div>
-
-      {/* 信息行：与原型对齐，补充 node/region/disk 字段 */}
-      <div className="sbx-info-row">
-        <div className="item"><span className="k">{t('detail.started')}</span><span className="v">{fmtStarted(s.created_at)}</span></div>
-        <div className="item"><span className="k">{t('detail.resources')}</span><span className="v">{fmtCpu(s.cpu_millis)} · {fmtMem(s.memory_bytes)}</span></div>
-        {/* node 使用 worker_id 字段（API 有则显示，无则 — ） */}
-        {/* worker_id：G2 新增字段 */}
-        <div className="item"><span className="k">{t('detail.node')}</span><span className="v">{s.worker_id ?? '—'}</span></div>
-        {/* region 字段（API 有则显示，无则 — ） */}
-        <div className="item"><span className="k">{t('detail.region')}</span><span className="v">{(s as { region?: string }).region ?? '—'}</span></div>
-        {/* disk 使用 disk_gib 字段（API 有则显示，无则 — ） */}
-        <div className="item"><span className="k">{t('detail.disk')}</span><span className="v">{(s as { disk_gib?: number }).disk_gib != null ? (s as { disk_gib?: number }).disk_gib + ' GiB' : '—'}</span></div>
-        <div className="item"><span className="k">{t('detail.profile')}</span><span className="v">{s.profile}</span></div>
-        <div className="item"><span className="k">ttl</span><span className="v">{s.ttl_seconds != null ? s.ttl_seconds + 's' : '—'}</span></div>
       </div>
 
       {/* tabs */}
@@ -163,14 +216,17 @@ export function PageSandboxDetail() {
         </div>
       </Tabs>
 
-      {/* kill confirm */}
+      {/* kill confirm — title stacks the question + sandbox id on two lines
+       * so the mono id doesn't cause an awkward CJK + ASCII line-break inside
+       * the heading. */}
       <ConfirmDialog
         open={confirmKill}
         onClose={() => setConfirmKill(false)}
         title={
-          <>{t('sbx.kill.title')}&nbsp;
-            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--err)' }}>{s.id}</span>
-          </>
+          <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span>{t('sbx.kill.title')}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 400, color: 'var(--fg-3)' }}>{s.id}</span>
+          </span>
         }
         description={t('sbx.kill.body')}
         confirmLabel={t('sbx.kill.confirm')}

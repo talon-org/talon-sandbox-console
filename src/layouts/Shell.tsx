@@ -8,23 +8,22 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../store';
 import { useT } from '../i18n/useT';
 import { TlnIcon, Mark } from '../icons/TlnIcon';
+import { useSandboxes } from '../hooks/useSandboxes';
 import {
   CommandDialog, CommandInput, CommandList, CommandEmpty,
-  CommandGroup, CommandItem, CommandShortcut,
+  CommandGroup, CommandItem, CommandShortcut, Shortcut,
   Toaster,
 } from '@talon-sandbox/react';
 import { TweaksPanel } from '../components/TweaksPanel';
 
 import './Shell.css';
 
-// ── Mock static data for sidebar (pre-API) ────────────────────────────────────
-// TODO: replace with real API data once GET /v1/admin/sandboxes is available
+// ── Static sidebar data ────────────────────────────────────────────────────────
 const STATIC_TENANT = { name: 'Acme · Inc.', plan: 'Enterprise' };
-const STATIC_SANDBOX_COUNT = 18; // active sandboxes count from metrics
 
-const NAV_WORKSPACE = [
+const NAV_WORKSPACE_BASE: Array<{ id: string; labelKey: string; icon: string; path: string; count?: number }> = [
   { id: 'dashboard',  labelKey: 'nav.dashboard',  icon: 'home',   path: '/dashboard' },
-  { id: 'sandboxes',  labelKey: 'nav.sandboxes',   icon: 'box',    path: '/sandboxes', count: STATIC_SANDBOX_COUNT },
+  { id: 'sandboxes',  labelKey: 'nav.sandboxes',   icon: 'box',    path: '/sandboxes' },
   { id: 'recordings', labelKey: 'nav.recordings',  icon: 'film',   path: '/recordings' },
   { id: 'secrets',    labelKey: 'nav.secrets',     icon: 'key',    path: '/secrets' },
   { id: 'audit',      labelKey: 'nav.audit',       icon: 'scroll', path: '/audit' },
@@ -70,6 +69,14 @@ export function Shell() {
   const cmdkOpen = useApp(s => s.cmdkOpen);
   const setCmdK  = useApp(s => s.setCmdK);
 
+  // Real sandbox count for the sidebar badge — undefined while loading (hides badge)
+  const { data: sandboxesData } = useSandboxes();
+  const sandboxCount = sandboxesData?.sandboxes?.length;
+
+  const NAV_WORKSPACE = NAV_WORKSPACE_BASE.map(item =>
+    item.id === 'sandboxes' ? { ...item, count: sandboxCount } : item
+  );
+
   const crumbs = crumbsForPath(location.pathname, t);
 
   // ⌘K keyboard shortcut
@@ -84,18 +91,32 @@ export function Shell() {
     return () => document.removeEventListener('keydown', handler);
   }, [cmdkOpen, setCmdK]);
 
+  // kbd shape:
+  //   - Sequential ("press G then D"): array of single keys, e.g. ['G', 'D']
+  //   - Modifier combo: use semantic tokens recognised by <Shortcut>:
+  //       'mod'   → ⌘ on macOS, Ctrl elsewhere
+  //       'shift' → ⇧, 'alt' / 'opt' → ⌥ (Mac) / Alt
+  //     <Shortcut> handles OS detection so we don't sniff navigator here.
+  //   - Destructive actions (sign-out, delete) deliberately have NO shortcut.
   const cmdkItems = [
-    { group: t('cmdk.group.nav'), name: t('cmdk.nav.dashboard'),   icon: <TlnIcon name="home"    size={15} />, kbd: 'G D', action: () => navigate('/dashboard') },
-    { group: t('cmdk.group.nav'), name: t('cmdk.nav.sandboxes'),   icon: <TlnIcon name="box"     size={15} />, kbd: 'G S', action: () => navigate('/sandboxes') },
-    { group: t('cmdk.group.nav'), name: t('cmdk.nav.recordings'),  icon: <TlnIcon name="film"    size={15} />, kbd: 'G R', action: () => navigate('/recordings') },
-    { group: t('cmdk.group.nav'), name: t('cmdk.nav.secrets'),     icon: <TlnIcon name="key"     size={15} />, kbd: 'G K', action: () => navigate('/secrets') },
-    { group: t('cmdk.group.nav'), name: t('cmdk.nav.audit'),       icon: <TlnIcon name="scroll"  size={15} />, kbd: 'G A', action: () => navigate('/audit') },
-    { group: t('cmdk.group.nav'), name: t('cmdk.nav.workers'),     icon: <TlnIcon name="server"  size={15} />,             action: () => navigate('/workers') },
-    { group: t('cmdk.group.nav'), name: t('cmdk.nav.tenants'),     icon: <TlnIcon name="users"   size={15} />,             action: () => navigate('/tenants') },
-    { group: t('cmdk.group.actions'), name: t('cmdk.action.newSandbox'), icon: <TlnIcon name="plus"   size={15} />, kbd: 'C N', action: () => navigate('/sandboxes?new=1') },
-    { group: t('cmdk.group.actions'), name: t('cmdk.action.newSecret'),  icon: <TlnIcon name="key"    size={15} />,           action: () => navigate('/secrets?new=1') },
-    { group: t('cmdk.group.actions'), name: t('cmdk.action.signOut'),    icon: <TlnIcon name="logout" size={15} />,           action: () => { logout(); navigate('/login'); } },
-  ];
+    { group: t('cmdk.group.nav'), name: t('cmdk.nav.dashboard'),   icon: <TlnIcon name="home"    size={15} />, kbd: ['G', 'D'], action: () => navigate('/dashboard') },
+    { group: t('cmdk.group.nav'), name: t('cmdk.nav.sandboxes'),   icon: <TlnIcon name="box"     size={15} />, kbd: ['G', 'S'], action: () => navigate('/sandboxes') },
+    { group: t('cmdk.group.nav'), name: t('cmdk.nav.recordings'),  icon: <TlnIcon name="film"    size={15} />, kbd: ['G', 'R'], action: () => navigate('/recordings') },
+    { group: t('cmdk.group.nav'), name: t('cmdk.nav.secrets'),     icon: <TlnIcon name="key"     size={15} />, kbd: ['G', 'K'], action: () => navigate('/secrets') },
+    { group: t('cmdk.group.nav'), name: t('cmdk.nav.audit'),       icon: <TlnIcon name="scroll"  size={15} />, kbd: ['G', 'A'], action: () => navigate('/audit') },
+    { group: t('cmdk.group.nav'), name: t('cmdk.nav.workers'),     icon: <TlnIcon name="server"  size={15} />, kbd: ['G', 'W'], action: () => navigate('/workers') },
+    { group: t('cmdk.group.nav'), name: t('cmdk.nav.tenants'),     icon: <TlnIcon name="users"   size={15} />, kbd: ['G', 'T'], action: () => navigate('/tenants') },
+    { group: t('cmdk.group.actions'), name: t('cmdk.action.newSandbox'), icon: <TlnIcon name="plus"   size={15} />, kbd: ['mod', 'N'], action: () => navigate('/sandboxes?new=1') },
+    { group: t('cmdk.group.actions'), name: t('cmdk.action.newSecret'),  icon: <TlnIcon name="key"    size={15} />, kbd: ['mod', 'shift', 'K'], action: () => navigate('/secrets?new=1') },
+    // Sign out — no shortcut by design (destructive).
+    { group: t('cmdk.group.actions'), name: t('cmdk.action.signOut'),    icon: <TlnIcon name="logout" size={15} />, action: () => { logout(); navigate('/login'); } },
+  ] as Array<{
+    group: string;
+    name: string;
+    icon: React.ReactNode;
+    kbd?: string[];
+    action: () => void;
+  }>;
 
   // Avatar initials: name → email → tenant_id prefix → '?'
   const initials = (() => {
@@ -214,7 +235,7 @@ export function Shell() {
             >
               <TlnIcon name="search" size={14} />
               <span>{t('topbar.cmdk_placeholder')}</span>
-              <span className="kbd">⌘K</span>
+              <Shortcut keys={['mod', 'K']} size="sm" />
             </button>
           </div>
 
@@ -237,8 +258,8 @@ export function Shell() {
         </main>
       </div>
 
-      {/* Tweaks panel — fixed bottom-right, collapsible */}
-      <TweaksPanel />
+      {/* Tweaks panel — fixed bottom-right, dev-only */}
+      {import.meta.env.DEV && <TweaksPanel />}
 
       {/* CmdK overlay */}
       <CommandDialog open={cmdkOpen} onOpenChange={setCmdK}>
@@ -261,7 +282,11 @@ export function Shell() {
                   >
                     {it.icon && <span style={{ display: 'flex', alignItems: 'center' }}>{it.icon}</span>}
                     <span>{it.name}</span>
-                    {it.kbd && <CommandShortcut>{it.kbd}</CommandShortcut>}
+                    {it.kbd && (
+                      <CommandShortcut>
+                        <Shortcut keys={it.kbd} size="sm" />
+                      </CommandShortcut>
+                    )}
                   </CommandItem>
                 ))}
               </CommandGroup>

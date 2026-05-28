@@ -1,8 +1,16 @@
 /* PageDashboard — metrics overview wired to useDashboard() hook. */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Button, ProgressBar, PageHeader } from '@talon-sandbox/react';
-import type { SandboxState as DSState } from '@talon-sandbox/react';
+import {
+  Card, CardHeader, CardTitle, CardAction, CardContent, CardFooter,
+  Button, ProgressBar, PageHeader,
+} from '@talon-sandbox/react';
+import type { SandboxState as DSStateBase } from '@talon-sandbox/react';
+
+// Widened local state alias — the design-system union excludes 'created',
+// but the backend returns it. Keep the palette aligned with the prototype
+// and add a dedicated blue for the new state.
+type DSState = DSStateBase | 'created';
 
 // DEFAULT_STATE_COLORS was removed in v0.3; inline the palette used by the dashboard bar
 const DEFAULT_STATE_COLORS: Partial<Record<DSState, string>> = {
@@ -14,6 +22,9 @@ const DEFAULT_STATE_COLORS: Partial<Record<DSState, string>> = {
   terminating:     'var(--fg-3)',
   evicted:         'var(--bg-3)',
   failed:          'var(--err)',
+  // Backend returns `created` for freshly-inserted sandboxes that have not
+  // yet been picked up by a worker. Use --info (blue) to differentiate.
+  created:         'var(--info)',
 };
 import { useApp } from '../store';
 import { useT } from '../i18n/useT';
@@ -77,41 +88,64 @@ interface MetricProps {
 function Metric({ micro, value, unit, of: ofVal, delta, deltaKind = 'neut', series, color }: MetricProps) {
   const animated = useCount(value);
   return (
-    <Card style={{ padding: 'var(--pad-card, 16px)' }}>
-      <div className="dash-metric">
-        <div className="top">
-          <span className="micro">{micro}</span>
-          {delta && <span className={'delta ' + deltaKind}>{delta}</span>}
+    <Card>
+      <CardContent>
+        <div className="dash-metric">
+          <div className="top">
+            <span className="micro">{micro}</span>
+            {delta && <span className={'delta ' + deltaKind}>{delta}</span>}
+          </div>
+          <div className="num">
+            <span>{fmtNum(animated)}</span>
+            {unit && <span className="unit">{unit}</span>}
+            {ofVal != null && <span className="of">/ {ofVal}</span>}
+          </div>
+          {series && (
+            <Sparkline data={series} height={36} color={color ?? 'var(--acc-strong)'} className="spark" />
+          )}
         </div>
-        <div className="num">
-          <span>{fmtNum(animated)}</span>
-          {unit && <span className="unit">{unit}</span>}
-          {ofVal != null && <span className="of">/ {ofVal}</span>}
-        </div>
-        {series && (
-          <Sparkline data={series} height={36} color={color ?? 'var(--acc-strong)'} className="spark" />
-        )}
-      </div>
+      </CardContent>
     </Card>
   );
 }
 
 const DS_STATE_ORDER: DSState[] = [
-  'running', 'pulling-image', 'provisioning', 'idle', 'paused', 'terminating', 'failed', 'evicted',
+  'running', 'pulling-image', 'provisioning', 'created', 'idle', 'paused', 'terminating', 'failed', 'evicted',
 ];
 
 // 1:1 port of the prototype's StatesOverview: stacked bar + 4-col legend grid.
 // Legend labels go through i18n via t(`state.<key>`) so they render in zh/en.
+// When the total is 0, show an empty-state CTA instead of an empty bar (which
+// would also trigger a divide-by-zero in the percentage calculation).
 function StatesOverview({
   order,
   counts,
   t,
+  onNewSandbox,
 }: {
   order: DSState[];
   counts: Partial<Record<string, number>>;
   t: (k: string) => string;
+  onNewSandbox: () => void;
 }) {
-  const total = order.reduce((s, k) => s + (counts[k] ?? 0), 0) || 1;
+  const rawTotal = order.reduce((s, k) => s + (counts[k] ?? 0), 0);
+
+  if (rawTotal === 0) {
+    return (
+      <div className="states-empty">
+        <div className="states-empty-text">
+          <div className="head">{t('dash.statesEmpty.head')}</div>
+          <div className="desc">{t('dash.statesEmpty.desc')}</div>
+        </div>
+        <Button variant="primary" size="sm" onClick={onNewSandbox}>
+          <TlnIcon name="plus" size={12} />
+          {t('dash.statesEmpty.cta')}
+        </Button>
+      </div>
+    );
+  }
+
+  const total = rawTotal;
   return (
     <div>
       <div className="states-bar" role="img" aria-label="sandbox states distribution">
@@ -220,7 +254,8 @@ export function PageDashboard() {
             micro={t('dash.metric.cpu')}
             value={summary?.vcpu.current ?? 0}
             unit="vCPU"
-            of={summary?.vcpu.limit}
+            /* limit=0 means "no quota configured" — render 'Unset' instead of '/ 0' which looks like a hard cap. */
+            of={summary?.vcpu.limit === 0 ? t('dash.unset') : summary?.vcpu.limit}
             delta={summary?.vcpu.delta_24h != null ? `+${summary.vcpu.delta_24h.toFixed(1)} vCPU` : undefined}
             deltaKind="neut"
             series={cpuSeries}
@@ -229,7 +264,7 @@ export function PageDashboard() {
             micro={t('dash.metric.mem')}
             value={summary?.memory_gib.current ?? 0}
             unit="GiB"
-            of={summary?.memory_gib.limit}
+            of={summary?.memory_gib.limit === 0 ? t('dash.unset') : summary?.memory_gib.limit}
             delta={summary?.memory_gib.delta_24h != null ? `+${summary.memory_gib.delta_24h.toFixed(1)} GiB` : undefined}
             deltaKind="neut"
             series={memSeries}
@@ -247,32 +282,63 @@ export function PageDashboard() {
         </div>
 
         <div className="dash-2col">
-          <Card
-            title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="box" size={14} style={{ color: 'var(--fg-2)' }} />{t('dash.sandboxStates')}</span>}
-            footer={<span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-3)' }}>{t('dash.lastRefresh')}</span>}
-          >
-            <StatesOverview order={DS_STATE_ORDER} counts={stateMap} t={t} />
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                <TlnIcon name="box" size={14} style={{ color: 'var(--fg-2)' }} />
+                {t('dash.sandboxStates')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <StatesOverview
+                order={DS_STATE_ORDER}
+                counts={stateMap}
+                t={t}
+                onNewSandbox={() => nav('/sandboxes?new=1')}
+              />
+            </CardContent>
+            <CardFooter>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-3)' }}>{t('dash.lastRefresh')}</span>
+            </CardFooter>
           </Card>
 
-          <Card
-            title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="clock" size={14} style={{ color: 'var(--fg-2)' }} />{t('dash.quota24h')}</span>}
-          >
-            <div className="dash-quota-row">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                <TlnIcon name="clock" size={14} style={{ color: 'var(--fg-2)' }} />
+                {t('dash.quota24h')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="dash-quota-row">
               {quota && (
                 <>
                   <div className="dash-quota-item">
                     <div className="qi-header">
                       <span className="qi-label">vCPU</span>
-                      <span className="qi-value">{quota.vcpu.used.toFixed(1)} / {quota.vcpu.limit}</span>
+                      {/* limit=0 means "no quota configured"; show 'Unset' instead of an empty bar. */}
+                      <span className="qi-value">
+                        {quota.vcpu.limit === 0
+                          ? t('dash.unset')
+                          : `${quota.vcpu.used.toFixed(1)} / ${quota.vcpu.limit}`}
+                      </span>
                     </div>
-                    <ProgressBar value={quota.vcpu.used} max={quota.vcpu.limit || 1} />
+                    {quota.vcpu.limit === 0
+                      ? <div className="qi-unset" aria-hidden="true" />
+                      : <ProgressBar value={quota.vcpu.used} max={quota.vcpu.limit || 1} />}
                   </div>
                   <div className="dash-quota-item">
                     <div className="qi-header">
                       <span className="qi-label">{t('dash.metric.mem')}</span>
-                      <span className="qi-value">{quota.memory_gib.used} / {quota.memory_gib.limit} GiB</span>
+                      <span className="qi-value">
+                        {quota.memory_gib.limit === 0
+                          ? t('dash.unset')
+                          : `${quota.memory_gib.used} / ${quota.memory_gib.limit} GiB`}
+                      </span>
                     </div>
-                    <ProgressBar value={quota.memory_gib.used} max={quota.memory_gib.limit || 1} />
+                    {quota.memory_gib.limit === 0
+                      ? <div className="qi-unset" aria-hidden="true" />
+                      : <ProgressBar value={quota.memory_gib.used} max={quota.memory_gib.limit || 1} />}
                   </div>
                   <div className="dash-quota-item">
                     <div className="qi-header">
@@ -292,16 +358,24 @@ export function PageDashboard() {
                   </div>
                 </>
               )}
-            </div>
+              </div>
+            </CardContent>
           </Card>
         </div>
 
         <div className="dash-2col">
-          <Card
-            title={<span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><TlnIcon name="zap" size={14} style={{ color: 'var(--fg-2)' }} />{t('dash.recentActivity')}</span>}
-            footer={<Button variant="ghost" size="sm" onClick={() => nav('/audit')}>{t('dash.viewAllAudit')}<TlnIcon name="arrowRight" size={12} /></Button>}
-          >
-            <div className="activity-list">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                <TlnIcon name="zap" size={14} style={{ color: 'var(--fg-2)' }} />
+                {t('dash.recentActivity')}
+              </CardTitle>
+              <CardAction>
+                <Button variant="ghost" size="sm" onClick={() => nav('/audit')}>{t('dash.viewAllAudit')}<TlnIcon name="arrowRight" size={12} /></Button>
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <div className="activity-list">
               {activity.map((r: DashboardActivity, i: number) => {
                 const secAgo = Math.round((Date.now() - new Date(r.ts).getTime()) / 1000);
                 return (
@@ -318,20 +392,23 @@ export function PageDashboard() {
                   </div>
                 );
               })}
-            </div>
+              </div>
+            </CardContent>
           </Card>
 
-          <Card
-            title={
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Card>
+            <CardHeader>
+              <CardTitle>
                 <TlnIcon name="dot" size={14} style={{ color: 'var(--ok)', animation: 'tln-pulse 1.6s ease-in-out infinite' }} />
                 {t('dash.runningNow')}
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)', marginLeft: 4 }}>{running.length}</span>
-              </span>
-            }
-            footer={<Button variant="ghost" size="sm" onClick={() => nav('/sandboxes')}>{t('dash.viewAllSandboxes')}<TlnIcon name="arrowRight" size={12} /></Button>}
-          >
-            <div className="run-list">
+              </CardTitle>
+              <CardAction>
+                <Button variant="ghost" size="sm" onClick={() => nav('/sandboxes')}>{t('dash.viewAllSandboxes')}<TlnIcon name="arrowRight" size={12} /></Button>
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <div className="run-list">
               {running.map(s => {
                 const isPulling = s.status === 'pulling-image';
                 const dotColor  = isPulling ? 'var(--warn)' : 'var(--ok)';
@@ -348,7 +425,8 @@ export function PageDashboard() {
                   </div>
                 );
               })}
-            </div>
+              </div>
+            </CardContent>
           </Card>
         </div>
       </div>

@@ -24,13 +24,20 @@ export async function deleteSandbox(id: string, signal?: AbortSignal): Promise<v
   return apiDelete(`/v1/sandboxes/${id}`, signal);
 }
 
-/** WebSocket URL for PTY connection */
+/** WebSocket URL for PTY connection.
+ *
+ * Auth handling differs from regular fetch() calls: the browser WebSocket API
+ * cannot attach an Authorization header, so Bearer-mode clients must pass the
+ * token via the `access_token` query param (matches the server's OAuth2 §2.3
+ * fallback in middleware/auth.go). Cookie-mode clients leave it off — the
+ * same-origin cookie is sent automatically by the browser during the upgrade.
+ */
 export function sandboxPtyUrl(id: string): string {
   const token = useApp.getState().authToken;
   // Convert http(s) base to ws(s); if relative path, use current host.
   const wsBase = API_BASE.startsWith('http')
     ? API_BASE.replace(/^http/, 'ws')
     : `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}${API_BASE}`;
-  const params = token ? `?token=${encodeURIComponent(token)}` : '';
+  const params = token ? `?access_token=${encodeURIComponent(token)}` : '';
   return `${wsBase}/v1/sandboxes/${id}/pty${params}`;
 }

@@ -90,6 +90,10 @@ export interface CreateSandboxRequest {
   timeout?: string;  // "30m"
   ttl?: string;      // "6h"
   network?: string;  // "allowlist" | "open" | "sealed"
+  // Used with network="allowlist" to whitelist outbound hosts (supports * wildcard).
+  // Field name mirrors backend dto.CreateRequest; backend uses DisallowUnknownFields
+  // so any alias will be rejected with 400.
+  network_allowed_hosts?: string[];
   env?: Record<string, string>;
   secrets?: Array<{ secret_id: string; mount_type: 'env' | 'file'; target: string }>;
 }
