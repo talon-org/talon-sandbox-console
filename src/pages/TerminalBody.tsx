@@ -24,6 +24,10 @@ export function TerminalBody({ sandboxId, connectKey, onConnected, onDimensions 
     if (!termDivRef.current) return;
     let disposed = false;
     let ws: WebSocket | null = null;
+    // 把 resize 监听和 MutationObserver 提到 effect 顶层,
+    // 才能在 cleanup 里真正释放(此前注册在 async IIFE return,会泄漏)
+    let onResize: (() => void) | null = null;
+    let obs: MutationObserver | null = null;
 
     const cs = getComputedStyle(document.documentElement);
     const cv = (n: string) => cs.getPropertyValue(n).trim();
@@ -100,7 +104,7 @@ export function TerminalBody({ sandboxId, connectKey, onConnected, onDimensions 
         if (ws && ws.readyState === WebSocket.OPEN) ws.send(data);
       });
 
-      const onResize = () => {
+      onResize = () => {
         if (disposed) return;
         try {
           fit.fit();
@@ -114,7 +118,7 @@ export function TerminalBody({ sandboxId, connectKey, onConnected, onDimensions 
       };
       window.addEventListener('resize', onResize);
 
-      const obs = new MutationObserver(() => {
+      obs = new MutationObserver(() => {
         if (!term || disposed) return;
         const cs2 = getComputedStyle(document.documentElement);
         const c2  = (n: string) => cs2.getPropertyValue(n).trim();
@@ -130,16 +134,13 @@ export function TerminalBody({ sandboxId, connectKey, onConnected, onDimensions 
         attributes: true,
         attributeFilter: ['data-theme', 'data-mode', 'data-font'],
       });
-
-      return () => {
-        obs.disconnect();
-        window.removeEventListener('resize', onResize);
-      };
     })();
 
     return () => {
       disposed = true;
       ws?.close();
+      if (onResize) window.removeEventListener('resize', onResize);
+      obs?.disconnect();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sandboxId, connectKey]);

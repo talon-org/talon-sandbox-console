@@ -91,7 +91,7 @@ export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps)
           <Input id="csd-image" mono value={image} onChange={e => setImage(e.target.value)} prefix={<TlnIcon name="image" size={14} style={{ color: 'var(--fg-3)' }} />} />
           <div className="image-suggest">
             {PRESET_IMAGES.map(p => (
-              <button key={p} className={p === image ? 'on' : ''} onClick={() => setImage(p)}>{p}</button>
+              <button type="button" key={p} className={p === image ? 'on' : ''} onClick={() => setImage(p)}>{p}</button>
             ))}
           </div>
         </div>

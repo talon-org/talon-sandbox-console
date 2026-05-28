@@ -131,7 +131,7 @@ export function PageSandboxes() {
   }), [sandboxes, filter, search]);
 
   const filterBtn = (val: string, label: string) => (
-    <button key={val} className="sbx-filter" aria-pressed={filter === val} onClick={() => setFilter(val)}>
+    <button type="button" key={val} className="sbx-filter" aria-pressed={filter === val} onClick={() => setFilter(val)}>
       <span>{label}</span>
       <span className="num">{counts[val] ?? 0}</span>
     </button>

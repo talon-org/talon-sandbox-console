@@ -110,6 +110,7 @@ export function Shell() {
             <span className="wm">talon</span>
           </div>
           <button
+            type="button"
             title={t('sidebar.newSandbox')}
             onClick={() => navigate('/sandboxes?new=1')}
             style={{
@@ -176,6 +177,7 @@ export function Shell() {
             <span className="role">{me?.role ?? ''}</span>
           </div>
           <button
+            type="button"
             className="logout-btn"
             title={t('common.signOut')}
             aria-label={t('common.signOut')}
@@ -204,6 +206,7 @@ export function Shell() {
 
           <div className="topbar-cmdk">
             <button
+              type="button"
               onClick={() => setCmdK(true)}
               aria-label={t('topbar.cmdk_placeholder')}
               aria-keyshortcuts="Meta+k"
@@ -215,14 +218,14 @@ export function Shell() {
           </div>
 
           <div className="topbar-actions">
-            <button className="ic-btn" title={t('topbar.notifications')} aria-label={t('topbar.notifications')}>
+            <button type="button" className="ic-btn" title={t('topbar.notifications')} aria-label={t('topbar.notifications')}>
               <TlnIcon name="bell" size={15} />
               <span className="dot" aria-hidden="true" />
             </button>
-            <button className="ic-btn" title={t('topbar.help')} aria-label={t('topbar.help')}>
+            <button type="button" className="ic-btn" title={t('topbar.help')} aria-label={t('topbar.help')}>
               <TlnIcon name="info" size={15} />
             </button>
-            <button className="ic-btn" title={t('topbar.settings')} aria-label={t('topbar.settings')}>
+            <button type="button" className="ic-btn" title={t('topbar.settings')} aria-label={t('topbar.settings')}>
               <TlnIcon name="settings" size={15} />
             </button>
           </div>

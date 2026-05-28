@@ -44,6 +44,7 @@ function Breadcrumb({ path, onNavigate, rootLabel }: BreadcrumbProps) {
   return (
     <div className="tab-files-breadcrumb">
       <button
+        type="button"
         className="tab-files-bc-item tab-files-bc-clickable"
         onClick={() => onNavigate('')}
       >
@@ -60,6 +61,7 @@ function Breadcrumb({ path, onNavigate, rootLabel }: BreadcrumbProps) {
               <span className="tab-files-bc-item tab-files-bc-current">{part}</span>
             ) : (
               <button
+                type="button"
                 className="tab-files-bc-item tab-files-bc-clickable"
                 onClick={() => onNavigate(segPath)}
               >

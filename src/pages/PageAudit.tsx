@@ -8,7 +8,8 @@ import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { useAuditEvents, useAuditStream } from '../hooks';
 import type { AuditEventDTO, AuditStreamEvent, AuditQueryParams } from '../api/types';
-import { AuditRow, typeKind } from './AuditRow';
+import { AuditRow } from './AuditRow';
+import { typeKind } from '../lib/auditUtils';
 
 import './PageAudit.css';
 
