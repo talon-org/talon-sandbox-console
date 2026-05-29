@@ -211,7 +211,7 @@
   align-items: center;
   justify-content: center;
   border: 1px solid var(--line);
-  border-radius: var(--r-2);
+  border-radius: 50%;
   background: var(--bg-2);
   color: var(--fg-2);
   cursor: pointer;
