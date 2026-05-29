@@ -5,6 +5,6 @@ export * from './InlineEmpty';
 export * from './Sparkline';
 export * from './StatusPill';
 export * from './Toast';
-export * from './TweaksPanel';
+export * from './SettingsMenu';
 export * from './RecordingPlayer';
 export * from './TerminalChrome';

@@ -1,6 +1,7 @@
-/* src/i18n/strings/tweaks.ts — theme / density / language panel */
+/* src/i18n/strings/tweaks.ts — appearance / language settings panel */
 export const tweaks = {
-  'tweaks.title':    { en: 'Tweaks', zh: '调试' },
+  'settings.title':  { en: 'Settings', zh: '设置' },
+  'tweaks.title':    { en: 'Settings', zh: '设置' },
   'tweaks.theme':    { en: 'Theme', zh: '主题' },
   'tweaks.mode':     { en: 'Mode', zh: '模式' },
   'tweaks.density':  { en: 'Density', zh: '密度' },

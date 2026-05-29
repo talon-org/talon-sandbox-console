@@ -1,7 +1,7 @@
 /* Shell — Sidebar (220px) + TopBar (48px) + main content.
  * 1:1 port of shell.jsx prototype. Styles defined in Shell.css.
  * v0.3: PageHeader removed from local impl — now re-exported from @talon-sandbox/react.
- *       TweaksPanel restored as local business shell (fixed bottom-right).
+ *       外观/语言设置收进顶栏 SettingsMenu(Popover),取代原右下角浮动面板。
  */
 import { useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
@@ -14,8 +14,7 @@ import {
   CommandGroup, CommandItem, CommandShortcut, Shortcut,
   Toaster,
 } from '@talon-sandbox/react';
-import { TweaksPanel } from '../components/TweaksPanel';
-import { ThemeToggle } from '../components/ThemeToggle';
+import { SettingsMenu } from '../components/SettingsMenu';
 
 import './Shell.css';
 
@@ -244,7 +243,6 @@ export function Shell() {
           </div>
 
           <div className="topbar-actions">
-            <ThemeToggle className="ic-btn" />
             <button type="button" className="ic-btn" title={t('topbar.notifications')} aria-label={t('topbar.notifications')}>
               <TlnIcon name="bell" size={15} />
               <span className="dot" aria-hidden="true" />
@@ -252,9 +250,7 @@ export function Shell() {
             <button type="button" className="ic-btn" title={t('topbar.help')} aria-label={t('topbar.help')}>
               <TlnIcon name="info" size={15} />
             </button>
-            <button type="button" className="ic-btn" title={t('topbar.settings')} aria-label={t('topbar.settings')}>
-              <TlnIcon name="settings" size={15} />
-            </button>
+            <SettingsMenu />
           </div>
         </header>
 
@@ -262,9 +258,6 @@ export function Shell() {
           <Outlet />
         </main>
       </div>
-
-      {/* Tweaks panel — fixed bottom-right, dev-only */}
-      {import.meta.env.DEV && <TweaksPanel />}
 
       {/* CmdK overlay */}
       <CommandDialog open={cmdkOpen} onOpenChange={setCmdK}>
