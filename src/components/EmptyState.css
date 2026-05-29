@@ -1,13 +1,7 @@
-/* EmptyState preset 图标外观 —— 用 TlnIcon 描边图标 + 视觉容器,
- * 与全站图标体系一致(不再用 ○ / ✕ 裸字符)。
- * 容器:圆角方块 + 微背景 + 描边,呼应 design system 的图标重量。 */
+/* EmptyState preset 图标 —— 裸 TlnIcon 描边图标,与全站体系一致。
+ * 不加边框/背景容器(那样会变成突兀的卡片);只控制尺寸与颜色。 */
 .es-preset-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--r-3);
-  border: 1px solid var(--line);
-  background: var(--bg-2);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   color: var(--fg-3);
@@ -15,8 +9,6 @@
 
 .es-preset-icon--error {
   color: var(--err);
-  border-color: var(--err-line, var(--line));
-  background: var(--err-soft, var(--bg-2));
 }
 
 .es-preset-icon--loading {
