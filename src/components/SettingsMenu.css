@@ -14,8 +14,10 @@
   font-family: var(--font-sans);
 }
 
-/* SegmentedGroup 包样式默认 mono + 偏大,中文下不协调:统一改 sans 并收小字号 */
-.settings-menu .tln-seg button {
+/* 包里有条 reset:[class*="tln-"] button:not(.tln-btn):not(.tln-switch){ font: inherit }
+ * 特异性 (0,3,1),会盖过普通覆盖,且 `font: inherit` 简写一次性重置 family+size。
+ * 这里用 (0,4,1) 的选择器压过它,显式给 sans + 收小字号(中文下原 mono 偏大不协调)。 */
+.settings-menu .tln-seg button:not(.tln-btn):not(.tln-switch) {
   font-family: var(--font-sans);
   font-size: 11px;
 }
