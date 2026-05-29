@@ -2,12 +2,22 @@
  * 标签统一用 sans 字体(中文下 mono 不协调),区块间距与卡片风格沿用 design tokens。
  */
 .settings-menu {
+  /* 覆盖 .tln-popover-content 的 max-height/overflow —— 设置项是固定的,
+   * 不是列表,应一屏全显示,不要滚动条。 */
   width: 268px;
-  padding: 12px;
+  max-width: none;
+  max-height: none;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   gap: 12px;
   font-family: var(--font-sans);
+}
+
+/* SegmentedGroup 包样式默认 mono + 偏大,中文下不协调:统一改 sans 并收小字号 */
+.settings-menu .tln-seg button {
+  font-family: var(--font-sans);
+  font-size: 11px;
 }
 
 .settings-menu__title {
