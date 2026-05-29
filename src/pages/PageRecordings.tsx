@@ -9,7 +9,7 @@ import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { relTime } from '../lib/relTime';
 import { useRecordings } from '../hooks';
-import { useApp } from '../store';
+import { useApp, useIsAdmin } from '../store';
 import type { RecordingQueryParams } from '../api/types';
 
 import './PageRecordings.css';
@@ -79,7 +79,7 @@ function RecordingRow({ id, title, sandboxId, agent, startedAt, durationSec, ste
 export function PageRecordings() {
   const t = useT();
   const me = useApp(s => s.me);
-  const isAdmin = me?.tenant_id === '__admin';
+  const isAdmin = useIsAdmin();
 
   const [agentFilter, setAgentFilter] = useState('all');
 

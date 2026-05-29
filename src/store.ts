@@ -119,3 +119,12 @@ export const useApp = create<AppState>((set, get) => ({
 
   setCmdK: (open) => set({ cmdkOpen: open }),
 }));
+
+// 超管租户 id —— 与后端 internal/auth/jwt.go 的 AdminTenantID 对齐。
+// tenant_id === '__admin' 的用户能看运维菜单(Workers / Tenants)。
+export const ADMIN_TENANT_ID = '__admin';
+
+/** 当前登录用户是否为超管(运维)。admin 判据收口到这里,各处统一调用。 */
+export function useIsAdmin(): boolean {
+  return useApp((s) => s.me?.tenant_id === ADMIN_TENANT_ID);
+}

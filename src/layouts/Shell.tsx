@@ -5,7 +5,7 @@
  */
 import { useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { useApp } from '../store';
+import { useApp, useIsAdmin } from '../store';
 import { useT } from '../i18n/useT';
 import { TlnIcon, Mark } from '../icons/TlnIcon';
 import { useSandboxes } from '../hooks/useSandboxes';
@@ -68,6 +68,7 @@ export function Shell() {
   const logout   = useApp(s => s.logout);
   const cmdkOpen = useApp(s => s.cmdkOpen);
   const setCmdK  = useApp(s => s.setCmdK);
+  const isAdmin  = useIsAdmin();
 
   // Real sandbox count for the sidebar badge — undefined while loading (hides badge)
   const { data: sandboxesData } = useSandboxes();
@@ -104,8 +105,11 @@ export function Shell() {
     { group: t('cmdk.group.nav'), name: t('cmdk.nav.recordings'),  icon: <TlnIcon name="film"    size={15} />, kbd: ['G', 'R'], action: () => navigate('/recordings') },
     { group: t('cmdk.group.nav'), name: t('cmdk.nav.secrets'),     icon: <TlnIcon name="key"     size={15} />, kbd: ['G', 'K'], action: () => navigate('/secrets') },
     { group: t('cmdk.group.nav'), name: t('cmdk.nav.audit'),       icon: <TlnIcon name="scroll"  size={15} />, kbd: ['G', 'A'], action: () => navigate('/audit') },
-    { group: t('cmdk.group.nav'), name: t('cmdk.nav.workers'),     icon: <TlnIcon name="server"  size={15} />, kbd: ['G', 'W'], action: () => navigate('/workers') },
-    { group: t('cmdk.group.nav'), name: t('cmdk.nav.tenants'),     icon: <TlnIcon name="users"   size={15} />, kbd: ['G', 'T'], action: () => navigate('/tenants') },
+    // 运维项(workers / tenants)仅 admin 可见,避免非 admin 从 ⌘K 跳进去吃 403
+    ...(isAdmin ? [
+      { group: t('cmdk.group.nav'), name: t('cmdk.nav.workers'),   icon: <TlnIcon name="server"  size={15} />, kbd: ['G', 'W'], action: () => navigate('/workers') },
+      { group: t('cmdk.group.nav'), name: t('cmdk.nav.tenants'),   icon: <TlnIcon name="users"   size={15} />, kbd: ['G', 'T'], action: () => navigate('/tenants') },
+    ] : []),
     { group: t('cmdk.group.actions'), name: t('cmdk.action.newSandbox'), icon: <TlnIcon name="plus"   size={15} />, kbd: ['mod', 'N'], action: () => navigate('/sandboxes?new=1') },
     { group: t('cmdk.group.actions'), name: t('cmdk.action.newSecret'),  icon: <TlnIcon name="key"    size={15} />, kbd: ['mod', 'shift', 'K'], action: () => navigate('/secrets?new=1') },
     // Sign out — no shortcut by design (destructive).
@@ -176,20 +180,22 @@ export function Shell() {
           ))}
         </nav>
 
-        {/* Admin nav */}
-        <nav className="nav-section" aria-label="Admin">
-          <div className="nav-label">{t('sidebar.admin')}</div>
-          {NAV_ADMIN.map(item => (
-            <NavLink
-              key={item.id}
-              to={item.path}
-              className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}
-            >
-              <TlnIcon name={item.icon} size={15} className="ic" />
-              <span>{t(item.labelKey)}</span>
-            </NavLink>
-          ))}
-        </nav>
+        {/* Admin nav — 仅超管(tenant_id === __admin)可见 */}
+        {isAdmin && (
+          <nav className="nav-section" aria-label="Admin">
+            <div className="nav-label">{t('sidebar.admin')}</div>
+            {NAV_ADMIN.map(item => (
+              <NavLink
+                key={item.id}
+                to={item.path}
+                className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}
+              >
+                <TlnIcon name={item.icon} size={15} className="ic" />
+                <span>{t(item.labelKey)}</span>
+              </NavLink>
+            ))}
+          </nav>
+        )}
 
         <div className="sidebar-spacer" />
 
