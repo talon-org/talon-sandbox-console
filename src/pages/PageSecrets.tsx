@@ -26,7 +26,7 @@ export function PageSecrets() {
   const [search,       setSearch]       = useState('');
   const [scope,        setScope]        = useState('all');
 
-  const { data, isLoading, isError } = useSecrets();
+  const { data, isLoading, isError, error } = useSecrets();
   const rotateMutation = useRotateSecret();
 
   useEffect(() => {
@@ -129,7 +129,7 @@ export function PageSecrets() {
         </div>
 
         {isLoading && <LocalEmptyState variant="loading" title={t('common.loading')} />}
-        {isError   && <LocalEmptyState variant="error"   title={t('common.loadFailed')} />}
+        {isError   && <LocalEmptyState variant="error"   error={error} />}
 
         {!isLoading && !isError && (
           <div className="tln-tbl">

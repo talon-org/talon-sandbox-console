@@ -19,7 +19,7 @@ import './PageWorkers.css';
 
 export function PageWorkers() {
   const t = useT();
-  const { data, isLoading, isError } = useWorkers();
+  const { data, isLoading, isError, error } = useWorkers();
 
   // G6: worker 邀请令牌弹窗状态
   const [inviteToken,    setInviteToken]    = useState<string | null>(null);
@@ -76,13 +76,7 @@ export function PageWorkers() {
       <div className="page-body">
         {isLoading && <EmptyState variant="loading" title={t('common.loading')} description={t('workers.loadingDesc')} />}
 
-        {isError && (
-          <EmptyState
-            variant="error"
-            title={t('workers.forbiddenTitle')}
-            message={t('workers.forbidden')}
-          />
-        )}
+        {isError && <EmptyState variant="error" error={error} />}
 
         {!isLoading && !isError && (
           <>

@@ -23,7 +23,7 @@ function relTime(sec: number): string {
 
 export function PageTenants() {
   const t = useT();
-  const { data, isLoading, isError } = useTenants();
+  const { data, isLoading, isError, error } = useTenants();
 
   const [detail,       setDetail]       = useState<TenantDTO | null>(null);
   const [createDialog, setCreateDialog] = useState(false);
@@ -52,7 +52,7 @@ export function PageTenants() {
 
       <div className="page-body">
         {isLoading && <EmptyState variant="loading" title={t('common.loading')} description={t('tenants.loadingDesc')} />}
-        {isError   && <EmptyState variant="error"   title={t('common.loadFailed')} />}
+        {isError   && <EmptyState variant="error"   error={error} />}
 
         {!isLoading && !isError && (
           <div className="tln-tbl">

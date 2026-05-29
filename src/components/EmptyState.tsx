@@ -20,6 +20,8 @@ import {
   EmptyStateActions,
 } from '@talon-sandbox/react';
 import { TlnIcon } from '../icons/TlnIcon';
+import { ApiError } from '../api/client';
+import { useT } from '../i18n/useT';
 
 import './EmptyState.css';
 
@@ -63,6 +65,11 @@ interface EmptyStateVariantProps {
   description?: ReactNode;
   /** Backward-compat alias for description. */
   message?: ReactNode;
+  /**
+   * variant="error" 时传入查询错误对象。组件按 ApiError.status 自动选文案:
+   * 403 → 无访问权限,其它 → 加载失败。优先级低于显式 title/description。
+   */
+  error?: unknown;
   action?: ReactNode;
   style?: CSSProperties;
   className?: string;
@@ -85,10 +92,20 @@ export type EmptyStateProps = EmptyStateVariantProps | EmptyStateBaseProps;
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function EmptyState(props: EmptyStateProps) {
+  const t = useT();
   const { variant, style, className } = props as EmptyStateVariantProps & EmptyStateBaseProps;
 
-  const desc       = props.description ?? (props as EmptyStateVariantProps).message;
-  const title      = props.title      ?? (variant ? PRESET_TITLE[variant]  : undefined);
+  // error variant + 传了 error:按 status 区分 403(无权限)与其它(加载失败),
+  // 作为 title/description 的兜底(显式 title/description 优先)。
+  const errObj = (props as EmptyStateVariantProps).error;
+  const isForbidden = variant === 'error' && errObj instanceof ApiError && errObj.status === 403;
+  const errorTitle = variant === 'error'
+    ? (isForbidden ? t('common.forbiddenTitle') : t('common.loadFailed'))
+    : undefined;
+  const errorDesc = isForbidden ? t('common.forbidden') : undefined;
+
+  const desc       = props.description ?? (props as EmptyStateVariantProps).message ?? errorDesc;
+  const title      = props.title      ?? errorTitle ?? (variant ? PRESET_TITLE[variant] : undefined);
   const icon       = (props as EmptyStateBaseProps).icon ?? (variant ? PRESET_ICON[variant] : undefined);
   const eyebrow    = (props as EmptyStateBaseProps).eyebrow;
   const action     = props.action;

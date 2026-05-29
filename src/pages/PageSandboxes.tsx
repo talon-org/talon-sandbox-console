@@ -141,8 +141,7 @@ export function PageSandboxes() {
 
   if (isLoading) return <EmptyState variant="loading" />;
   if (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    return <EmptyState variant="error" title={t('common.loadFailed')} message={msg} action={<Button onClick={() => refetch()}>{t('common.retry')}</Button>} />;
+    return <EmptyState variant="error" error={error} action={<Button onClick={() => refetch()}>{t('common.retry')}</Button>} />;
   }
 
   return (

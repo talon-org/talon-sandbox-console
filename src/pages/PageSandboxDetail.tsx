@@ -92,12 +92,10 @@ export function PageSandboxDetail() {
 
   if (isLoading) return <EmptyState variant="loading" />;
   if (error) {
-    const msg = error instanceof Error ? error.message : String(error);
     return (
       <EmptyState
         variant="error"
-        title={t('detail.loadFailed')}
-        message={msg}
+        error={error}
         action={<Button onClick={() => refetch()}>{t('common.retry')}</Button>}
       />
     );
