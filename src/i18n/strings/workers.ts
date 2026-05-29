@@ -2,6 +2,7 @@
 export const workers = {
   'workers.eyebrow':        { en: 'admin', zh: '管理' },
   'workers.title':          { en: 'Workers', zh: '节点' },
+  'workers.loadingDesc':    { en: 'Fetching worker nodes…', zh: '正在加载节点列表…' },
   'workers.desc':           { en: "Worker nodes run the actual sandbox microVMs. Drain a node before maintenance — Talon's scheduler stops sending new work.", zh: 'Worker 节点运行实际的 sandbox 微 VM。维护前先 drain 节点——Talon 调度器会停止派发新任务。' },
   'workers.sync':           { en: 'Sync', zh: '同步' },
   'workers.join':           { en: 'Join node', zh: '加入节点' },

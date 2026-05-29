@@ -2,6 +2,7 @@
 export const tenants = {
   'tenants.eyebrow':              { en: 'admin', zh: '管理' },
   'tenants.title':                { en: 'Workspaces', zh: '空间' },
+  'tenants.loadingDesc':          { en: 'Fetching workspaces…', zh: '正在加载空间列表…' },
   'tenants.desc':                 { en: 'Each workspace has isolated sandboxes, quotas, and a workspace-scoped KMS key. Cross-workspace access is denied at the API gateway.', zh: '每个空间独立的 sandbox / 配额 / KMS key。跨空间访问在 API 网关层就被拒绝。' },
   'tenants.exportCsv':            { en: 'Export CSV', zh: '导出 CSV' },
   'tenants.new':                  { en: 'New workspace', zh: '新建空间' },

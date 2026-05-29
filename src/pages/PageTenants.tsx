@@ -51,7 +51,7 @@ export function PageTenants() {
       />
 
       <div className="page-body">
-        {isLoading && <EmptyState variant="loading" title={t('common.loading')} />}
+        {isLoading && <EmptyState variant="loading" title={t('common.loading')} description={t('tenants.loadingDesc')} />}
         {isError   && <EmptyState variant="error"   title={t('common.loadFailed')} />}
 
         {!isLoading && !isError && (

@@ -74,7 +74,7 @@ export function PageWorkers() {
       />
 
       <div className="page-body">
-        {isLoading && <EmptyState variant="loading" title={t('common.loading')} />}
+        {isLoading && <EmptyState variant="loading" title={t('common.loading')} description={t('workers.loadingDesc')} />}
 
         {isError && (
           <EmptyState
