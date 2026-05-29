@@ -17,6 +17,10 @@ export const common = {
   'common.terminal':       { en: 'Terminal', zh: '终端' },
   'common.copy':           { en: 'Copy', zh: '复制' },
   'common.signOut':        { en: 'Sign out', zh: '退出登录' },
+
+  // ── Theme toggle (sun/moon) ──────────────────────────────────────────────
+  'theme.toggle.toLight':  { en: 'Switch to light', zh: '切换到亮色' },
+  'theme.toggle.toDark':   { en: 'Switch to dark', zh: '切换到暗色' },
   'common.signIn':         { en: 'Sign in', zh: '登录' },
   'common.continue':       { en: 'Continue', zh: '继续' },
   'common.loading':        { en: 'Loading…', zh: '加载中…' },

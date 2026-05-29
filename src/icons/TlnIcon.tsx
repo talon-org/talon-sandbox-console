@@ -61,6 +61,9 @@ const PATHS: Record<string, IconPaths> = {
   dot: <><circle cx="8" cy="8" r="3" fill="currentColor" stroke="none" /></>,
   flame: <><path d="M8 14c-2.5 0-4-2-4-4 0-2 1-3 1-5 0 0 2 1 2 3 0-2 1.5-3.5 2-5 1 2 4 3 4 7 0 2-2 4-5 4z" /></>,
   agent: <><path d="M3.5 6.5L8 2l4.5 4.5M8 2v8M3 13.5h10" /></>,
+  // theme toggle
+  sun: <><circle cx="8" cy="8" r="3" /><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.4 1.4M11.55 11.55l1.4 1.4M3.05 12.95l1.4-1.4M11.55 4.45l1.4-1.4" /></>,
+  moon: <><path d="M13.5 9.5A6 6 0 016.5 2.5a6 6 0 107 7z" /></>,
 };
 
 interface TlnIconProps {

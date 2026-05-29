@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from './client';
+import { apiGet, apiPost, ApiError } from './client';
 import type { Me } from '../store';
 
 export interface LoginApiKeyPayload {
@@ -48,7 +48,7 @@ async function apiGetWithToken<T>(path: string, token: string, signal?: AbortSig
   });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
-    throw new Error(`API ${res.status}: ${body || '(empty)'}`);
+    throw new ApiError(res.status, body);
   }
   return res.json() as Promise<T>;
 }

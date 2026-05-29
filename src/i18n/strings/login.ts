@@ -29,4 +29,13 @@ export const login = {
   'login.regions':        { en: 'regions', zh: '区域' },
   'login.code.header':    { en: 'Quick start · python', zh: '快速上手 · python' },
   'login.signInBtn':      { en: 'Sign in', zh: '登录' },
+
+  // ── Error messages (friendly, no raw API payloads) ───────────────────────
+  'login.err.invalidKey':    { en: 'Invalid or expired API key. Check it and try again.', zh: 'API key 无效或已过期,请检查后重试' },
+  'login.err.invalidCode':   { en: 'Code is incorrect or expired. Request a new one.', zh: '验证码错误或已过期,请重新获取' },
+  'login.err.rateLimited':   { en: 'Too many attempts. Please wait a moment.', zh: '操作太频繁,请稍后再试' },
+  'login.err.server':        { en: 'Server error. Please try again later.', zh: '服务器开小差了,请稍后重试' },
+  'login.err.network':       { en: "Can't reach the server. Check your connection.", zh: '无法连接服务器,请检查网络' },
+  'login.err.generic':       { en: 'Sign-in failed. Please try again.', zh: '登录失败,请重试' },
+  'login.err.emailRequired': { en: 'Enter your email address.', zh: '请输入邮箱地址' },
 } as const;

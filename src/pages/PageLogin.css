@@ -198,3 +198,27 @@
   border-radius: var(--r-2);
   border: 1px solid var(--line, rgba(255,255,255,0.08));
 }
+
+/* 右上角固定的主题切换按钮 */
+.login-theme-toggle {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 10;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: var(--bg-2);
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: color 0.1s, background 0.1s, border-color 0.1s;
+}
+.login-theme-toggle:hover {
+  color: var(--fg-0);
+  background: var(--bg-3);
+  border-color: var(--line-strong);
+}

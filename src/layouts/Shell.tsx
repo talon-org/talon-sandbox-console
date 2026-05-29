@@ -15,6 +15,7 @@ import {
   Toaster,
 } from '@talon-sandbox/react';
 import { TweaksPanel } from '../components/TweaksPanel';
+import { ThemeToggle } from '../components/ThemeToggle';
 
 import './Shell.css';
 
@@ -243,6 +244,7 @@ export function Shell() {
           </div>
 
           <div className="topbar-actions">
+            <ThemeToggle className="ic-btn" />
             <button type="button" className="ic-btn" title={t('topbar.notifications')} aria-label={t('topbar.notifications')}>
               <TlnIcon name="bell" size={15} />
               <span className="dot" aria-hidden="true" />

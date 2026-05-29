@@ -14,7 +14,9 @@ import {
 import { useApp } from '../store';
 import { useT } from '../i18n/useT';
 import { TlnIcon, Mark } from '../icons/TlnIcon';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { requestCode, verifyCode, loginApiKey } from '../api/auth';
+import { loginErrorKey } from '../api/errors';
 
 import './PageLogin.css';
 
@@ -99,7 +101,7 @@ export function PageLogin() {
     setErr('');
     setInfo('');
     if (!email.trim()) {
-      setErr(t('login.email') + ' required');
+      setErr(t('login.err.emailRequired'));
       return;
     }
     setSending(true);
@@ -108,7 +110,7 @@ export function PageLogin() {
       setInfo(t('login.codeSent'));
       setCooldown(60);
     } catch (ex) {
-      setErr(ex instanceof Error ? ex.message : String(ex));
+      setErr(t(loginErrorKey(ex, 'email')));
     } finally {
       setSending(false);
     }
@@ -136,7 +138,7 @@ export function PageLogin() {
       nav('/', { replace: true });
     } catch (ex) {
       console.error('[login] failed', ex);
-      setErr(ex instanceof Error ? ex.message : String(ex));
+      setErr(t(loginErrorKey(ex, tab)));
     } finally {
       setBusy(false);
     }
@@ -149,6 +151,9 @@ export function PageLogin() {
 
   return (
     <LoginLayout>
+      {/* 右上角固定悬浮的主题切换 */}
+      <ThemeToggle className="login-theme-toggle" size={16} />
+
       {/* Left: brand / marketing */}
       <LoginLayoutBrand className="login-left">
         <LoginBrandContent />
