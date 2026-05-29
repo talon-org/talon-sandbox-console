@@ -75,7 +75,7 @@ function applyAttrs() {
 }
 applyAttrs();
 
-export const useApp = create<AppState>((set, get) => ({
+export const useApp = create<AppState>((set) => ({
   authToken: read<string>(LS.token, '') || null,
   me: null,
   tenantId: null,
