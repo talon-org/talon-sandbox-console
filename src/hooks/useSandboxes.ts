@@ -34,10 +34,9 @@ export function useDeleteSandbox() {
   const isAdmin = useIsAdmin();
   const qc = useQueryClient();
   return useMutation({
-    // TODO(admin-delete): 后端暂无 DELETE /v1/admin/sandboxes/{id} 端点。
-    // 超管删除其他租户的 sandbox 时会走普通 DELETE /v1/sandboxes/{id}，
-    // 后端按当前登录用户的租户（__admin）做鉴权，跨租户时可能返回 403/404。
-    // 待后端实现 admin delete 端点后，在此根据 isAdmin 分流调用。
+    // 超管删除其他租户的 sandbox 也走 DELETE /v1/sandboxes/{id}：后端的
+    // effectiveTenant 已支持超管以资源真实归属租户身份代行（并记 audit），
+    // 跨租户删除不再 403/404，无需单独的 admin delete 端点。
     mutationFn: (id: string) => deleteSandbox(id),
     // 删除成功后同时刷新两个 key，确保 admin/普通视图均更新
     onSuccess: () => {
