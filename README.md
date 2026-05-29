@@ -32,6 +32,20 @@ pnpm build
 pnpm preview
 ```
 
+## Deploy
+
+Static SPA — build, ship `dist/` to the server's web root, reload Caddy.
+`scripts/deploy.sh` does all three; pass the target via env (no secrets in repo):
+
+```sh
+DEPLOY_HOST=user@host pnpm deploy
+```
+
+Env vars: `DEPLOY_HOST` (required), `DEPLOY_PATH` (default `/var/www/talon-sandbox-console`),
+`RELOAD_CADDY` (default `1`), `SKIP_BUILD` (default `0`). The Caddy site snippet
+(routes `/api`→backend, `/v1`→backend, everything else→static SPA) is documented at
+the bottom of `scripts/deploy.sh` and is set up once on the server.
+
 ## Project Layout
 
 ```
