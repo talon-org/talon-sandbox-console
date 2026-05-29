@@ -244,10 +244,11 @@ export function TabProcesses({ s }: { s: SandboxDTO }) {
             <span>
               <Badge
                 variant={
-                  proc.state === 'running' ? 'success'
-                  : proc.state === 'exited'  ? 'neutral'
-                  : 'danger'
+                  proc.state === 'running' ? 'ok'
+                  : proc.state === 'exited'  ? 'muted'
+                  : 'err'
                 }
+                dot={proc.state === 'running'}
               >
                 {proc.state}
               </Badge>
@@ -386,7 +387,7 @@ export function TabPorts({ s }: { s: SandboxDTO }) {
                 </span>
                 {/* 来源 badge */}
                 <span>
-                  <Badge variant={p.source === 'explicit' ? 'info' : 'neutral'}>
+                  <Badge variant={p.source === 'explicit' ? 'info' : 'muted'}>
                     {p.source === 'explicit' ? t('detail.ports.explicit') : t('detail.ports.dynamic')}
                   </Badge>
                 </span>
@@ -597,7 +598,7 @@ export function TabAudit({ events }: { events: AuditEventDTO[] }) {
               <span className="actor">{e.actor ?? '—'}</span>
               <span className="dtarget">{e.target}{e.reason ? ' · ' + e.reason : ''}</span>
               <span className="dresult">
-                <Badge variant={e.outcome === 'ok' ? 'success' : 'danger'}>{outcomeLabel}</Badge>
+                <Badge variant={e.outcome === 'ok' ? 'ok' : 'err'} dot>{outcomeLabel}</Badge>
               </span>
             </div>
           );

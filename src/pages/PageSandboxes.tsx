@@ -27,11 +27,13 @@ const STATE_COLORS: Partial<Record<SandboxState, string>> = {
 
 const ACTIVE_STATES: SandboxState[] = ['running', 'pulling-image', 'provisioning'];
 
-function stateVariant(state: SandboxState): 'success' | 'warning' | 'danger' | 'neutral' {
-  if (state === 'running') return 'success';
-  if (ACTIVE_STATES.includes(state) || state === 'paused' || state === 'idle') return 'warning';
-  if (state === 'failed') return 'danger';
-  return 'neutral';
+// variant 用 ui-lib Badge 合法值 ok|info|warn|err|muted(非 success/danger/...)
+function stateVariant(state: SandboxState): 'ok' | 'info' | 'warn' | 'err' | 'muted' {
+  if (state === 'running') return 'ok';
+  if (state === 'pulling-image' || state === 'provisioning') return 'info';
+  if (state === 'terminating') return 'warn';
+  if (state === 'failed' || state === 'evicted') return 'err';
+  return 'muted';
 }
 
 function fmtCpu(millis?: number): string {

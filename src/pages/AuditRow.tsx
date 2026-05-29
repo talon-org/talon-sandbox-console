@@ -59,7 +59,7 @@ export function AuditRow({ event }: AuditRowProps) {
       </div>
       <div className="atarget">{event.target ?? '—'}</div>
       <div>
-        <Badge variant={event.outcome === 'ok' ? 'success' : 'danger'}>{outcomeLabel}</Badge>
+        <Badge variant={event.outcome === 'ok' ? 'ok' : 'err'} dot>{outcomeLabel}</Badge>
       </div>
       <div className="ameta">{meta}</div>
       <div className="actions">
