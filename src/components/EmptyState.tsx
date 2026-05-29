@@ -31,17 +31,17 @@ type Variant = 'loading' | 'empty' | 'error';
 const PRESET_ICON: Record<Variant, ReactNode> = {
   loading: (
     <span className="es-preset-icon es-preset-icon--loading" aria-hidden="true">
-      <TlnIcon name="refresh" size={32} />
+      <TlnIcon name="refresh" size={24} />
     </span>
   ),
   empty: (
     <span className="es-preset-icon" aria-hidden="true">
-      <TlnIcon name="box" size={32} />
+      <TlnIcon name="box" size={24} />
     </span>
   ),
   error: (
     <span className="es-preset-icon es-preset-icon--error" aria-hidden="true">
-      <TlnIcon name="alert" size={32} />
+      <TlnIcon name="alert" size={24} />
     </span>
   ),
 };
