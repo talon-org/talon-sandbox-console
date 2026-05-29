@@ -7,7 +7,7 @@
  */
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { EmptyState } from '@talon-sandbox/react';
+import { EmptyState } from '../components';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { useRecordings } from '../hooks';

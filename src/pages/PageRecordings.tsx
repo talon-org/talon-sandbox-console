@@ -3,7 +3,8 @@
  */
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, EmptyState, PageHeader } from '@talon-sandbox/react';
+import { Button, PageHeader } from '@talon-sandbox/react';
+import { EmptyState } from '../components';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { relTime } from '../lib/relTime';
@@ -149,7 +150,7 @@ export function PageRecordings() {
             {items.length === 0 ? (
               <div style={{ padding: 32 }}>
                 <EmptyState
-                  icon={<TlnIcon name="video" size={24} />}
+                  icon={<TlnIcon name="film" size={24} />}
                   title={t('recordings.emptyTitle')}
                   description={t('recordings.emptyDesc')}
                 />

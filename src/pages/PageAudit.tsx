@@ -3,7 +3,8 @@
  * No mock data.
  */
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Button, SegmentedGroup, SegmentedItem, Input, EmptyState, PageHeader } from '@talon-sandbox/react';
+import { Button, SegmentedGroup, SegmentedItem, Input, PageHeader } from '@talon-sandbox/react';
+import { EmptyState } from '../components';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { useAuditEvents, useAuditStream } from '../hooks';

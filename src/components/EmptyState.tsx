@@ -19,33 +19,29 @@ import {
   EmptyStateDescription,
   EmptyStateActions,
 } from '@talon-sandbox/react';
+import { TlnIcon } from '../icons/TlnIcon';
+
+import './EmptyState.css';
 
 // ── Preset config ─────────────────────────────────────────────────────────────
 
 type Variant = 'loading' | 'empty' | 'error';
 
+// Preset 图标用 TlnIcon 描边图标 + 视觉容器,与全站图标体系一致。
 const PRESET_ICON: Record<Variant, ReactNode> = {
   loading: (
-    <span
-      aria-hidden="true"
-      style={{
-        display: 'inline-block',
-        fontSize: 28,
-        color: 'var(--fg-3)',
-        animation: 'tln-spin 1s linear infinite',
-      }}
-    >
-      ⟳
+    <span className="es-preset-icon es-preset-icon--loading" aria-hidden="true">
+      <TlnIcon name="refresh" size={22} />
     </span>
   ),
   empty: (
-    <span aria-hidden="true" style={{ fontSize: 28, color: 'var(--fg-3)' }}>
-      ○
+    <span className="es-preset-icon" aria-hidden="true">
+      <TlnIcon name="box" size={22} />
     </span>
   ),
   error: (
-    <span aria-hidden="true" style={{ fontSize: 28, color: 'var(--err)' }}>
-      ✕
+    <span className="es-preset-icon es-preset-icon--error" aria-hidden="true">
+      <TlnIcon name="alert" size={22} />
     </span>
   ),
 };

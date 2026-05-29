@@ -6,7 +6,7 @@ import { useSearchParams } from 'react-router-dom';
 import {
   Button, Input, PageHeader,
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-  EmptyState, toast,
+  toast,
 } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
@@ -149,7 +149,7 @@ export function PageSecrets() {
 
             {list.length === 0 && (
               <div style={{ padding: 32 }}>
-                <EmptyState
+                <LocalEmptyState
                   icon={<TlnIcon name="key" size={24} />}
                   title={t('secrets.empty.head')}
                   description={t('secrets.empty.desc')}
