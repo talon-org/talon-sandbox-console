@@ -121,12 +121,13 @@ export function PageSandboxes() {
     else if (filter !== 'all' && s.state !== filter) return false;
     if (search) {
       const q = search.toLowerCase();
-      // G2：name 字段也参与搜索
+      // G2：name 字段也参与搜索；admin 视角下 tenant_id 也参与搜索
       if (
         !s.id.toLowerCase().includes(q) &&
         !(s.name ?? '').toLowerCase().includes(q) &&
         !(s.profile ?? '').toLowerCase().includes(q) &&
-        !(s.image_id ?? '').toLowerCase().includes(q)
+        !(s.image_id ?? '').toLowerCase().includes(q) &&
+        !(s.tenant_id ?? '').toLowerCase().includes(q)
       ) return false;
     }
     return true;
