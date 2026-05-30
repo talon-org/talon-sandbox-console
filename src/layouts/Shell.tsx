@@ -19,7 +19,6 @@ import { SettingsMenu } from '../components/SettingsMenu';
 import './Shell.css';
 
 // ── Static sidebar data ────────────────────────────────────────────────────────
-const STATIC_TENANT = { name: 'Acme · Inc.', plan: 'Enterprise' };
 
 const NAV_WORKSPACE_BASE: Array<{ id: string; labelKey: string; icon: string; path: string; count?: number }> = [
   { id: 'dashboard',  labelKey: 'nav.dashboard',  icon: 'home',   path: '/dashboard' },
@@ -156,16 +155,6 @@ export function Shell() {
           >
             <TlnIcon name="plus" size={14} />
           </button>
-        </div>
-
-        {/* Tenant switcher */}
-        <div className="tenant-switcher" role="button" tabIndex={0} aria-label="Switch workspace">
-          <div className="avatar">{STATIC_TENANT.name[0]}</div>
-          <div className="who">
-            <span className="name">{STATIC_TENANT.name}</span>
-            <span className="plan">{STATIC_TENANT.plan}</span>
-          </div>
-          <TlnIcon name="chevronDown" size={12} style={{ color: 'var(--fg-3)' }} />
         </div>
 
         {/* Workspace nav */}

@@ -3,6 +3,7 @@ export const apiKeys = {
   'apiKeys.title':               { en: 'API Keys', zh: 'API Keys' },
   'apiKeys.desc':                { en: 'Manage API keys for programmatic access. Keys inherit your workspace role.', zh: '管理用于程序访问的 API Key。Key 权限继承自你的工作区角色。' },
   'apiKeys.create.title':        { en: 'Create Key', zh: '创建 Key' },
+  'apiKeys.field.name':          { en: 'Key details', zh: 'Key 信息' },
   'apiKeys.create.labelLabel':   { en: 'Label', zh: '标签' },
   'apiKeys.create.labelPlaceholder': { en: 'e.g. ci-runner, local-dev', zh: '如 ci-runner、本地开发' },
   'apiKeys.create.labelHint':    { en: 'A human-readable name to identify this key.', zh: '便于识别此 Key 的可读名称。' },
