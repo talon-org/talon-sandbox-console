@@ -1,5 +1,5 @@
 .rec-row {
-  grid-template-columns: 1.8fr 1fr 0.8fr 0.9fr 0.6fr 0.6fr 60px;
+  grid-template-columns: 1.8fr 1fr 0.8fr 0.9fr 0.6fr 0.6fr;
 }
 .rec-row .rectitle { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .rec-row .rectitle .t1 { font-size: 13px; color: var(--fg-0); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -11,6 +11,7 @@ export const recordings = {
   'recordings.colSteps':     { en: 'Steps', zh: '步骤' },
   'recordings.frames':       { en: 'frames', zh: '帧' },
   'recordings.filterAll':    { en: 'All agents', zh: '全部 Agent' },
+  'recordings.clearSandboxFilter': { en: 'Clear sandbox filter', zh: '清除 sandbox 过滤' },
   'recordings.emptyTitle':   { en: 'No recordings yet', zh: '暂无录像' },
   'recordings.emptyDesc':    { en: 'Recordings appear here when an agent shell session is captured.', zh: '当 agent shell 会话被录制后,录像会显示在这里。' },
   'recordings.loadingDesc':  { en: 'Fetching recordings…', zh: '正在加载录像…' },

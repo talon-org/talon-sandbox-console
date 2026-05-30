@@ -1,7 +1,7 @@
 /* AuditRow — 审计事件表格单行组件。
  * 从 PageAudit 中抽离，保持该文件在 200 行以内。
  */
-import { Button, Badge } from '@talon-sandbox/react';
+import { Badge } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { relTime as sharedRelTime } from '../lib/relTime';
@@ -62,11 +62,6 @@ export function AuditRow({ event }: AuditRowProps) {
         <Badge variant={event.outcome === 'ok' ? 'ok' : 'err'} dot>{outcomeLabel}</Badge>
       </div>
       <div className="ameta">{meta}</div>
-      <div className="actions">
-        <Button variant="ghost" size="sm" iconOnly aria-label="More">
-          <TlnIcon name="more" size={14} />
-        </Button>
-      </div>
     </div>
   );
 }

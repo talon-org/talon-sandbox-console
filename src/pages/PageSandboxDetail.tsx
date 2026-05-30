@@ -17,7 +17,10 @@ import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { EmptyState } from '../components/EmptyState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { useSandbox, useDeleteSandbox, useAuditEvents } from '../hooks';
+import {
+  useSandbox, useDeleteSandbox, useAuditEvents,
+  useStartSandbox, useStopSandbox, usePauseSandbox,
+} from '../hooks';
 import type { SandboxState, SandboxDTO } from '../api/types';
 import { TabOverview, TabProcesses, TabPorts, TabFiles, TabNetwork, TabAudit } from './_sandboxes/DetailTabs';
 
@@ -85,7 +88,12 @@ export function PageSandboxDetail() {
   const [confirmKill, setConfirmKill] = useState(false);
 
   const { data: s, isLoading, error, refetch } = useSandbox(id);
-  const del = useDeleteSandbox();
+  const del   = useDeleteSandbox();
+  const start = useStartSandbox();
+  const stop  = useStopSandbox();
+  const pause = usePauseSandbox();
+  // 生命周期操作进行中:任一 mutation pending 时禁用整组按钮,防止并发重复点击。
+  const lifecycleBusy = start.isPending || stop.isPending || pause.isPending;
 
   const { data: auditData } = useAuditEvents({ target: id, limit: 50 });
   const auditEvents = auditData?.events ?? [];
@@ -167,19 +175,49 @@ export function PageSandboxDetail() {
             <TlnIcon name="terminal" size={14} />
             {t('detail.openShell')}
           </Button>
+          {/* 次级操作:全部连真实后端端点,按状态机条件渲染——只显示当前状态下
+           * 合法的转移,不渲染点了无效的按钮。
+           *   running        → 暂停(pause)/ 停止(stop)
+           *   paused/stopped → 启动(start)
+           * 「录像」始终可见,深链到该 sandbox 过滤后的录像列表。 */}
           <div className="det-actions-sec">
-            <Button variant="ghost" iconOnly aria-label={t('common.recordings')} title={t('common.recordings')}>
+            <Button
+              variant="ghost" iconOnly
+              aria-label={t('common.recordings')} title={t('common.recordings')}
+              onClick={() => nav('/recordings?sandbox=' + encodeURIComponent(s.id))}
+            >
               <TlnIcon name="film" size={14} />
             </Button>
-            <Button variant="ghost" iconOnly aria-label={t('common.restart')} title={t('common.restart')}>
-              <TlnIcon name="refresh" size={14} />
-            </Button>
-            <Button variant="ghost" iconOnly aria-label={t('common.pause')} title={t('common.pause')}>
-              <TlnIcon name="pause" size={14} />
-            </Button>
+            {s.state === 'running' && (
+              <Button
+                variant="ghost" iconOnly disabled={lifecycleBusy}
+                aria-label={t('common.pause')} title={t('common.pause')}
+                onClick={() => pause.mutate(s.id)}
+              >
+                <TlnIcon name="pause" size={14} />
+              </Button>
+            )}
+            {(s.state === 'paused' || s.state === 'stopped') && (
+              <Button
+                variant="ghost" iconOnly disabled={lifecycleBusy}
+                aria-label={t('common.start')} title={t('common.start')}
+                onClick={() => start.mutate(s.id)}
+              >
+                <TlnIcon name="play" size={14} />
+              </Button>
+            )}
+            {(s.state === 'running' || s.state === 'paused' || s.state === 'idle') && (
+              <Button
+                variant="ghost" iconOnly disabled={lifecycleBusy}
+                aria-label={t('common.stop')} title={t('common.stop')}
+                onClick={() => stop.mutate(s.id)}
+              >
+                <TlnIcon name="stop" size={14} />
+              </Button>
+            )}
           </div>
           <Button variant="ghost" onClick={() => setConfirmKill(true)} className="det-kill-btn">
-            <TlnIcon name="stop" size={14} />
+            <TlnIcon name="trash" size={14} />
             {t('common.kill')}
           </Button>
         </div>

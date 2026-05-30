@@ -1,5 +1,5 @@
 /* src/api/secrets.ts — pure HTTP functions, no React */
-import { apiGet, apiPost, API_BASE, ApiError } from './client';
+import { apiGet, apiPost, apiDelete, API_BASE, ApiError } from './client';
 import { useApp } from '../store';
 import type {
   SecretListResponse, SecretDTO,
@@ -15,6 +15,11 @@ export async function createSecret(
   signal?: AbortSignal,
 ): Promise<SecretDTO> {
   return apiPost<SecretDTO>('/v1/secrets', req, signal);
+}
+
+/** DELETE /v1/secrets/{id} — 永久删除凭据，返回 204 */
+export async function deleteSecret(id: string, signal?: AbortSignal): Promise<void> {
+  return apiDelete(`/v1/secrets/${id}`, signal);
 }
 
 /** PATCH /v1/secrets/{id} — marks last_rotated_at only (value unchanged) */

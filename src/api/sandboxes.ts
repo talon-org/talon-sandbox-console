@@ -62,6 +62,21 @@ export async function deleteSandbox(id: string, signal?: AbortSignal): Promise<v
   return apiDelete(`/v1/sandboxes/${id}`, signal);
 }
 
+/** POST /v1/sandboxes/{id}/start — 启动已停止的 sandbox。 */
+export async function startSandbox(id: string, signal?: AbortSignal): Promise<SandboxDTO> {
+  return apiPost<SandboxDTO>(`/v1/sandboxes/${id}/start`, {}, signal);
+}
+
+/** POST /v1/sandboxes/{id}/stop — 停止运行中的 sandbox。 */
+export async function stopSandbox(id: string, signal?: AbortSignal): Promise<SandboxDTO> {
+  return apiPost<SandboxDTO>(`/v1/sandboxes/${id}/stop`, {}, signal);
+}
+
+/** POST /v1/sandboxes/{id}/pause — 暂停运行中的 sandbox。 */
+export async function pauseSandbox(id: string, signal?: AbortSignal): Promise<SandboxDTO> {
+  return apiPost<SandboxDTO>(`/v1/sandboxes/${id}/pause`, {}, signal);
+}
+
 /** WebSocket URL for PTY connection.
  *
  * Auth handling differs from regular fetch() calls: the browser WebSocket API

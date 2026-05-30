@@ -1,6 +1,6 @@
 /* src/hooks/useSecrets.ts */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { listSecrets, createSecret, rotateSecret } from '../api/secrets';
+import { listSecrets, createSecret, rotateSecret, deleteSecret } from '../api/secrets';
 import type { CreateSecretRequest, RotateSecretRequest, SecretListResponse } from '../api/types';
 
 export const SECRETS_KEY = ['secrets'] as const;
@@ -25,6 +25,14 @@ export function useRotateSecret() {
   return useMutation({
     mutationFn: ({ id, req }: { id: string; req?: RotateSecretRequest }) =>
       rotateSecret(id, req),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SECRETS_KEY }),
+  });
+}
+
+export function useDeleteSecret() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteSecret(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: SECRETS_KEY }),
   });
 }

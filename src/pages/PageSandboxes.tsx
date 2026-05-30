@@ -177,6 +177,7 @@ export function PageSandboxes() {
             {filterBtn('failed',        t('sbx.filterFailed'))}
           </div>
           <div style={{ flex: 1 }} />
+          {/* 搜索框已覆盖筛选意图，原 filter 图标按钮（无 onClick）属冗余装饰，已删除 */}
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -184,9 +185,6 @@ export function PageSandboxes() {
             prefix={<TlnIcon name="search" size={14} style={{ color: 'var(--fg-3)' }} />}
             style={{ width: 280 }}
           />
-          <Button variant="ghost" iconOnly title={t('common.filter')} aria-label={t('common.filter')}>
-            <TlnIcon name="filter" size={14} />
-          </Button>
         </div>
 
         <div className="tln-tbl">

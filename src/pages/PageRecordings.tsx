@@ -1,8 +1,8 @@
 /* PageRecordings — workspace: recording session list.
  * Data from useRecordings() hook; no mock data.
  */
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useRef, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, PageHeader } from '@talon-sandbox/react';
 import { EmptyState } from '../components';
 import { useT } from '../i18n/useT';
@@ -67,11 +67,6 @@ function RecordingRow({ id, title, sandboxId, agent, startedAt, durationSec, ste
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--fg-1)' }}>
         {steps}
       </div>
-      <div className="actions" onClick={e => e.stopPropagation()}>
-        <Button variant="ghost" size="sm" iconOnly aria-label="More">
-          <TlnIcon name="more" size={14} />
-        </Button>
-      </div>
     </div>
   );
 }
@@ -83,15 +78,57 @@ export function PageRecordings() {
 
   const [agentFilter, setAgentFilter] = useState('all');
 
+  // sandbox 过滤:从 URL query 读(详情页「录像」按钮跳转时带 ?sandbox=<id>)。
+  // 用 query 而非 state,使该过滤可被链接/刷新保留,并能从详情页直接深链进来。
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sandboxFilter = searchParams.get('sandbox') ?? '';
+  const clearSandboxFilter = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('sandbox');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   const queryOpts: RecordingQueryParams = useMemo(() => {
     const p: RecordingQueryParams = { limit: 50 };
     if (agentFilter !== 'all') p.agent = agentFilter;
+    if (sandboxFilter) p.sandbox_id = sandboxFilter;
     if (!isAdmin && me?.tenant_id) p.tenant_id = me.tenant_id;
     return p;
-  }, [agentFilter, isAdmin, me?.tenant_id]);
+  }, [agentFilter, sandboxFilter, isAdmin, me?.tenant_id]);
 
   const { data, isLoading, isError } = useRecordings(queryOpts);
   const items = data?.items ?? [];
+
+  // Agent 筛选选项:后端没有 agent 目录端点,从已加载录像里累积提取 distinct agent。
+  // 用 ref 跨渲染累积——选了具体 agent 后列表只剩该 agent,但 chip 仍保留之前见过
+  // 的全部 agent,避免筛选后选项消失。
+  const seenAgentsRef = useRef<Set<string>>(new Set());
+  for (const r of items) {
+    if (r.agent) seenAgentsRef.current.add(r.agent);
+  }
+  const agentOptions = useMemo<string[]>(
+    () => Array.from(seenAgentsRef.current).sort(),
+    // items 变化时重算(ref 已在上面累积)
+    [items],
+  );
+
+  // 导出 CSV:把当前可见录像列表导出(纯前端,RFC4180 转义 + BOM)。
+  const handleExportCsv = useCallback(() => {
+    const esc = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
+    const header = ['id', 'title', 'sandbox_id', 'agent', 'started_at', 'duration_sec', 'steps', 'size_kb', 'frames'];
+    const rows = items.map(r => [
+      r.id, r.title ?? '', r.sandbox_id, r.agent ?? '',
+      r.started_at ?? '', r.duration_sec, r.steps, r.size_kb, r.frames,
+    ].map(esc).join(','));
+    const csv = '﻿' + [header.map(esc).join(','), ...rows].join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `recordings-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [items]);
 
   return (
     <>
@@ -101,11 +138,7 @@ export function PageRecordings() {
         desc={t('recordings.desc')}
         actions={
           <>
-            <Button variant="ghost">
-              <TlnIcon name="filter" size={14} />
-              {t('common.filter')}
-            </Button>
-            <Button variant="ghost">
+            <Button variant="default" onClick={handleExportCsv} disabled={items.length === 0}>
               <TlnIcon name="download" size={14} />
               {t('common.export')}
             </Button>
@@ -114,12 +147,37 @@ export function PageRecordings() {
       />
 
       <div className="page-body">
-        {isAdmin && (
+        {/* sandbox 过滤提示条:从详情页深链进来时显示,可一键清除回到全部录像。 */}
+        {sandboxFilter && (
+          <div className="sbx-filters" style={{ marginBottom: 14 }}>
+            <button className="sbx-filter" aria-pressed onClick={clearSandboxFilter} title={t('recordings.clearSandboxFilter')}>
+              <span style={{ fontFamily: 'var(--font-mono)' }}>{sandboxFilter}</span>
+              <TlnIcon name="x" size={11} />
+            </button>
+          </div>
+        )}
+        {/* Agent 筛选:从当前录像里提取 distinct agent 动态生成 chip(与审计页同款
+            .sbx-filter 风格)。只有存在 agent 数据时才显示;无 agent 则不渲染筛选行。 */}
+        {agentOptions.length > 0 && (
           <div className="sbx-filters" style={{ marginBottom: 14 }}>
             <div className="group">
-              <button className={'filter-btn' + (agentFilter === 'all' ? ' active' : '')} onClick={() => setAgentFilter('all')}>
-                {t('recordings.filterAll')}
+              <button
+                className="sbx-filter"
+                aria-pressed={agentFilter === 'all'}
+                onClick={() => setAgentFilter('all')}
+              >
+                <span>{t('recordings.filterAll')}</span>
               </button>
+              {agentOptions.map(a => (
+                <button
+                  key={a}
+                  className="sbx-filter"
+                  aria-pressed={agentFilter === a}
+                  onClick={() => setAgentFilter(a)}
+                >
+                  <span>{a}</span>
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -144,7 +202,6 @@ export function PageRecordings() {
               <div role="columnheader">{t('recordings.colStarted')}</div>
               <div role="columnheader">{t('recordings.colDuration')}</div>
               <div role="columnheader">{t('recordings.colSteps')}</div>
-              <div role="columnheader" />
             </div>
 
             {items.length === 0 ? (

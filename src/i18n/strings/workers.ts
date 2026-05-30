@@ -10,7 +10,6 @@ export const workers = {
   'workers.draining':       { en: 'Draining', zh: '渡出中' },
   'workers.unhealthy':      { en: 'Unhealthy', zh: '不健康' },
   'workers.capacity':       { en: 'Sandbox / Capacity', zh: 'Sandbox / 容量' },
-  'workers.drain':          { en: 'Drain · Restart', zh: 'Drain · 重启' },
   'workers.nodes':          { en: 'nodes', zh: '个节点' },
   'workers.regions':        { en: 'regions', zh: '个区域' },
   'workers.colWorker':      { en: 'Worker', zh: 'Worker' },

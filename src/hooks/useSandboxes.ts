@@ -1,6 +1,9 @@
 /* src/hooks/useSandboxes.ts */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { listSandboxes, listAdminSandboxes, createSandbox, deleteSandbox } from '../api/sandboxes';
+import {
+  listSandboxes, listAdminSandboxes, createSandbox, deleteSandbox,
+  startSandbox, stopSandbox, pauseSandbox,
+} from '../api/sandboxes';
 import { useIsAdmin } from '../store';
 import type { CreateSandboxRequest, SandboxListResponse } from '../api/types';
 
@@ -29,6 +32,31 @@ export function useCreateSandbox() {
     onSuccess: () => qc.invalidateQueries({ queryKey: SANDBOXES_KEY }),
   });
 }
+
+/**
+ * sandbox 生命周期操作（start / stop / pause）统一 mutation。
+ * 后端 effectiveTenant 已支持超管跨租户代行，三个端点对普通/超管路径一致，
+ * 故无需按 admin 分流。成功后同时刷新列表（两个 key）与单条详情缓存，
+ * 让详情页与列表页状态立即同步。
+ */
+function useSandboxLifecycle(
+  fn: (id: string) => Promise<unknown>,
+) {
+  const isAdmin = useIsAdmin();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => fn(id),
+    onSuccess: (_data, id) => {
+      qc.invalidateQueries({ queryKey: SANDBOXES_KEY });
+      qc.invalidateQueries({ queryKey: ['sandboxes', id] });
+      if (isAdmin) qc.invalidateQueries({ queryKey: ADMIN_SANDBOXES_KEY });
+    },
+  });
+}
+
+export const useStartSandbox = () => useSandboxLifecycle(startSandbox);
+export const useStopSandbox  = () => useSandboxLifecycle(stopSandbox);
+export const usePauseSandbox = () => useSandboxLifecycle(pauseSandbox);
 
 export function useDeleteSandbox() {
   const isAdmin = useIsAdmin();

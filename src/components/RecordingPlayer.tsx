@@ -122,6 +122,31 @@ export function RecordingPlayer({
   const visibleCount = useMemo(() => countVisible(frames, currentTime), [frames, currentTime]);
   const visibleFrames = frames.slice(0, visibleCount);
 
+  // 导出 asciicast v2(.cast):首行 header,其后每帧一行 [time, "o", text]。
+  // 这是 asciinema 的标准格式,导出的文件可用 asciinema play 本地回放。
+  // frames 为空时按钮 disabled——不导空文件,避免假装有内容可导。
+  const handleExportCast = useCallback(() => {
+    const header = {
+      version: 2,
+      width: 80,
+      height: 24,
+      timestamp: 0,
+      title: recording.title ?? recording.id,
+    };
+    const lines = [JSON.stringify(header)];
+    for (const f of frames) {
+      // asciicast 事件的 text 末尾补换行,贴近终端逐行输出的视觉
+      lines.push(JSON.stringify([f.time, 'o', f.text + '\r\n']));
+    }
+    const blob = new Blob([lines.join('\n')], { type: 'application/x-asciicast' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${recording.id}.cast`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [frames, recording.id, recording.title]);
+
   useEffect(() => {
     if (stageRef.current) {
       stageRef.current.scrollTop = stageRef.current.scrollHeight;
@@ -203,13 +228,11 @@ export function RecordingPlayer({
           )}
         </div>
         <div className="recp-top-actions">
-          <Button size="sm" variant="ghost">
+          {/* 导出 .cast(asciicast v2);无帧数据时禁用,不导空文件。Share 已移除
+              ——后端无分享端点,不保留指向不存在功能的死按钮。 */}
+          <Button size="sm" variant="ghost" onClick={handleExportCast} disabled={frames.length === 0}>
             <TlnIcon name="download" size={14} />
             {t('recordings.exportCast', '.cast')}
-          </Button>
-          <Button size="sm" variant="ghost">
-            <TlnIcon name="external" size={14} />
-            {t('recordings.share', 'Share')}
           </Button>
         </div>
       </div>

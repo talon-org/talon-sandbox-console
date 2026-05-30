@@ -1,7 +1,7 @@
-/* PageSecrets — secrets list + create drawer + rotate dialog.
- * Data: useSecrets() / useRotateSecret() from src/hooks/useSecrets.ts
+/* PageSecrets — secrets list + create drawer + rotate dialog + delete confirm.
+ * Data: useSecrets() / useRotateSecret() / useDeleteSecret() from src/hooks/useSecrets.ts
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Button, Input, PageHeader,
@@ -10,8 +10,9 @@ import {
 } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
-import { useSecrets, useRotateSecret } from '../hooks/useSecrets';
+import { useSecrets, useRotateSecret, useDeleteSecret } from '../hooks/useSecrets';
 import { EmptyState as LocalEmptyState } from '../components';
+import { ConfirmDialog } from '../components';
 import type { SecretDTO } from '../api/types';
 import { CreateSecretDrawer } from './_secrets/CreateSecretDrawer';
 import { SecretRow } from './_secrets/SecretRow';
@@ -23,11 +24,13 @@ export function PageSecrets() {
   const [searchParams] = useSearchParams();
   const [drawer,       setDrawer]       = useState(false);
   const [rotateTarget, setRotateTarget] = useState<SecretDTO | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SecretDTO | null>(null);
   const [search,       setSearch]       = useState('');
   const [scope,        setScope]        = useState('all');
 
   const { data, isLoading, isError, error } = useSecrets();
   const rotateMutation = useRotateSecret();
+  const deleteMutation = useDeleteSecret();
 
   useEffect(() => {
     if (searchParams.get('new') === '1') setDrawer(true);
@@ -67,6 +70,42 @@ export function PageSecrets() {
     );
   };
 
+  const handleDeleteConfirm = () => {
+    if (!deleteTarget) return;
+    const name = deleteTarget.name;
+    const id   = deleteTarget.id;
+    setDeleteTarget(null);
+    deleteMutation.mutate(id, {
+      onSuccess: () => toast.success(name + ' — ' + t('secrets.deleteSuccess')),
+      onError:   () => toast.error(name + ' — ' + t('common.loadFailed')),
+    });
+  };
+
+  // 导出当前可见列表为 CSV（纯前端，RFC4180 转义 + BOM）。
+  // 安全提醒：只导出元数据字段（name、scope、created_by、used_by_count 等），
+  // 凭据值（value / ciphertext）后端本就不返回，此处绝对不含任何密文。
+  const handleExportCsv = useCallback(() => {
+    const esc = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
+    const header = ['name', 'scope', 'created_by', 'used_by_count', 'last_rotated_at', 'last_used_at', 'expires_at'];
+    const rows = list.map(s => [
+      s.name,
+      s.scope ?? 'tenant',
+      s.created_by ?? '',
+      s.used_by_count,
+      s.last_rotated_at ?? '',
+      s.last_used_at ?? '',
+      s.expires_at ?? '',
+    ].map(esc).join(','));
+    const csv = '﻿' + [header.map(esc).join(','), ...rows].join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `secrets-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [list]);
+
   return (
     <>
       <PageHeader
@@ -75,7 +114,7 @@ export function PageSecrets() {
         desc={t('secrets.desc')}
         actions={
           <>
-            <Button variant="ghost">
+            <Button variant="default" onClick={handleExportCsv} disabled={list.length === 0}>
               <TlnIcon name="download" size={14} />
               {t('common.export')}
             </Button>
@@ -137,14 +176,18 @@ export function PageSecrets() {
               <div>{t('secrets.colName')}</div>
               <div>{t('secrets.colRotated')}</div>
               <div>{t('secrets.colUsed')}</div>
-              <div>{t('secrets.colUsage30d')}</div>
               <div>{t('secrets.colSandboxes')}</div>
               <div>{t('secrets.colCreatedBy')}</div>
               <div />
             </div>
 
             {list.map(s => (
-              <SecretRow key={s.id} secret={s} onRotate={setRotateTarget} />
+              <SecretRow
+                key={s.id}
+                secret={s}
+                onRotate={setRotateTarget}
+                onDelete={setDeleteTarget}
+              />
             ))}
 
             {list.length === 0 && (
@@ -168,6 +211,7 @@ export function PageSecrets() {
 
       <CreateSecretDrawer open={drawer} onClose={() => setDrawer(false)} />
 
+      {/* 轮换确认弹窗 */}
       <Dialog open={!!rotateTarget} onOpenChange={(o) => { if (!o) setRotateTarget(null); }}>
         <DialogContent>
           <DialogHeader>
@@ -188,6 +232,25 @@ export function PageSecrets() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 删除确认弹窗（ConfirmDialog 复用 PageApiKeys 风格） */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteConfirm}
+        title={
+          <>
+            {t('secrets.deleteTitle')}&nbsp;
+            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--magenta, #c678dd)' }}>
+              {deleteTarget?.name}
+            </span>
+          </>
+        }
+        description={t('secrets.deleteBody')}
+        confirmLabel={t('secrets.deleteConfirm')}
+        loading={deleteMutation.isPending}
+        danger
+      />
     </>
   );
 }

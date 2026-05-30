@@ -18,7 +18,6 @@ export const secrets = {
   'secrets.colName':              { en: 'Name · Scope', zh: '名称 · 范围' },
   'secrets.colRotated':           { en: 'Last rotated', zh: '上次轮换' },
   'secrets.colUsed':              { en: 'Last used', zh: '上次使用' },
-  'secrets.colUsage30d':          { en: 'Usage · 30d', zh: '使用次数 · 30d' },
   'secrets.colSandboxes':         { en: 'Sandboxes', zh: 'Sandbox' },
   'secrets.colCreatedBy':         { en: 'Created by', zh: '创建者' },
   'secrets.view':                 { en: 'View', zh: '查看' },
@@ -48,9 +47,18 @@ export const secrets = {
   'secrets.create.submit':        { en: 'Create', zh: '创建' },
   'secrets.create.nameLabel':     { en: 'Name', zh: '名称' },
   'secrets.create.scopeLabel':    { en: 'Scope', zh: '范围' },
-  'secrets.viewToast':            { en: 'Shown for 30s — copy now', zh: '已显示 30s，请立即复制' },
   'secrets.rotateSuccess':        { en: 'Rotated · sandboxes refresh within 60s', zh: '已轮换 · sandbox 将在 60s 内刷新' },
   // 范围 pill 翻译（每行 SecretRow 使用）
   'secrets.scope.tenant':         { en: 'Workspace scope', zh: '空间范围' },
   'secrets.scope.sandbox':        { en: 'Sandbox scope', zh: 'Sandbox 范围' },
+  // 行级操作
+  'secrets.copyName':             { en: 'Copy name', zh: '复制名称' },
+  'secrets.copyNameSuccess':      { en: 'Name copied', zh: '名称已复制' },
+  'secrets.delete':               { en: 'Delete', zh: '删除' },
+  'secrets.deleteTitle':          { en: 'Delete secret?', zh: '删除凭据？' },
+  'secrets.deleteBody':           { en: 'This will permanently revoke the secret. Running sandboxes that depend on it will lose access immediately.', zh: '此操作将永久吊销凭据。依赖该凭据的运行中 sandbox 将立即失去访问权限。' },
+  'secrets.deleteConfirm':        { en: 'Delete', zh: '删除' },
+  'secrets.deleteSuccess':        { en: 'Secret deleted', zh: '凭据已删除' },
+  // 导出 CSV
+  'secrets.exportDisabled':       { en: 'No secrets to export', zh: '没有可导出的凭据' },
 } as const;

@@ -19,7 +19,7 @@ import './PageWorkers.css';
 
 export function PageWorkers() {
   const t = useT();
-  const { data, isLoading, isError, error } = useWorkers();
+  const { data, isLoading, isError, error, refetch, isFetching } = useWorkers();
 
   // G6: worker 邀请令牌弹窗状态
   const [inviteToken,    setInviteToken]    = useState<string | null>(null);
@@ -60,7 +60,8 @@ export function PageWorkers() {
         desc={t('workers.desc')}
         actions={
           <>
-            <Button variant="ghost">
+            {/* 同步按钮：手动触发 react-query refetch，参考 PageDashboard 的 refresh 按钮 */}
+            <Button variant="ghost" onClick={() => refetch()} disabled={isFetching}>
               <TlnIcon name="refresh" size={14} />
               {t('workers.sync')}
             </Button>

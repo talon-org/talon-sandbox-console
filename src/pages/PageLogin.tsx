@@ -312,37 +312,6 @@ export function PageLogin() {
             </Button>
           </form>
 
-          {/* SSO */}
-          <div className="sso-divider">{t('login.continueWith')}</div>
-          <div className="sso-section">
-            <Button
-              variant="default"
-              size="md"
-              style={{ width: '100%', justifyContent: 'center', gap: 8 }}
-            >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 0a8 8 0 00-2.5 15.6c.4.1.5-.2.5-.4v-1.4c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.2 1.9.9 2.3.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-3.9 0-.9.3-1.6.8-2.1 0-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8a7.5 7.5 0 014 0c1.5-1 2.2-.8 2.2-.8.5 1.1.1 1.9.1 2.1.5.5.8 1.2.8 2.1 0 3-1.8 3.7-3.6 3.9.3.2.5.7.5 1.4v2c0 .2.1.5.5.4A8 8 0 008 0z" />
-              </svg>
-              {t('login.github')}
-            </Button>
-            <Button
-              variant="default"
-              size="md"
-              style={{ width: '100%', justifyContent: 'center', gap: 8 }}
-            >
-              <svg width="14" height="14" viewBox="0 0 16 16">
-                <path d="M14.7 8.2c0-.5-.1-1-.2-1.5H8v2.9h3.8c-.2.9-.7 1.6-1.4 2v1.7h2.2c1.3-1.2 2.1-2.9 2.1-5.1z" fill="#4285F4"/>
-                <path d="M8 15c1.9 0 3.5-.6 4.7-1.7L10.5 11.6c-.6.4-1.4.7-2.5.7-1.9 0-3.5-1.3-4.1-3H1.6v1.9C2.8 13.6 5.2 15 8 15z" fill="#34A853"/>
-                <path d="M3.9 9.3c-.1-.4-.2-.9-.2-1.3V4.8H1.6C1.2 5.7 1 6.8 1 8s.2 2.3.6 3.2l2.3-1.9z" fill="#FBBC05"/>
-                <path d="M8 3.6c1 0 2 .4 2.7 1.1l2-2C11.5 1.6 9.9 1 8 1 5.2 1 2.8 2.4 1.6 4.8l2.3 1.9c.6-1.7 2.2-3 4.1-3z" fill="#EA4335"/>
-              </svg>
-              {t('login.google')}
-            </Button>
-          </div>
-
-          <div className="login-footer-link">
-            <a onClick={() => { /* TODO: request access flow */ }}>{t('login.requestAccess')}</a>
-          </div>
         </div>
       </LoginLayoutForm>
     </LoginLayout>

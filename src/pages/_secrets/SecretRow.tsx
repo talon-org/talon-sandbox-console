@@ -1,5 +1,9 @@
 /* src/pages/_secrets/SecretRow.tsx
- * Single row in the secrets table.
+ * 凭据列表单行组件。
+ * 行级操作：轮换（弹确认）、复制名称、删除（弹确认）。
+ * 凭据值后端设计上不返回，故不提供「查看明文」入口（曾有的眼睛按钮只能弹提示，
+ * 是承诺查看却做不到的假功能，已移除）。
+ * 无下拉组件依赖——所有操作直接暴露为图标按钮，与 PageApiKeys 风格一致。
  */
 import { Button, toast } from '@talon-sandbox/react';
 import { useT } from '../../i18n/useT';
@@ -20,13 +24,23 @@ function secsAgo(unix: number): number {
 interface Props {
   secret: SecretDTO;
   onRotate: (s: SecretDTO) => void;
+  /** 父组件处理删除确认弹窗，此处只触发 */
+  onDelete: (s: SecretDTO) => void;
 }
 
-export function SecretRow({ secret: s, onRotate }: Props) {
+export function SecretRow({ secret: s, onRotate, onDelete }: Props) {
   const t = useT();
   const rotatedAgo    = s.last_rotated_at ? relTime(secsAgo(s.last_rotated_at)) : '—';
   const lastUsedAgo   = s.last_used_at && s.last_used_at > 0 ? relTime(secsAgo(s.last_used_at)) : '—';
   const rotateDueFlag = !s.last_rotated_at;
+
+  /** 复制凭据名称到剪贴板 */
+  const handleCopyName = () => {
+    navigator.clipboard.writeText(s.name).then(
+      () => toast.success(s.name + ' — ' + t('secrets.copyNameSuccess')),
+      () => toast.error(t('common.loadFailed')),
+    );
+  };
 
   return (
     <div className="tln-tbl-row sec-row" style={{ cursor: 'default' }}>
@@ -52,21 +66,36 @@ export function SecretRow({ secret: s, onRotate }: Props) {
       {/* last_used_at：G5 新增字段；后端未写入时显示 — */}
       <div className="mono">{lastUsedAgo}</div>
       <div className="mono" style={{ color: 'var(--fg-1)' }}>{s.used_by_count.toLocaleString()}</div>
-      <div className="mono">{s.used_by_count}</div>
       {/* created_by：G5 新增字段；旧记录 / API Key 为空则显示 — */}
       <div className="mono" title={s.created_by || undefined} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {s.created_by || '—'}
       </div>
       <div className="actions">
-        <Button variant="ghost" size="sm"
-          onClick={() => toast.warn(s.name + ' — ' + t('secrets.viewToast'))}>
-          <TlnIcon name="eye" size={13} />
-        </Button>
+        {/* 轮换：由父组件弹确认 */}
         <Button variant="ghost" size="sm" onClick={() => onRotate(s)}>
           <TlnIcon name="refresh" size={13} />
         </Button>
-        <Button variant="ghost" size="sm" iconOnly aria-label={t('secrets.rotate')}>
-          <TlnIcon name="more" size={14} />
+        {/* 复制名称到剪贴板 */}
+        <Button
+          variant="ghost"
+          size="sm"
+          iconOnly
+          onClick={handleCopyName}
+          title={t('secrets.copyName')}
+          aria-label={t('secrets.copyName')}
+        >
+          <TlnIcon name="copy" size={13} />
+        </Button>
+        {/* 删除：由父组件弹确认，避免在 row 层持有 mutation state */}
+        <Button
+          variant="ghost"
+          size="sm"
+          iconOnly
+          onClick={() => onDelete(s)}
+          title={t('secrets.delete')}
+          aria-label={t('secrets.delete')}
+        >
+          <TlnIcon name="trash" size={13} />
         </Button>
       </div>
     </div>

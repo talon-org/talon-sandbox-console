@@ -2,7 +2,7 @@
  * UI label: "Workspaces" / "空间". File/route stays `tenants`.
  * Data: useTenants() from src/hooks/useTenants.ts
  */
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Button, ProgressBar, PageHeader } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
@@ -30,6 +30,30 @@ export function PageTenants() {
 
   const tenants = data?.tenants ?? [];
 
+  // 导出 CSV：把当前 tenants 列表导出（纯前端，RFC4180 转义 + BOM）。
+  // 同款风格参考 PageRecordings.handleExportCsv。
+  const handleExportCsv = useCallback(() => {
+    const esc = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
+    const header = ['id', 'name', 'plan', 'members', 'active_sandboxes', 'quota_max_sandboxes', 'created_at'];
+    const rows = tenants.map(ten => [
+      ten.id,
+      ten.name,
+      ten.plan ?? 'free',
+      ten.member_count ?? '',
+      ten.active_sandboxes,
+      ten.quota_max_sandboxes,
+      ten.created_at,
+    ].map(esc).join(','));
+    const csv = '﻿' + [header.map(esc).join(','), ...rows].join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tenants-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [tenants]);
+
   return (
     <>
       <PageHeader
@@ -38,7 +62,7 @@ export function PageTenants() {
         desc={t('tenants.desc')}
         actions={
           <>
-            <Button variant="ghost">
+            <Button variant="default" onClick={handleExportCsv} disabled={tenants.length === 0}>
               <TlnIcon name="download" size={14} />
               {t('tenants.exportCsv')}
             </Button>
@@ -63,7 +87,6 @@ export function PageTenants() {
               <div>{t('tenants.colSandboxes')}</div>
               <div>{t('tenants.colQuota')}</div>
               <div>{t('tenants.colCreated')}</div>
-              <div />
             </div>
 
             {tenants.map(tenant => {
@@ -114,12 +137,6 @@ export function PageTenants() {
 
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)' }}>
                     {relTime(ageSec)}
-                  </div>
-
-                  <div className="actions" onClick={e => e.stopPropagation()}>
-                    <Button variant="ghost" size="sm" iconOnly aria-label={t('common.filter')}>
-                      <TlnIcon name="more" size={14} />
-                    </Button>
                   </div>
                 </div>
               );

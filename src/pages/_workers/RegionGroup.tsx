@@ -2,7 +2,6 @@
  * Worker table for a single region.
  */
 import { Fragment } from 'react';
-import { Button } from '@talon-sandbox/react';
 import { useT } from '../../i18n/useT';
 import { TlnIcon } from '../../icons/TlnIcon';
 import { WorkerLoadBars } from './WorkerLoadBars';
@@ -50,7 +49,6 @@ export function RegionGroup({ region, workers }: Props) {
           <div>{t('workers.colLoad')}</div>
           <div>{t('workers.colSandboxes')}</div>
           <div>{t('workers.colUptime')}</div>
-          <div />
         </div>
         {workers.map(w => {
           const dotColor  = w.status === 'healthy' ? 'var(--ok)' : w.status === 'draining' ? 'var(--warn)' : 'var(--err)';
@@ -76,19 +74,13 @@ export function RegionGroup({ region, workers }: Props) {
                   <span className="wof">/ {wCap}</span>
                 </div>
                 <div className="wuptime">{fmtUptime(w.uptime_sec ?? 0)}</div>
-                <div className="actions">
-                  <Button variant="ghost" size="sm" iconOnly aria-label={t('common.filter')}>
-                    <TlnIcon name="more" size={14} />
-                  </Button>
-                </div>
               </div>
+              {/* worker 自报错误只读展示。原先的「Drain」按钮已移除:后端无手动
+                  排空端点,"draining" 仅是 last_error 非空时的派生状态,按钮点了无效。 */}
               {w.last_error && (
                 <div className="wkr-error-strip">
                   <TlnIcon name="alert" size={12} />
                   <span>{w.last_error}</span>
-                  <Button variant="ghost" size="sm" style={{ marginLeft: 'auto', color: 'var(--err)' }}>
-                    {t('workers.drain')}
-                  </Button>
                 </div>
               )}
             </Fragment>

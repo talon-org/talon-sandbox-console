@@ -235,7 +235,7 @@ export function PageAudit() {
         desc={t('audit.desc')}
         actions={
           <>
-            <Button variant="ghost" onClick={handleExportCsv}>
+            <Button variant="default" onClick={handleExportCsv}>
               <TlnIcon name="download" size={14} />
               {t('audit.exportCsv')}
             </Button>
@@ -313,7 +313,6 @@ export function PageAudit() {
               <div role="columnheader">{t('audit.colTarget')}</div>
               <div role="columnheader">{t('audit.colResult')}</div>
               <div role="columnheader">{t('audit.colMeta')}</div>
-              <div role="columnheader" />
             </div>
 
             {/* 事件行列表 */}

@@ -59,28 +59,16 @@ export function PageTerminal() {
     </div>
   );
 
-  // Top-bar action buttons
-  const topActions = (
-    <>
-      {!connected && (
-        <Button variant="ghost" size="sm" onClick={reconnect}>
-          <TlnIcon name="refresh" size={14} />
-          {t('term.reconnect')}
-        </Button>
-      )}
-      <Button variant="ghost" size="sm">
-        <TlnIcon name="plus" size={14} />
-        {t('term.newShell')}
-      </Button>
-      <Button variant="ghost" size="sm">
-        <TlnIcon name="external" size={14} />
-        {t('term.detach')}
-      </Button>
-      <Button variant="ghost" size="sm" iconOnly aria-label="More">
-        <TlnIcon name="more" size={14} />
-      </Button>
-    </>
-  );
+  // Top-bar action buttons。
+  // 仅保留「重连」(断线时出现)这一真实操作。原先的「新建 Shell / Detach / More」
+  // 均无后端支撑:当前 PTY 是单会话 WebSocket 模型,不支持多 shell,关闭即断连无
+  // 后台保活(detach 无意义),More 也无菜单内容——故移除,不保留死按钮。
+  const topActions = !connected ? (
+    <Button variant="ghost" size="sm" onClick={reconnect}>
+      <TlnIcon name="refresh" size={14} />
+      {t('term.reconnect')}
+    </Button>
+  ) : null;
 
   return (
     <TerminalChrome
