@@ -203,6 +203,10 @@ export interface TenantDTO {
   active_sandboxes: number;
   plan?: 'free' | 'team' | 'enterprise';   // backend-gaps G4：列表响应已扩展此字段
   member_count?: number;                    // G4 (v30)：该租户的用户数（列表端点扩展）
+  /** 套餐配额上限，0 表示不限；列表端点扩展字段，旧响应可能缺失 */
+  quota?: TenantQuotaDTO;
+  /** 当前活跃 sandbox 聚合用量；列表端点扩展字段，旧响应可能缺失 */
+  usage?: TenantUsageDTO;
 }
 
 /** GET /v1/admin/tenants response */

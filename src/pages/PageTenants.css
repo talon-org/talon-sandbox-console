@@ -1,5 +1,6 @@
-/* 原 7 列（最后 60px 为 actions 列）已缩减为 6 列，行尾「更多」按钮已删除 */
-.ten-row { grid-template-columns: 1.6fr 0.8fr 0.7fr 0.8fr 1.6fr 0.8fr; }
+/* 6 列：空间 / 套餐 / 成员 / Sandbox 数 / 配额使用(三维条) / 创建。
+   配额使用列给 1.8fr 以容纳三条用量条 + 数值文本；行尾「更多」按钮已删除。 */
+.ten-row { grid-template-columns: 1.6fr 0.8fr 0.7fr 0.8fr 1.8fr 0.8fr; }
 .ten-row .name-cell { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .ten-row .name-cell .av {
   width: 28px; height: 28px;
@@ -27,14 +28,50 @@
 .ten-row .tplan.Enterprise { background: var(--acc-soft); color: var(--acc-strong); }
 .ten-row .tplan.Team       { background: var(--info-soft); color: var(--info); }
 .ten-row .tplan.Free       { background: var(--bg-3); color: var(--fg-2); border: 1px solid var(--line); }
-.ten-row .quota-cell {
-  display: grid;
-  grid-template-columns: 30px 1fr 60px;
-  gap: 8px;
-  align-items: center;
+/* 三维配额使用率条容器：竖向堆叠三条，各条横向展开 */
+.ten-row .quota-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  width: 100%;
 }
-.ten-row .quota-cell .lbl { font-family: var(--font-mono); font-size: 9.5px; color: var(--fg-3); text-transform: uppercase; letter-spacing: 0.08em; }
-.ten-row .quota-cell .v { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-2); text-align: right; }
+/* 单条：标签 | 进度条(flex 1) | 数值 */
+.ten-row .qbar-row {
+  display: grid;
+  grid-template-columns: 38px 1fr 72px;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+/* 维度标签：与 Drawer 的 qlbl 对齐风格，紧凑字号 */
+.ten-row .qbar-lbl {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--fg-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+/* 数值：右对齐，已用量高亮 */
+.ten-row .qbar-val {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-3);
+  text-align: right;
+  white-space: nowrap;
+}
+.ten-row .qbar-used { color: var(--fg-1); }
+/* 不限（∞）情况：占满剩余两列 */
+.ten-row .qbar-inf {
+  grid-column: 2 / -1;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-3);
+}
+.ten-row .qbar-inf .qbar-used { color: var(--fg-1); }
 
 /* detail drawer */
 .tenant-drawer-body {

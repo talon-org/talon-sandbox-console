@@ -10,7 +10,7 @@ import { useTenants } from '../hooks/useTenants';
 import { EmptyState } from '../components';
 import { TenantDrawer } from './_tenants/TenantDrawer';
 import { CreateWorkspaceDialog } from './_tenants/CreateWorkspaceDialog';
-import type { TenantDTO } from '../api/types';
+import type { TenantDTO, TenantQuotaDTO, TenantUsageDTO } from '../api/types';
 
 import './PageTenants.css';
 
@@ -19,6 +19,72 @@ function relTime(sec: number): string {
   if (sec < 3600)  return `${Math.floor(sec / 60)}m`;
   if (sec < 86400) return `${Math.floor(sec / 3600)}h`;
   return `${Math.floor(sec / 86400)}d`;
+}
+
+/**
+ * 三维配额使用率条 —— 与详情页 TenantDrawer 的 quota-row 风格一致，
+ * 但更紧凑（列表行高有限）。复用 DrawerContent 里的 ProgressBar 颜色变量。
+ * quota 为 0 代表「不限」，对应维度不渲染进度条，只显示 ∞。
+ */
+function QuotaBars({ quota, usage }: { quota: TenantQuotaDTO; usage: TenantUsageDTO }) {
+  const t = useT();
+
+  const dims = [
+    {
+      key:   'vcpu',
+      label: t('tenants.quota.vcpu'),
+      used:  usage.vcpu,
+      max:   quota.vcpu,
+      fmt:   (v: number) => v.toFixed(1),
+      unit:  'vCPU',
+      // vCPU 使用默认紫色（--acc），与 Drawer 一致
+      style: undefined as React.CSSProperties | undefined,
+    },
+    {
+      key:   'mem',
+      label: t('tenants.quota.memory'),
+      used:  usage.mem_gb,
+      max:   quota.mem_gb,
+      fmt:   (v: number) => v % 1 === 0 ? String(v) : v.toFixed(1),
+      unit:  'GB',
+      style: { '--tln-progress-color': 'var(--info)' } as React.CSSProperties,
+    },
+    {
+      key:   'disk',
+      label: t('tenants.quota.disk'),
+      used:  usage.disk_gb,
+      max:   quota.disk_gb,
+      fmt:   (v: number) => v % 1 === 0 ? String(v) : v.toFixed(1),
+      unit:  'GB',
+      style: { '--tln-progress-color': 'var(--teal, #56cbb8)' } as React.CSSProperties,
+    },
+  ] as const;
+
+  return (
+    <div className="quota-bars">
+      {dims.map(dim => (
+        <div key={dim.key} className="qbar-row">
+          {/* 维度小标签 */}
+          <span className="qbar-lbl">{dim.label}</span>
+          {dim.max === 0 ? (
+            /* 不限：不显示进度条，只显示已用量 + ∞ */
+            <span className="qbar-inf">
+              <span className="qbar-used">{dim.fmt(dim.used)}</span>
+              {' / ∞'}
+            </span>
+          ) : (
+            <>
+              <ProgressBar value={dim.used} max={dim.max} style={dim.style} />
+              <span className="qbar-val">
+                <span className="qbar-used">{dim.fmt(dim.used)}</span>
+                {' / '}{dim.max} {dim.unit}
+              </span>
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function PageTenants() {
@@ -84,6 +150,7 @@ export function PageTenants() {
               <div>{t('tenants.colName')}</div>
               <div>{t('tenants.colPlan')}</div>
               <div>{t('tenants.colMembers')}</div>
+              {/* Sandbox 数：活跃数/上限，独立计数维度，不与资源配额混淆 */}
               <div>{t('tenants.colSandboxes')}</div>
               <div>{t('tenants.colQuota')}</div>
               <div>{t('tenants.colCreated')}</div>
@@ -122,17 +189,20 @@ export function PageTenants() {
                     {tenant.member_count != null ? tenant.member_count : '—'}
                   </div>
 
+                  {/* Sandbox 数列：活跃数 / 套餐上限，与资源配额独立维度 */}
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
                     {tenant.active_sandboxes}
-                    {' '}<span style={{ color: 'var(--fg-3)' }}>/ {tenant.quota_max_sandboxes}</span>
+                    <span style={{ color: 'var(--fg-3)' }}> / {tenant.quota_max_sandboxes}</span>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    <div className="quota-cell">
-                      <span className="lbl">{t('tenants.colSandboxes')}</span>
-                      <ProgressBar value={tenant.active_sandboxes} max={tenant.quota_max_sandboxes || 1} />
-                      <span className="v">{tenant.active_sandboxes}/{tenant.quota_max_sandboxes}</span>
-                    </div>
+                  {/* 配额使用列：vCPU / 内存 / 磁盘三维用量条。
+                      quota/usage 字段来自列表端点扩展；旧响应缺失时回退空占位。 */}
+                  <div>
+                    {tenant.quota && tenant.usage ? (
+                      <QuotaBars quota={tenant.quota} usage={tenant.usage} />
+                    ) : (
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)' }}>—</span>
+                    )}
                   </div>
 
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)' }}>
