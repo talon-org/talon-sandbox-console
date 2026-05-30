@@ -38,4 +38,7 @@ export const login = {
   'login.err.network':       { en: "Can't reach the server. Check your connection.", zh: '无法连接服务器,请检查网络' },
   'login.err.generic':       { en: 'Sign-in failed. Please try again.', zh: '登录失败,请重试' },
   'login.err.emailRequired': { en: 'Enter your email address.', zh: '请输入邮箱地址' },
+
+  // ── 新注册欢迎提示 ───────────────────────────────────────────────────────
+  'login.welcomeNewUser':    { en: 'Welcome! Your account is ready.', zh: '欢迎！账号已就绪，开始使用吧。' },
 } as const;

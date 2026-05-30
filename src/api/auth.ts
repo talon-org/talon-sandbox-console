@@ -11,6 +11,8 @@ export interface LoginResponse {
   token: string;
   expires_at: number;
   tenant_id: string;
+  /** 新注册用户为 true；邮箱验证码路径专用，passwordless 注册=登录同一接口 */
+  is_new_user?: boolean;
 }
 
 /** Request a 6-digit code be emailed. Server always returns {ok:true} (privacy). */

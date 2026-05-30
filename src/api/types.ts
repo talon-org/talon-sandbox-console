@@ -431,6 +431,78 @@ export interface FSListResponse {
   total: number;
 }
 
+// ── API Keys ──────────────────────────────────────────────────────────────────
+
+/** GET /v1/api-keys 列表中的单条记录 */
+export interface ApiKeyDTO {
+  id: string;
+  label: string;
+  /** 掩码，如 ask_1xaE…uOWk；列表中永远不返回明文 */
+  masked: string;
+  /** true = 可调 reveal 端点取完整 key；false = 旧 key 不可恢复 */
+  can_reveal: boolean;
+  created_at: number;   // Unix 秒
+  last_used?: number;   // Unix 秒；0 / absent = 从未使用
+}
+
+/** GET /v1/api-keys 响应体 */
+export interface ApiKeyListResponse {
+  keys: ApiKeyDTO[];
+}
+
+/** POST /v1/api-keys 请求体 */
+export interface CreateApiKeyRequest {
+  label: string;
+}
+
+/** POST /v1/api-keys 响应体（明文 api_key 只此一次） */
+export interface CreateApiKeyResponse {
+  id: string;
+  label: string;
+  api_key: string;     // 明文
+  created_at: number;  // Unix 秒
+}
+
+/** GET /v1/api-keys/{id}/reveal 响应体 */
+export interface RevealApiKeyResponse {
+  api_key: string;     // 完整明文
+}
+
+// ── Plans（套餐管理，超管专用）──────────────────────────────────────────────────
+
+/** 单条套餐，来自 GET /v1/admin/plans */
+export interface PlanDTO {
+  code: string;               // 套餐唯一标识，如 "free" / "team" / "enterprise"
+  name: string;               // 显示名称
+  quota_max_sandboxes: number;
+  quota_vcpu: number;
+  quota_mem_gb: number;
+  quota_disk_gb: number;
+  is_default: boolean;
+  is_active: boolean;
+}
+
+/** GET /v1/admin/plans 响应体 */
+export interface PlanListResponse {
+  plans: PlanDTO[];
+}
+
+/** POST /v1/admin/plans 请求体（新建或编辑，不含 is_default） */
+export interface UpsertPlanRequest {
+  code: string;
+  name: string;
+  quota_max_sandboxes: number;
+  quota_vcpu: number;
+  quota_mem_gb: number;
+  quota_disk_gb: number;
+  is_active: boolean;
+}
+
+/** PATCH /v1/admin/plans/{code} 请求体（仅设默认） */
+export interface SetDefaultPlanRequest {
+  set_default: true;
+}
+
 // ── Query params ──────────────────────────────────────────────────────────────
 
 export interface AuditQueryParams {

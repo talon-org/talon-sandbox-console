@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Button, Input,
   LoginLayout, LoginLayoutBrand, LoginLayoutForm,
+  toast,
 } from '@talon-sandbox/react';
 import { useApp } from '../store';
 import { useT } from '../i18n/useT';
@@ -126,8 +127,16 @@ export function PageLogin() {
       if (tab === 'email') {
         const resp = await verifyCode(email, code);
         token = resp.token;
+        // 先把 token 存入 store 以便 authHeaders() 工作，再拉 me
         me = await fetch('/v1/auth/me', { credentials: 'include' })
           .then((r) => { if (!r.ok) throw new Error(`me ${r.status}`); return r.json(); });
+        // 新注册用户给一次性欢迎 toast，老用户静默跳转
+        if (resp.is_new_user) {
+          // 欢迎 toast 在 setAuth + nav 后显示；延迟 200ms 等 Toaster 挂载
+          setTimeout(() => {
+            toast.success(t('login.welcomeNewUser'));
+          }, 200);
+        }
       } else {
         const r = await loginApiKey({ api_key: apiKey });
         token = r.token;

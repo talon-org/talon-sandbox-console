@@ -51,13 +51,14 @@ export default defineConfig(({ mode }) => {
         allow: ['..', '../talon-sandbox-ui'],
       },
       proxy: {
-        // dev-only: forward /v1/* to local sandbox-api so the browser sees
-        // same-origin (cookie + no CORS). Prod uses Caddy /api → 18080 and
-        // VITE_API_BASE='/api'.
+        // dev-only: forward /v1/* to a locally-running API so the browser sees
+        // same-origin (cookie + no CORS). In production the SPA calls /api on
+        // the same origin (VITE_API_BASE='/api'). Override the local target via
+        // VITE_DEV_API_TARGET if your API listens elsewhere.
         // ws: true is required for the /v1/sandboxes/{id}/pty WebSocket
         // endpoint; without it Vite never upgrades and the browser fails.
         '/v1': {
-          target: 'http://127.0.0.1:18080',
+          target: env.VITE_DEV_API_TARGET || 'http://127.0.0.1:18080',
           changeOrigin: false,
           ws: true,
         },

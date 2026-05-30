@@ -17,6 +17,8 @@ import { workers }    from './workers';
 import { tenants }    from './tenants';
 import { recordings } from './recordings';
 import { terminal }   from './terminal';
+import { apiKeys }    from './apiKeys';
+import { plans }      from './plans';
 
 export type LangKey = 'en' | 'zh';
 
@@ -34,9 +36,12 @@ export const STRINGS: Record<string, { en: string; zh: string }> = {
   ...tenants,
   ...recordings,
   ...terminal,
+  ...apiKeys,
+  ...plans,
 };
 
 export {
   shell, common, tweaks, cmdk, dashboard, sandboxes,
   login, secrets, audit, workers, tenants, recordings, terminal,
+  apiKeys, plans,
 };

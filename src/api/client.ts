@@ -1,11 +1,11 @@
-/* Thin fetch wrapper around talon-sandbox platform API.
+/* Thin fetch wrapper around the Talon Sandbox API.
  *
  * Base URL strategy:
- *   - dev: VITE_API_BASE -> http://localhost:18080 (set in .env.development)
- *   - prod: same-origin /api (proxied by Caddy to 127.0.0.1:18080)
+ *   - dev: VITE_API_BASE points the dev server at a local API (see .env.development)
+ *   - prod: same-origin `/api` (served alongside the SPA)
  *
- * Auth: JWT cookie set by /v1/auth/login. We still read a token from store as
- * a fallback / for API-key flows. Server is source of truth.
+ * Auth: JWT cookie set on sign-in. We also read a token from store as a
+ * fallback / for API-key flows. The server is the source of truth.
  */
 import { useApp } from '../store';
 

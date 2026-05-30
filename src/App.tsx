@@ -18,8 +18,10 @@ import { PageTerminal } from './pages/PageTerminal';
 import { PageRecordings } from './pages/PageRecordings';
 import { PageRecording } from './pages/PageRecording';
 import { PageSecrets } from './pages/PageSecrets';
+import { PageApiKeys } from './pages/PageApiKeys';
 import { PageWorkers } from './pages/PageWorkers';
 import { PageTenants } from './pages/PageTenants';
+import { PagePlans } from './pages/PagePlans';
 import { PageAudit } from './pages/PageAudit';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -104,9 +106,11 @@ export default function App() {
           <Route path="/sandboxes/:id" element={<PageSandboxDetail />} />
           <Route path="/recordings" element={<PageRecordings />} />
           <Route path="/secrets" element={<PageSecrets />} />
+          <Route path="/api-keys" element={<PageApiKeys />} />
           <Route path="/audit" element={<PageAudit />} />
           <Route path="/workers" element={<PageWorkers />} />
           <Route path="/tenants" element={<PageTenants />} />
+          <Route path="/plans" element={<PagePlans />} />
         </Route>
 
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

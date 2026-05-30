@@ -26,12 +26,14 @@ const NAV_WORKSPACE_BASE: Array<{ id: string; labelKey: string; icon: string; pa
   { id: 'sandboxes',  labelKey: 'nav.sandboxes',   icon: 'box',    path: '/sandboxes' },
   { id: 'recordings', labelKey: 'nav.recordings',  icon: 'film',   path: '/recordings' },
   { id: 'secrets',    labelKey: 'nav.secrets',     icon: 'key',    path: '/secrets' },
+  { id: 'apiKeys',    labelKey: 'nav.apiKeys',     icon: 'cpu',    path: '/api-keys' },
   { id: 'audit',      labelKey: 'nav.audit',       icon: 'scroll', path: '/audit' },
 ];
 
 const NAV_ADMIN = [
   { id: 'workers', labelKey: 'nav.workers', icon: 'server', path: '/workers' },
   { id: 'tenants', labelKey: 'nav.tenants', icon: 'users',  path: '/tenants' },
+  { id: 'plans',   labelKey: 'nav.plans',   icon: 'server', path: '/plans' },
 ];
 
 function crumbsForPath(path: string, t: (key: string) => string): string[] {
@@ -52,9 +54,11 @@ function crumbsForPath(path: string, t: (key: string) => string): string[] {
     '/sandboxes':  t('nav.sandboxes'),
     '/recordings': t('nav.recordings'),
     '/secrets':    t('nav.secrets'),
+    '/api-keys':   t('nav.apiKeys'),
     '/audit':      t('nav.audit'),
     '/workers':    t('nav.workers'),
     '/tenants':    t('nav.tenants'),
+    '/plans':      t('nav.plans'),
   };
   const match = Object.keys(map).find(k => path.startsWith(k));
   return match ? [map[match]!] : ['—'];
@@ -104,11 +108,13 @@ export function Shell() {
     { group: t('cmdk.group.nav'), name: t('cmdk.nav.sandboxes'),   icon: <TlnIcon name="box"     size={15} />, kbd: ['G', 'S'], action: () => navigate('/sandboxes') },
     { group: t('cmdk.group.nav'), name: t('cmdk.nav.recordings'),  icon: <TlnIcon name="film"    size={15} />, kbd: ['G', 'R'], action: () => navigate('/recordings') },
     { group: t('cmdk.group.nav'), name: t('cmdk.nav.secrets'),     icon: <TlnIcon name="key"     size={15} />, kbd: ['G', 'K'], action: () => navigate('/secrets') },
+    { group: t('cmdk.group.nav'), name: t('cmdk.nav.apiKeys'),     icon: <TlnIcon name="cpu"     size={15} />, kbd: ['G', 'P'], action: () => navigate('/api-keys') },
     { group: t('cmdk.group.nav'), name: t('cmdk.nav.audit'),       icon: <TlnIcon name="scroll"  size={15} />, kbd: ['G', 'A'], action: () => navigate('/audit') },
-    // 运维项(workers / tenants)仅 admin 可见,避免非 admin 从 ⌘K 跳进去吃 403
+    // 运维项(workers / tenants / plans)仅 admin 可见,避免非 admin 从 ⌘K 跳进去吃 403
     ...(isAdmin ? [
       { group: t('cmdk.group.nav'), name: t('cmdk.nav.workers'),   icon: <TlnIcon name="server"  size={15} />, kbd: ['G', 'W'], action: () => navigate('/workers') },
       { group: t('cmdk.group.nav'), name: t('cmdk.nav.tenants'),   icon: <TlnIcon name="users"   size={15} />, kbd: ['G', 'T'], action: () => navigate('/tenants') },
+      { group: t('cmdk.group.nav'), name: t('cmdk.nav.plans'),     icon: <TlnIcon name="server"  size={15} />, action: () => navigate('/plans') },
     ] : []),
     { group: t('cmdk.group.actions'), name: t('cmdk.action.newSandbox'), icon: <TlnIcon name="plus"   size={15} />, kbd: ['mod', 'N'], action: () => navigate('/sandboxes?new=1') },
     { group: t('cmdk.group.actions'), name: t('cmdk.action.newSecret'),  icon: <TlnIcon name="key"    size={15} />, kbd: ['mod', 'shift', 'K'], action: () => navigate('/secrets?new=1') },
