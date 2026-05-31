@@ -100,3 +100,15 @@
   background: var(--bg-1);
   border-color: var(--line-strong);
 }
+
+/* Segmented font restore.
+ * ui-lib 有条激进 reset:[class*="tln-"] button:not(.tln-btn):not(.tln-switch){font:inherit}
+ * (特异性 0,3,1),它把 .tln-seg button 的 mono/10.5px 字体清成了页面 sans/14px
+ * ——只有 text-transform 幸存(font 简写不含它)。Segmented 自己的 .tln-seg button
+ * (0,1,1)压不过。这里用同样 :not() 链达到 (0,3,1) + import 在后,恢复原型字体。 */
+.tln-seg button:not(.tln-btn):not(.tln-switch) {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+.tln-seg-sm button:not(.tln-btn):not(.tln-switch) { font-size: 9.5px; }
+.tln-seg-lg button:not(.tln-btn):not(.tln-switch) { font-size: 11.5px; }
