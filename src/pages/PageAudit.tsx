@@ -4,7 +4,7 @@
  * 历史记录通过 listAuditEvents 管理(游标分页),实时 tail 来自 useAuditStream()。无 mock。
  */
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Button, Input, PageHeader, Badge, DataTable, DataTableContent } from '@talon-sandbox/react';
+import { Button, Input, PageHeader, Badge, DataTable, DataTableContent, TablePagination, TablePaginationInfo } from '@talon-sandbox/react';
 import type { ColumnDef } from '@talon-sandbox/react';
 import { EmptyState } from '../components';
 import { useT } from '../i18n/useT';
@@ -17,8 +17,11 @@ import { relTime as sharedRelTime } from '../lib/relTime';
 
 import './PageAudit.css';
 
-/** 每次 API 请求拉取的最大条数，同时作为游标分页的步长 */
+/** 每次 API 请求拉取的最大条数(向后端取一个历史窗口;游标「加载更早」步长) */
 const PAGE_LIMIT = 100;
+
+/** 前端编号分页:每页行数 */
+const PAGE_SIZE = 20;
 
 /** 各时间范围对应的秒数 */
 const RANGE_SECONDS: Record<string, number> = {
@@ -117,11 +120,13 @@ export function PageAudit() {
   // loadIdRef 用于取消已过期的异步请求结果
   const loadIdRef = useRef(0);
 
+  // 注意:不向后端传 event_type。后端是精确匹配(event_type = 'sandbox_created' …),
+  // 而类型 chip 是「类别」(sandbox/auth/…),传过去匹配不到任何东西 —— 这正是之前
+  // 过滤器失效的根因。类别过滤改在前端按 typeKind 做(见 filtered)。
   const doLoad = useCallback(async (opts: {
-    reset:     boolean;
-    sinceTs:   number;
-    untilTs:   number | undefined;
-    eventType: string | undefined;
+    reset:   boolean;
+    sinceTs: number;
+    untilTs: number | undefined;
   }) => {
     const myId = ++loadIdRef.current;
     setIsLoading(true);
@@ -129,10 +134,9 @@ export function PageAudit() {
 
     try {
       const resp = await listAuditEvents({
-        since:      opts.sinceTs,
-        until:      opts.untilTs,
-        event_type: opts.eventType,
-        limit:      PAGE_LIMIT,
+        since: opts.sinceTs,
+        until: opts.untilTs,
+        limit: PAGE_LIMIT,
       });
 
       if (myId !== loadIdRef.current) return;
@@ -159,19 +163,14 @@ export function PageAudit() {
     }
   }, []);
 
-  // 过滤条件变更时重置并加载第一页
+  // 时间范围变更时重置并重新拉取窗口。类型 chip(filter)是前端过滤,不触发网络请求。
   useEffect(() => {
     const sinceTs = Math.floor(Date.now() / 1000) - (RANGE_SECONDS[range] ?? 86400);
     setUntilCursor(undefined);
     setHasMore(true);
-    doLoad({
-      reset:     true,
-      sinceTs,
-      untilTs:   undefined,
-      eventType: filter !== 'all' ? filter : undefined,
-    });
+    doLoad({ reset: true, sinceTs, untilTs: undefined });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [range, filter]);
+  }, [range]);
 
   const since = useMemo(
     () => Math.floor(Date.now() / 1000) - (RANGE_SECONDS[range] ?? 86400),
@@ -180,13 +179,8 @@ export function PageAudit() {
 
   const handleLoadMore = useCallback(() => {
     if (isLoading || !hasMore) return;
-    doLoad({
-      reset:     false,
-      sinceTs:   since,
-      untilTs:   untilCursor,
-      eventType: filter !== 'all' ? filter : undefined,
-    });
-  }, [isLoading, hasMore, doLoad, since, untilCursor, filter]);
+    doLoad({ reset: false, sinceTs: since, untilTs: untilCursor });
+  }, [isLoading, hasMore, doLoad, since, untilCursor]);
 
   // 合并 live + 历史，按 id 去重(live 在前)
   const allEvents = useMemo(() => {
@@ -207,17 +201,29 @@ export function PageAudit() {
     image:   allEvents.filter(e => typeKind(e.event_type) === 'image').length,
   }), [allEvents]);
 
-  // 关键词搜索(纯前端本地过滤)
+  // 类别过滤(typeKind)+ 关键词搜索,都在前端做。
+  // 类别过滤是之前失效那块的正确实现:按 typeKind 把具体 event_type 归类后比对 chip 值。
   const filtered = useMemo(() => allEvents.filter(e => {
+    if (filter !== 'all' && typeKind(e.event_type) !== filter) return false;
     if (!search) return true;
     const q   = search.toLowerCase();
     const hay = [e.event_type, e.actor ?? '', e.target ?? '', e.reason ?? '',
       ...(e.extra ? Object.values(e.extra) : [])].join(' ').toLowerCase();
     return hay.includes(q);
-  }), [allEvents, search]);
+  }), [allEvents, filter, search]);
+
+  // ── 前端编号分页 ───────────────────────────────────────────────────────────
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  // 过滤/搜索/范围变化导致结果集变化时,把页码夹回合法区间(避免停在空页)。
+  useEffect(() => { setPage(p => Math.min(p, totalPages)); }, [totalPages]);
+  useEffect(() => { setPage(1); }, [filter, search, range]);
+
+  const pageStart = (page - 1) * PAGE_SIZE;
+  const pageRows  = filtered.slice(pageStart, pageStart + PAGE_SIZE);
 
   const handleExportCsv = useCallback(() => {
-    exportToCsv(filtered, range);
+    exportToCsv(filtered, range);   // 导出当前过滤结果全集(非仅当前页)
   }, [filtered, range]);
 
   // ── DataTable 列定义:把原 AuditRow 的逐格渲染搬进 render,沿用 .aud-* 类样式 ──
@@ -326,7 +332,7 @@ export function PageAudit() {
         ) : (
           <DataTable<AuditEventDTO>
             className="aud-table"
-            data={filtered}
+            data={pageRows}
             columns={columns}
             rowKey={(e) => e.id}
             loading={isLoading && allEvents.length === 0}
@@ -342,15 +348,26 @@ export function PageAudit() {
           </DataTable>
         )}
 
-        {/* 加载更多:游标向过去翻页;实时 tail 由 useAuditStream 持续 prepend */}
-        {!isError && hasMore && allEvents.length > 0 && (
-          <div className="aud-load-more">
-            <Button variant="ghost" onClick={handleLoadMore} disabled={isLoading}>
-              {isLoading
-                ? <TlnIcon name="spinner" size={14} className="aud-spin" />
-                : <TlnIcon name="chevronDown" size={14} />}
-              {t('audit.loadMore')}
-            </Button>
+        {/* 编号分页(前端切片)+ 信息文案 + 「加载更早」扩窗 */}
+        {!isError && filtered.length > 0 && (
+          <div className="aud-pager">
+            <TablePagination page={page} total={totalPages} onPageChange={setPage}>
+              <TablePaginationInfo>
+                {t('audit.pageInfo')
+                  .replace('{from}', String(filtered.length === 0 ? 0 : pageStart + 1))
+                  .replace('{to}', String(Math.min(pageStart + PAGE_SIZE, filtered.length)))
+                  .replace('{total}', String(filtered.length))}
+              </TablePaginationInfo>
+            </TablePagination>
+            {/* 当前已翻到最后一页、且后端仍有更早历史时,允许把窗口拉长 */}
+            {hasMore && page >= totalPages && (
+              <Button variant="ghost" size="sm" onClick={handleLoadMore} disabled={isLoading}>
+                {isLoading
+                  ? <TlnIcon name="spinner" size={13} className="aud-spin" />
+                  : <TlnIcon name="chevronDown" size={13} />}
+                {t('audit.loadOlder')}
+              </Button>
+            )}
           </div>
         )}
       </div>

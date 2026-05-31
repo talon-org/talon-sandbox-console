@@ -24,9 +24,10 @@
 .aud-row .aactor.agent  .aic { color: var(--magenta, #c678dd); }
 .aud-row .aactor.sandbox .aic { color: var(--acc-strong); }
 .aud-row .ameta { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* 加载更多按钮区域 */
-.aud-load-more {
-  display: flex; justify-content: center; padding: 16px 0 8px;
+/* 编号分页区域:分页器靠右,「加载更早」紧随其后 */
+.aud-pager {
+  display: flex; align-items: center; justify-content: flex-end; gap: 14px;
+  padding: 14px 2px 8px;
 }
 
 /* 加载中旋转图标 */

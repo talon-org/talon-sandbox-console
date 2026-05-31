@@ -18,6 +18,8 @@ export const audit = {
   'audit.colMeta':           { en: 'Meta', zh: '元信息' },
   'audit.exportCsv':         { en: 'Export CSV', zh: '导出 CSV' },
   'audit.loadMore':          { en: 'Load more', zh: '加载更多' },
+  'audit.loadOlder':         { en: 'Load older events', zh: '加载更早事件' },
+  'audit.pageInfo':          { en: '{from}–{to} of {total}', zh: '第 {from}–{to} 条 · 共 {total} 条' },
   'audit.searchPlaceholder': { en: 'Search type · actor · target · meta…', zh: '搜索类型 · 发起者 · 目标 · 元信息…' },
   'audit.empty.head':        { en: 'No matching events', zh: '没有事件匹配当前过滤器' },
   'audit.empty.desc':        { en: 'Try broadening your filters.', zh: '尝试放宽过滤条件。' },
