@@ -30,6 +30,21 @@ export interface UpdateMeRequest {
   prefs?: UserPrefs;
 }
 
+/** GET /v1/tenant —— owner 视角的「我的组织/空间」。 */
+export interface WorkspaceDTO {
+  id: string;
+  name: string;
+  plan: string;
+  status: string;
+  created_at: number;   // Unix seconds
+  member_count: number;
+}
+
+/** PATCH /v1/tenant 请求体。owner 改组织名。 */
+export interface UpdateWorkspaceRequest {
+  name?: string;
+}
+
 // ── Baseimages ────────────────────────────────────────────────────────────────
 
 /** Baseimage 从 GET /v1/images. dto.go ImageDTO 的 console 侧契约 */

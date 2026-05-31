@@ -51,3 +51,8 @@ export function canInviteMembers(role: Role): boolean {
 export function canManageBilling(role: Role): boolean {
   return role === 'owner';
 }
+
+/** 仅 owner 可改组织设置（空间名等）。后端 PATCH /v1/tenant 走 chainOwner。 */
+export function canManageWorkspace(role: Role): boolean {
+  return role === 'owner';
+}

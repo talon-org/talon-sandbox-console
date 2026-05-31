@@ -28,4 +28,21 @@ export const settings = {
   'settings.prefsSaved':   { en: 'Preferences saved', zh: '偏好已保存' },
 
   'settings.saveFailed':   { en: 'Save failed', zh: '保存失败' },
+
+  // ── 组织设置(owner) ──
+  'org.title':         { en: 'Workspace settings', zh: '组织设置' },
+  'org.desc':          { en: 'Manage your workspace. Only owners can make changes.', zh: '管理你的组织空间。仅 owner 可变更。' },
+  'org.general':       { en: 'General', zh: '基本信息' },
+  'org.name':          { en: 'Workspace name', zh: '组织名称' },
+  'org.namePlaceholder': { en: 'e.g. Acme Inc', zh: '例如:某某科技' },
+  'org.id':            { en: 'Workspace ID', zh: '组织 ID' },
+  'org.plan':          { en: 'Plan', zh: '套餐' },
+  'org.members':       { en: 'Members', zh: '成员' },
+  'org.createdAt':     { en: 'Created', zh: '创建时间' },
+  'org.viewMembers':   { en: 'Manage members', zh: '管理成员' },
+  'org.viewBilling':   { en: 'View plans & billing', zh: '套餐与计费' },
+  'org.save':          { en: 'Save', zh: '保存' },
+  'org.saved':         { en: 'Workspace updated', zh: '组织已更新' },
+  'org.saveFailed':    { en: 'Update failed', zh: '更新失败' },
+  'org.ownerOnly':     { en: 'Only the workspace owner can change these settings.', zh: '仅空间 owner 可变更这些设置。' },
 } as const;
