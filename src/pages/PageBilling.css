@@ -1,182 +1,166 @@
-/* PageBilling — SaaS 定价页观感。Hero 调资卡 + 套餐卡片网格。
- * 复用全局设计 token（--bg-*/--line-*/--acc-*/--fg-*/--r-*）。 */
+/* PageBilling — 价值阶梯定价页。深色 dev-tool 计费页。
+ *
+ * 设计依据(研究 Vercel / Linear / Railway / Stripe 定价页后的可执行规范):
+ *   - 价格大数字 48px/700,货币符号 20px 顶对齐;名:价 ≈ 2.5:1。
+ *   - 推荐档不靠 ribbon 单打:顶部 2px 主色条 + 物理抬升 translateY(-10px)
+ *     + 背景提一层(--bg-1→--bg-2)+ 主色描边外发光 + CTA 主色填充。
+ *   - 反「扁平深色方块」:卡片顶部径向微光(rgba 白 4%),普通/推荐两层 surface,
+ *     hover 抬升 2px + 边框提亮 + 深阴影。
+ *   - 当前套餐做全宽细 banner(非大空 hero),用量进度条随占用变色。
+ *   - 宽度收到 ~1000px 居中,4 档 gap 16px,卡内 padding 28/24,区块 rhythm 40px。
+ * 复用全局 token(--bg-*/--line-*/--acc-*/--fg-*/--ok/--err/--info/--magenta/--r-*)。 */
 
 .billing-body {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  max-width: 1080px;
+  gap: 0;
+  max-width: 1040px;
+  margin: 0 auto;
+  width: 100%;
 }
 
-/* ════ Hero 调资卡:当前套餐(左) + 用量进度(右) ════ */
-.billing-hero {
-  display: grid;
-  grid-template-columns: minmax(220px, 0.8fr) 1.2fr;
-  gap: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--r-3, 14px);
-  background: linear-gradient(135deg, var(--bg-1), var(--bg-2));
-  overflow: hidden;
-}
-.bh-left {
-  padding: 24px 26px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-right: 1px solid var(--line-soft);
-}
-.bh-eyebrow {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--fg-3);
-}
-.bh-plan-row {
+/* ════ 当前套餐 banner(全宽细条) ════ */
+.bill-status {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 20px;
+  padding: 16px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-3, 14px);
+  background:
+    radial-gradient(ellipse at 0% 0%, var(--acc-soft), transparent 42%),
+    var(--bg-1);
+  flex-wrap: wrap;
 }
-.bh-plan {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--fg-0);
+.bs-id { display: flex; align-items: center; gap: 13px; min-width: 200px; }
+.bs-glyph {
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  border-radius: 11px;
+  background: var(--acc-soft);
+  color: var(--acc-strong);
+  flex-shrink: 0;
 }
-.bh-price {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  margin-top: 2px;
+.bs-meta { display: flex; flex-direction: column; gap: 3px; }
+.bs-eyebrow {
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--fg-3); font-family: var(--font-mono);
 }
-.bh-amount {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--fg-1);
-}
-.bh-int { font-size: 12px; color: var(--fg-3); }
-.bh-renews {
-  margin-top: auto;
-  font-size: 12px;
-  color: var(--fg-3);
-  font-family: var(--font-mono);
-}
+.bs-name-row { display: flex; align-items: center; gap: 9px; }
+.bs-name { font-size: 18px; font-weight: 700; color: var(--fg-0); }
+.bs-price { font-size: 12px; color: var(--fg-3); font-family: var(--font-mono); }
 
-.bh-right {
-  padding: 22px 26px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.bh-usage-title {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--fg-3);
-}
-.bh-bars {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px 28px;
-}
-.bh-usage-empty { font-size: 12px; color: var(--fg-3); }
+/* 用量条:横向铺开,只显示有上限的维度 */
+.bs-usage { display: flex; gap: 28px; margin-left: auto; flex-wrap: wrap; }
+.bs-usage-empty { margin-left: auto; font-size: 12px; color: var(--fg-3); }
+.usage-cell { display: flex; flex-direction: column; gap: 6px; min-width: 132px; }
+.uc-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.uc-label { font-size: 11px; color: var(--fg-2); }
+.uc-val { font-size: 11px; color: var(--fg-3); font-family: var(--font-mono); }
+.uc-used { color: var(--fg-1); font-weight: 600; }
+.usage-cell .tln-progress { height: 5px; border-radius: 999px; }
 
-.ub-row { display: flex; flex-direction: column; gap: 5px; }
-.ub-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-}
-.ub-label { font-size: 12px; color: var(--fg-2); }
-.ub-val { font-size: 11px; color: var(--fg-3); font-family: var(--font-mono); }
-.ub-used { color: var(--fg-1); font-weight: 600; }
-
-/* ════ 套餐卡片网格 ════ */
+/* ════ 套餐阶梯 ════ */
 .billing-plans {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  align-items: stretch;
+  align-items: start;          /* 推荐档抬升时其他卡片不跟着拉高 */
+  margin-top: 44px;
 }
+@media (max-width: 1024px) { .billing-plans { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px)  { .billing-plans { grid-template-columns: 1fr; } }
+
 .plan-card {
   position: relative;
   border: 1px solid var(--line);
   border-radius: var(--r-3, 14px);
-  background: var(--bg-1);
-  padding: 22px 20px 20px;
+  /* 顶部径向微光:制造「顶端受光」立体感,杀掉纯平色块观感 */
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 0%, rgba(255,255,255,0.045), transparent 58%),
+    var(--bg-1);
+  padding: 28px 22px 22px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  transition: border-color 120ms, box-shadow 120ms, transform 120ms;
+  gap: 18px;
+  transition: border-color 140ms ease, box-shadow 160ms ease, transform 160ms ease, background 160ms ease;
 }
 .plan-card:hover {
   border-color: var(--line-strong);
   transform: translateY(-2px);
+  box-shadow: 0 10px 34px -14px rgba(0,0,0,0.6);
 }
-.plan-card.current {
-  border-color: var(--ok, #3fb950);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--ok) 5%, var(--bg-1)), var(--bg-1));
+
+/* 付费档背景提一层,价值层次 */
+.plan-card.paid {
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 0%, rgba(255,255,255,0.06), transparent 58%),
+    var(--bg-2);
 }
+
+/* 推荐档:顶部主色条 + 物理抬升 + 主色描边外发光 */
 .plan-card.recommended {
   border-color: var(--acc);
-  box-shadow: 0 0 0 1px var(--acc), 0 8px 24px -12px var(--acc);
+  box-shadow: 0 0 0 1px var(--acc), 0 18px 44px -22px var(--acc);
+  transform: translateY(-10px);
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 0%, var(--acc-soft), transparent 56%),
+    var(--bg-2);
 }
+.plan-card.recommended:hover { transform: translateY(-13px); }
+.plan-card.recommended::before {
+  content: '';
+  position: absolute; inset: -1px -1px auto -1px; height: 3px;
+  border-radius: var(--r-3, 14px) var(--r-3, 14px) 0 0;
+  background: linear-gradient(90deg, var(--acc-strong), var(--acc));
+}
+
+.plan-card.current { border-color: var(--ok); }
+
 .pc-ribbon {
   position: absolute;
-  top: -1px;
-  right: -1px;
+  top: 0; left: 50%; transform: translate(-50%, -52%);
   background: var(--acc);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 4px 10px;
-  border-radius: 0 var(--r-3, 14px) 0 10px;
+  color: var(--acc-fg, #fff);
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px -2px var(--acc);
 }
-.pc-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 22px;
+
+.pc-top { display: flex; flex-direction: column; gap: 12px; }
+.pc-head { display: flex; align-items: center; justify-content: space-between; min-height: 24px; }
+.pc-id { display: flex; align-items: center; gap: 8px; }
+.pc-glyph { color: var(--fg-3); display: grid; place-items: center; }
+.plan-card.recommended .pc-glyph { color: var(--acc-strong); }
+.plan-card.current .pc-glyph { color: var(--ok); }
+.pc-name { font-weight: 600; font-size: 14px; color: var(--fg-1); letter-spacing: 0.02em; text-transform: uppercase; }
+.plan-card.recommended .pc-name { color: var(--fg-0); }
+
+/* 价格:大数字 48/800,货币符号 20/700 顶对齐,周期 baseline 底对齐 */
+.pc-price { display: flex; align-items: flex-start; gap: 4px; min-height: 50px; }
+.pc-sym { font-size: 20px; font-weight: 700; color: var(--fg-1); margin-top: 7px; }
+.pc-amount {
+  font-size: 48px; font-weight: 800; color: var(--fg-0);
+  letter-spacing: -0.035em; font-variant-numeric: tabular-nums; line-height: 1;
 }
-.pc-name { font-weight: 600; font-size: 15px; color: var(--fg-0); }
-.pc-price {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
-.pc-amount { font-size: 30px; font-weight: 800; color: var(--fg-0); letter-spacing: -0.02em; }
-.pc-interval { font-size: 13px; color: var(--fg-3); }
-.pc-quota {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.pc-quota li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--fg-2);
-}
-.pc-quota li svg { color: var(--fg-3); flex-shrink: 0; }
-.pc-quota li b { color: var(--fg-0); font-weight: 600; font-variant-numeric: tabular-nums; }
-.pc-action { margin-top: auto; }
+.pc-interval { font-size: 13px; color: var(--fg-3); align-self: flex-end; margin-bottom: 4px; }
+.pc-tagline { font-size: 12.5px; color: var(--fg-2); line-height: 1.5; min-height: 38px; }
+
+.pc-divider { height: 1px; background: var(--line-soft); }
+
+.pc-quota { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 11px; flex: 1; }
+.pc-quota li { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--fg-2); line-height: 1.4; }
+.pc-quota li .qcheck { color: var(--ok); flex-shrink: 0; display: grid; place-items: center; }
+.pc-quota li b { color: var(--fg-0); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.pc-action { margin-top: 4px; }
 .pc-action button { width: 100%; }
 
 /* ── owner-only 提示 ── */
 .billing-note {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--fg-3);
-}
-
-@media (max-width: 720px) {
-  .billing-hero { grid-template-columns: 1fr; }
-  .bh-left { border-right: none; border-bottom: 1px solid var(--line-soft); }
-  .bh-bars { grid-template-columns: 1fr; }
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--fg-3);
+  margin-top: 18px;
 }
