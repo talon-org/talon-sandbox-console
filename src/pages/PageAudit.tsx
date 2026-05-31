@@ -1,17 +1,19 @@
 /* PageAudit — 审计事件日志，含类型/时间范围过滤、关键词搜索、CSV 导出、加载更多。
- * 历史记录通过直接调用 listAuditEvents 管理（游标分页），实时 tail 来自 useAuditStream()。
- * 无任何 mock 数据。
+ * 表格用 ui-lib DataTable(统一组件/列定义/空态/loading);分页保留游标「加载更多」
+ * + 实时 tail(useAuditStream)——append-only 审计日志的正确形态,不用 offset 编号分页。
+ * 历史记录通过 listAuditEvents 管理(游标分页),实时 tail 来自 useAuditStream()。无 mock。
  */
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Button, Input, PageHeader } from '@talon-sandbox/react';
+import { Button, Input, PageHeader, Badge, DataTable, DataTableContent } from '@talon-sandbox/react';
+import type { ColumnDef } from '@talon-sandbox/react';
 import { EmptyState } from '../components';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { useAuditStream } from '../hooks';
 import { listAuditEvents } from '../api/audit';
 import type { AuditEventDTO, AuditStreamEvent } from '../api/types';
-import { AuditRow } from './AuditRow';
 import { typeKind } from '../lib/auditUtils';
+import { relTime as sharedRelTime } from '../lib/relTime';
 
 import './PageAudit.css';
 
@@ -42,6 +44,11 @@ function streamToDisplay(e: AuditStreamEvent): AuditEventDTO {
     extra:      e.extra,
     at:         Math.floor(new Date(e.ts).getTime() / 1000),
   };
+}
+
+function actorIcon(actorKind: string): string {
+  if (actorKind === 'sandbox') return 'box';
+  return 'user';
 }
 
 /** 把任意值转义为 CSV 安全的带双引号字符串（RFC 4180） */
@@ -101,16 +108,12 @@ export function PageAudit() {
   useAuditStream(onStreamEvent);
 
   // ── 历史分页 state ─────────────────────────────────────────────────────────
-  // historyBatch：已累积的历史事件（追加式，不含实时 live events）
   const [historyBatch, setHistoryBatch] = useState<AuditEventDTO[]>([]);
-  // until 游标：下次「加载更多」时传入的 until 参数（Unix 秒）
   const [untilCursor,  setUntilCursor]  = useState<number | undefined>(undefined);
-  // 是否还有更多历史数据（上次返回条数 < PAGE_LIMIT 即认为到底）
   const [hasMore,      setHasMore]      = useState(true);
   const [isLoading,    setIsLoading]    = useState(false);
   const [isError,      setIsError]      = useState(false);
 
-  // ── 加载函数（首次 + 加载更多共用）────────────────────────────────────────
   // loadIdRef 用于取消已过期的异步请求结果
   const loadIdRef = useRef(0);
 
@@ -132,23 +135,19 @@ export function PageAudit() {
         limit:      PAGE_LIMIT,
       });
 
-      if (myId !== loadIdRef.current) return;   // 被更新的请求覆盖，直接丢弃
+      if (myId !== loadIdRef.current) return;
 
       const events = resp.events ?? [];
 
       if (opts.reset) {
-        // 过滤条件切换：清空历史和 live，重新开始
         setHistoryBatch(events);
         setLiveEvents([]);
       } else {
-        // 加载更多：追加到现有历史列表
         setHistoryBatch(prev => [...prev, ...events]);
       }
 
-      // 返回条数 < PAGE_LIMIT → 到底了
       setHasMore(events.length >= PAGE_LIMIT);
 
-      // 更新游标：取本批最旧一条的 at，下次用 until = at - 1 避免重复
       if (events.length > 0) {
         setUntilCursor(events[events.length - 1].at - 1);
       }
@@ -160,7 +159,7 @@ export function PageAudit() {
     }
   }, []);
 
-  // ── 过滤条件变更时重置并加载第一页 ────────────────────────────────────────
+  // 过滤条件变更时重置并加载第一页
   useEffect(() => {
     const sinceTs = Math.floor(Date.now() / 1000) - (RANGE_SECONDS[range] ?? 86400);
     setUntilCursor(undefined);
@@ -172,15 +171,13 @@ export function PageAudit() {
       eventType: filter !== 'all' ? filter : undefined,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [range, filter]);   // doLoad 是稳定的 useCallback，不需要列入依赖
+  }, [range, filter]);
 
-  // ── since（用于「加载更多」时传给 API）────────────────────────────────────
   const since = useMemo(
     () => Math.floor(Date.now() / 1000) - (RANGE_SECONDS[range] ?? 86400),
     [range],
   );
 
-  // ── 加载更多（游标向过去翻页）─────────────────────────────────────────────
   const handleLoadMore = useCallback(() => {
     if (isLoading || !hasMore) return;
     doLoad({
@@ -191,8 +188,7 @@ export function PageAudit() {
     });
   }, [isLoading, hasMore, doLoad, since, untilCursor, filter]);
 
-  // ── 合并 live + 历史，按 id 去重 ──────────────────────────────────────────
-  // live 在前（最新），history 在后（时间倒序）
+  // 合并 live + 历史，按 id 去重(live 在前)
   const allEvents = useMemo(() => {
     const seen   = new Set<string>();
     const merged: AuditEventDTO[] = [];
@@ -202,7 +198,6 @@ export function PageAudit() {
     return merged;
   }, [liveEvents, historyBatch]);
 
-  // ── 类型计数（基于合并后、未搜索的 allEvents）─────────────────────────────
   const typeCounts = useMemo(() => ({
     all:     allEvents.length,
     sandbox: allEvents.filter(e => typeKind(e.event_type) === 'sandbox').length,
@@ -212,7 +207,7 @@ export function PageAudit() {
     image:   allEvents.filter(e => typeKind(e.event_type) === 'image').length,
   }), [allEvents]);
 
-  // ── 关键词搜索（纯前端本地过滤，不触发网络请求）──────────────────────────
+  // 关键词搜索(纯前端本地过滤)
   const filtered = useMemo(() => allEvents.filter(e => {
     if (!search) return true;
     const q   = search.toLowerCase();
@@ -221,65 +216,98 @@ export function PageAudit() {
     return hay.includes(q);
   }), [allEvents, search]);
 
-  // ── 导出 CSV（纯前端，基于当前 filtered 数组）─────────────────────────────
   const handleExportCsv = useCallback(() => {
     exportToCsv(filtered, range);
   }, [filtered, range]);
 
+  // ── DataTable 列定义:把原 AuditRow 的逐格渲染搬进 render,沿用 .aud-* 类样式 ──
+  const columns = useMemo<ColumnDef<AuditEventDTO>[]>(() => [
+    {
+      key: 'time', label: t('audit.colTime'), width: 110,
+      render: (e) => (
+        <div className="awhen">
+          <span className="rel">{sharedRelTime(Math.round(Date.now() / 1000 - e.at), t)}</span>
+          <span>{new Date(e.at * 1000).toISOString().slice(11, 19)}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'event', label: t('audit.colEvent'),
+      render: (e) => {
+        const kind = typeKind(e.event_type);
+        const sub  = e.event_type.split('.').slice(1).join('.');
+        return <div className="atype"><span className={'kind ' + kind}>{kind}</span>{sub}</div>;
+      },
+    },
+    {
+      key: 'actor', label: t('audit.colActor'),
+      render: (e) => {
+        const ak = e.actor?.includes('sb_') ? 'sandbox' : 'user';
+        return (
+          <div className={'aactor ' + ak}>
+            <TlnIcon name={actorIcon(ak)} size={11} className="aic" />
+            {e.actor ?? '—'}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'target', label: t('audit.colTarget'), width: '1.4fr', truncate: true,
+      render: (e) => <span className="atarget">{e.target ?? '—'}</span>,
+    },
+    {
+      key: 'result', label: t('audit.colResult'), width: '0.7fr',
+      render: (e) => (
+        <Badge variant={e.outcome === 'ok' ? 'ok' : 'err'} dot>
+          {t(`audit.outcome.${e.outcome}`, e.outcome)}
+        </Badge>
+      ),
+    },
+    {
+      key: 'meta', label: t('audit.colMeta'), width: '1.5fr', truncate: true,
+      render: (e) => (
+        <span className="ameta">
+          {e.extra ? Object.entries(e.extra).map(([k, v]) => `${k}=${v}`).join(' · ') : (e.reason ?? '—')}
+        </span>
+      ),
+    },
+  ], [t]);
+
   return (
     <>
-      {/* PageHeader：标题 + 描述 + 导出按钮（导出与 PageSecrets/PageSandboxes
-          一致放在 header actions 里，全站统一）。过滤控件放表格上方筛选行。 */}
       <PageHeader
         title={t('audit.title')}
         desc={t('audit.desc')}
         actions={
-          <>
-            <Button variant="default" onClick={handleExportCsv}>
-              <TlnIcon name="download" size={14} />
-              {t('audit.exportCsv')}
-            </Button>
-          </>
+          <Button variant="default" onClick={handleExportCsv}>
+            <TlnIcon name="download" size={14} />
+            {t('audit.exportCsv')}
+          </Button>
         }
       />
 
       <div className="page-body">
-        {/* 筛选行：类型 chip + 时间范围 chip + 搜索框，统一放在表格上方。
-            时间范围用与类型 chip 同款 .sbx-filter 风格，全行视觉统一。 */}
+        {/* 筛选行:类型 chip + 时间范围 chip + 搜索框 */}
         <div className="sbx-filters" style={{ marginBottom: 14 }}>
-          {/* 类型 chip 组 */}
           <div className="group">
             {(['all','sandbox','secret','auth','pty','image'] as const).map(v => (
-              <button
-                key={v}
-                className="sbx-filter"
-                aria-pressed={filter === v}
-                onClick={() => setFilter(v)}
-              >
+              <button key={v} className="sbx-filter" aria-pressed={filter === v} onClick={() => setFilter(v)}>
                 <span>{t(`audit.filter${v.charAt(0).toUpperCase() + v.slice(1)}`)}</span>
                 {typeCounts[v] != null && <span className="num">{typeCounts[v]}</span>}
               </button>
             ))}
           </div>
 
-          {/* 时间范围 chip 组（与类型 chip 同款 .sbx-filter 样式） */}
           <div className="group">
             {(['1h','24h','7d','30d'] as const).map(v => (
-              <button
-                key={v}
-                className="sbx-filter"
-                aria-pressed={range === v}
-                onClick={() => setRange(v)}
-              >
+              <button key={v} className="sbx-filter" aria-pressed={range === v} onClick={() => setRange(v)}>
                 <span>{t(`audit.range${v}`)}</span>
               </button>
             ))}
           </div>
 
-          {/* 弹性间距 */}
           <div style={{ flex: 1 }} />
 
-          {/* 搜索框 */}
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -289,57 +317,38 @@ export function PageAudit() {
           />
         </div>
 
-        {/* 骨架态：初次加载且无任何数据时展示 */}
-        {isLoading && allEvents.length === 0 && (
-          <EmptyState title={t('common.loading')} description={t('audit.loadingDesc')} />
-        )}
-
-        {/* 错误态 */}
-        {isError && (
+        {isError ? (
           <EmptyState
             icon={<TlnIcon name="alert" size={24} />}
             title={t('audit.errorTitle')}
             description={t('audit.errorDesc')}
           />
+        ) : (
+          <DataTable<AuditEventDTO>
+            className="aud-table"
+            data={filtered}
+            columns={columns}
+            rowKey={(e) => e.id}
+            loading={isLoading && allEvents.length === 0}
+            empty={
+              <EmptyState
+                icon={<TlnIcon name="scroll" size={24} />}
+                title={t('audit.empty.head')}
+                description={t('audit.empty.desc')}
+              />
+            }
+          >
+            <DataTableContent />
+          </DataTable>
         )}
 
-        {!isError && (
-          <div className="tln-tbl" role="table" aria-label={t('audit.title')}>
-            {/* 表头 */}
-            <div className="tln-tbl-head aud-row" role="rowgroup">
-              <div role="columnheader">{t('audit.colTime')}</div>
-              <div role="columnheader">{t('audit.colEvent')}</div>
-              <div role="columnheader">{t('audit.colActor')}</div>
-              <div role="columnheader">{t('audit.colTarget')}</div>
-              <div role="columnheader">{t('audit.colResult')}</div>
-              <div role="columnheader">{t('audit.colMeta')}</div>
-            </div>
-
-            {/* 事件行列表 */}
-            {filtered.map(e => <AuditRow key={e.id} event={e} />)}
-
-            {/* 空结果提示 */}
-            {filtered.length === 0 && !isLoading && (
-              <div style={{ padding: 32 }}>
-                <EmptyState
-                  icon={<TlnIcon name="scroll" size={24} />}
-                  eyebrow={t('audit.empty.head')}
-                  title={t('audit.empty.head')}
-                  description={t('audit.empty.desc')}
-                />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* 加载更多：仍有数据且不在初次加载中时展示 */}
+        {/* 加载更多:游标向过去翻页;实时 tail 由 useAuditStream 持续 prepend */}
         {!isError && hasMore && allEvents.length > 0 && (
           <div className="aud-load-more">
             <Button variant="ghost" onClick={handleLoadMore} disabled={isLoading}>
               {isLoading
                 ? <TlnIcon name="spinner" size={14} className="aud-spin" />
-                : <TlnIcon name="chevron-down" size={14} />
-              }
+                : <TlnIcon name="chevronDown" size={14} />}
               {t('audit.loadMore')}
             </Button>
           </div>
