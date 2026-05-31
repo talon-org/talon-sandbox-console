@@ -21,6 +21,10 @@ export interface Me {
   name: string;
   role: string;
   tenant_id: string;
+  /** 细粒度权限集预留(RBAC membership spec §6)。本期三档角色够用,权威源已收口到
+   *  membership;未来加 role→permission 细粒度时后端回填此字段,前端 permissions.ts
+   *  的判定可平滑切到它,不必翻地基。后端当前不返回 → undefined。 */
+  permissions?: string[];
 }
 
 interface AppState {

@@ -10,7 +10,7 @@ import {
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { useApiKeys, useDeleteApiKey, useRevealApiKey } from '../hooks/useApiKeys';
-import { useApp } from '../store';
+import { useRole, isViewer as roleIsViewer } from '../lib/permissions';
 import { EmptyState, ConfirmDialog } from '../components';
 import { CreateApiKeyDrawer } from './_apiKeys/CreateApiKeyDrawer';
 import type { ApiKeyDTO } from '../api/types';
@@ -20,9 +20,8 @@ import './PageApiKeys.css';
 export function PageApiKeys() {
   const t = useT();
 
-  // 判断角色：viewer 不可写，developer/owner/admin 可写
-  const me = useApp(s => s.me);
-  const isViewer = me?.role === 'viewer';
+  // 判断角色：viewer 不可写，developer/owner 可写 —— 判定收口到 lib/permissions
+  const isViewer = roleIsViewer(useRole());
 
   const { data, isLoading, isError, error } = useApiKeys();
   const deleteMutation = useDeleteApiKey();

@@ -511,6 +511,65 @@ export interface SetDefaultPlanRequest {
   set_default: true;
 }
 
+// ── Members & Invitations (自助团队成员管理) ────────────────────────────────────
+// 与 sandbox-api 的 /v1/tenants/{tenant_id}/members、/invitations 契约对齐。
+// 注意：这是租户内自助端点，区别于超管的 /v1/admin/tenants/{id}（后者 members 内嵌在 detail）。
+
+export type MemberRole = 'owner' | 'developer' | 'viewer';
+
+/** 单个成员（GET /v1/tenants/{id}/members） */
+export interface MemberDTO {
+  id: string;
+  email: string;
+  name?: string;
+  role: MemberRole;
+  status?: string;       // 例如 active；后端可能不返回
+  joined_at: number;     // Unix 秒
+}
+
+export interface MemberListResponse {
+  members: MemberDTO[];
+}
+
+/** PATCH /v1/tenants/{id}/members/{user_id} 请求体 */
+export interface UpdateMemberRoleRequest {
+  role: MemberRole;
+}
+
+/** 单个待处理邀请（GET / POST /v1/tenants/{id}/invitations） */
+export interface InvitationDTO {
+  id: string;
+  email: string;
+  role: MemberRole;
+  status: string;        // pending / accepted / revoked / expired
+  created_at: number;    // Unix 秒
+  expires_at: number;    // Unix 秒
+  /** 仅在后端未配置邮件发送时返回，需前端展示让用户手动复制 */
+  accept_url?: string;
+}
+
+export interface InvitationListResponse {
+  invitations: InvitationDTO[];
+}
+
+/** POST /v1/tenants/{id}/invitations 请求体 */
+export interface CreateInvitationRequest {
+  email: string;
+  role: MemberRole;
+}
+
+/** POST /v1/invitations/accept 请求体（公开端点，无需登录） */
+export interface AcceptInvitationRequest {
+  token: string;
+  name?: string;
+}
+
+/** POST /v1/invitations/accept 响应 */
+export interface AcceptInvitationResponse {
+  email: string;
+  tenant_id: string;
+}
+
 // ── Query params ──────────────────────────────────────────────────────────────
 
 export interface AuditQueryParams {

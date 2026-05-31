@@ -26,6 +26,7 @@ const NAV_WORKSPACE_BASE: Array<{ id: string; labelKey: string; icon: string; pa
   { id: 'recordings', labelKey: 'nav.recordings',  icon: 'film',   path: '/recordings' },
   { id: 'secrets',    labelKey: 'nav.secrets',     icon: 'key',    path: '/secrets' },
   { id: 'apiKeys',    labelKey: 'nav.apiKeys',     icon: 'cpu',    path: '/api-keys' },
+  { id: 'members',    labelKey: 'nav.members',     icon: 'users',  path: '/members' },
   { id: 'audit',      labelKey: 'nav.audit',       icon: 'scroll', path: '/audit' },
 ];
 
@@ -54,6 +55,7 @@ function crumbsForPath(path: string, t: (key: string) => string): string[] {
     '/recordings': t('nav.recordings'),
     '/secrets':    t('nav.secrets'),
     '/api-keys':   t('nav.apiKeys'),
+    '/members':    t('nav.members'),
     '/audit':      t('nav.audit'),
     '/workers':    t('nav.workers'),
     '/tenants':    t('nav.tenants'),
@@ -108,6 +110,7 @@ export function Shell() {
     { group: t('cmdk.group.nav'), name: t('cmdk.nav.recordings'),  icon: <TlnIcon name="film"    size={15} />, kbd: ['G', 'R'], action: () => navigate('/recordings') },
     { group: t('cmdk.group.nav'), name: t('cmdk.nav.secrets'),     icon: <TlnIcon name="key"     size={15} />, kbd: ['G', 'K'], action: () => navigate('/secrets') },
     { group: t('cmdk.group.nav'), name: t('cmdk.nav.apiKeys'),     icon: <TlnIcon name="cpu"     size={15} />, kbd: ['G', 'P'], action: () => navigate('/api-keys') },
+    { group: t('cmdk.group.nav'), name: t('cmdk.nav.members'),     icon: <TlnIcon name="users"   size={15} />, kbd: ['G', 'M'], action: () => navigate('/members') },
     { group: t('cmdk.group.nav'), name: t('cmdk.nav.audit'),       icon: <TlnIcon name="scroll"  size={15} />, kbd: ['G', 'A'], action: () => navigate('/audit') },
     // 运维项(workers / tenants / plans)仅 admin 可见,避免非 admin 从 ⌘K 跳进去吃 403
     ...(isAdmin ? [

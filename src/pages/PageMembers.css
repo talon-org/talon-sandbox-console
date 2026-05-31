@@ -1,0 +1,45 @@
+/* PageMembers.css — 参照 PageApiKeys.css / PageTenants.css 风格 */
+
+/* 成员表格行：成员 / 角色 / 状态 / 加入时间 / 操作 */
+.mbr-row { grid-template-columns: 2fr 150px 100px 100px 60px; align-items: center; }
+
+/* 成员身份单元：头像 + 名称/邮箱 */
+.mbr-id { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.mbr-av {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--bg-3); color: var(--fg-0);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 500; flex: 0 0 auto;
+}
+.mbr-id-text { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.mbr-name {
+  font-size: 13px; color: var(--fg-0); font-weight: 500;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.mbr-email {
+  font-family: var(--font-mono); font-size: 12px; color: var(--fg-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.mbr-status { font-size: 12px; color: var(--fg-2); }
+.mbr-joined { font-family: var(--font-mono); font-size: 12px; color: var(--fg-3); }
+
+/* 非 owner 提示 banner（与 PageApiKeys 的 .ak-viewer-note 同构） */
+.mbr-note {
+  font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-2);
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: var(--r-2); padding: 8px 14px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* 待处理邀请区块 */
+.mbr-pending { margin-top: 28px; }
+.mbr-section-title {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; font-weight: 600; color: var(--fg-1);
+  margin-bottom: 10px;
+}
+.mbr-section-title .ic { color: var(--fg-3); }
+
+/* 邀请表格行：邮箱 / 角色 / 过期 / 操作 */
+.mbr-inv-row { grid-template-columns: 2fr 150px 120px 80px; align-items: center; }

@@ -19,6 +19,8 @@ import { PageRecordings } from './pages/PageRecordings';
 import { PageRecording } from './pages/PageRecording';
 import { PageSecrets } from './pages/PageSecrets';
 import { PageApiKeys } from './pages/PageApiKeys';
+import { PageMembers } from './pages/PageMembers';
+import { PageAcceptInvite } from './pages/PageAcceptInvite';
 import { PageWorkers } from './pages/PageWorkers';
 import { PageTenants } from './pages/PageTenants';
 import { PagePlans } from './pages/PagePlans';
@@ -74,6 +76,8 @@ export default function App() {
       <Boot />
       <Routes>
         <Route path="/login" element={<PageLogin />} />
+        {/* 接受邀请 —— 公开页，无需登录（在 RequireAuth 之外） */}
+        <Route path="/accept-invite" element={<PageAcceptInvite />} />
 
         {/* Full-bleed authenticated routes (no Shell). */}
         <Route
@@ -107,6 +111,7 @@ export default function App() {
           <Route path="/recordings" element={<PageRecordings />} />
           <Route path="/secrets" element={<PageSecrets />} />
           <Route path="/api-keys" element={<PageApiKeys />} />
+          <Route path="/members" element={<PageMembers />} />
           <Route path="/audit" element={<PageAudit />} />
           <Route path="/workers" element={<PageWorkers />} />
           <Route path="/tenants" element={<PageTenants />} />
