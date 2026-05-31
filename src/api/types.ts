@@ -521,6 +521,65 @@ export interface SetDefaultPlanRequest {
   set_default: true;
 }
 
+// ── Billing（租户侧计费：用量 / 订阅 / 可选套餐 / 升降级）─────────────────────────
+// 与超管 /v1/admin/plans 区分：以下走租户可读端点 /v1/usage、/v1/billing/*、/v1/plans。
+
+/** 面向租户的套餐展示视图（GET /v1/plans，仅 active，不含 stripe_price_id） */
+export interface PublicPlanDTO {
+  code: string;
+  name: string;
+  quota_max_sandboxes: number;
+  quota_vcpu: number;
+  quota_mem_gb: number;
+  quota_disk_gb: number;
+  price_cents: number;
+  currency: string;
+  billing_interval: string;   // month / year / ''（免费）
+}
+
+export interface PublicPlanListResponse {
+  plans: PublicPlanDTO[];
+}
+
+/** 租户订阅状态（GET /v1/billing/subscription） */
+export interface SubscriptionDTO {
+  provider: string;            // stripe / manual
+  plan_code: string;
+  status: string;              // active | past_due | canceled | none
+  current_period_end: number;  // Unix 秒；0 = 无
+}
+
+/** 单日用量（GET /v1/usage 的 days[] / total） */
+export interface UsageDayDTO {
+  date: string;                // YYYY-MM-DD（total 留空）
+  cpu_milli_seconds: number;
+  memory_byte_seconds: number;
+  disk_byte_seconds: number;
+  sandbox_seconds: number;
+  request_count: number;
+}
+
+export interface UsageResponse {
+  since: string;
+  until: string;
+  days: UsageDayDTO[];
+  total: UsageDayDTO;
+}
+
+/** POST /v1/billing/upgrade-plan 请求体 */
+export interface UpgradePlanRequest {
+  plan_code: string;
+  success_url?: string;
+  cancel_url?: string;
+}
+
+/** POST /v1/billing/upgrade-plan 响应：免费档 applied=true；付费档返回 checkout_url */
+export interface UpgradePlanResponse {
+  applied: boolean;
+  checkout_url?: string;
+  plan_code: string;
+}
+
 // ── Members & Invitations (自助团队成员管理) ────────────────────────────────────
 // 与 sandbox-api 的 /v1/tenants/{tenant_id}/members、/invitations 契约对齐。
 // 注意：这是租户内自助端点，区别于超管的 /v1/admin/tenants/{id}（后者 members 内嵌在 detail）。

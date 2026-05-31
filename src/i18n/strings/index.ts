@@ -20,6 +20,7 @@ import { terminal }   from './terminal';
 import { apiKeys }    from './apiKeys';
 import { plans }      from './plans';
 import { members }    from './members';
+import { billing }    from './billing';
 
 export type LangKey = 'en' | 'zh';
 
@@ -40,10 +41,11 @@ export const STRINGS: Record<string, { en: string; zh: string }> = {
   ...apiKeys,
   ...plans,
   ...members,
+  ...billing,
 };
 
 export {
   shell, common, tweaks, cmdk, dashboard, sandboxes,
   login, secrets, audit, workers, tenants, recordings, terminal,
-  apiKeys, plans, members,
+  apiKeys, plans, members, billing,
 };

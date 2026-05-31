@@ -11,6 +11,7 @@ export const shell = {
   'nav.audit':                 { en: 'Audit', zh: '审计' },
   'nav.apiKeys':               { en: 'API Keys', zh: 'API Keys' },
   'nav.members':               { en: 'Members', zh: '成员' },
+  'nav.billing':               { en: 'Billing', zh: '计费' },
   'nav.workers':               { en: 'Workers', zh: '节点' },
   'nav.tenants':               { en: 'Workspaces', zh: '空间' },
   'nav.plans':                 { en: 'Plans', zh: '套餐' },

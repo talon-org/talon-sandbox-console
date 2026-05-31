@@ -12,6 +12,7 @@ export const cmdk = {
   'cmdk.nav.secrets':      { en: 'Secrets', zh: '凭据' },
   'cmdk.nav.apiKeys':      { en: 'API Keys', zh: 'API Keys' },
   'cmdk.nav.members':      { en: 'Members', zh: '成员' },
+  'cmdk.nav.billing':      { en: 'Billing', zh: '计费' },
   'cmdk.nav.audit':        { en: 'Audit', zh: '审计' },
   'cmdk.nav.workers':      { en: 'Workers', zh: '节点' },
   'cmdk.nav.tenants':      { en: 'Workspaces', zh: '空间' },

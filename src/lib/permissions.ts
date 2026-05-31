@@ -46,3 +46,8 @@ export function canManageMembers(role: Role): boolean {
 export function canInviteMembers(role: Role): boolean {
   return role === 'owner';
 }
+
+/** 仅 owner 可管理计费（升/降级套餐、发起结账）。后端 upgrade-plan 走 chainOwner。 */
+export function canManageBilling(role: Role): boolean {
+  return role === 'owner';
+}
