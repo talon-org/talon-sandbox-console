@@ -254,18 +254,25 @@ export function PageBilling() {
                     </div>
 
                     <div className="plan-cta">
-                      {/* 原型语义:仅「当前套餐」按钮 disabled(ghost,刻意低调)。
-                          非 owner 不靠 disabled 变灰(0.5 透明度看不清),而是点击时
-                          由 onCta 拦截 + 后端 chainOwner 兜底 403;footnote 已说明权限。 */}
-                      <Button
-                        variant={ctaVariant}
-                        disabled={isCur || (upgradeMutation.isPending && confirm?.code === p.code)}
-                        loading={upgradeMutation.isPending && confirm?.code === p.code}
-                        onClick={() => onCta(p)}
-                        title={!canManage ? t('billing.ownerOnly') : undefined}
-                      >
-                        {ctaLabel}
-                      </Button>
+                      {/* 当前套餐不是「不可用的操作」而是状态,用清晰的状态块而非 disabled
+                          按钮(disabled 的 opacity 0.5 在两种模式下都读不清)。
+                          其余档位才是真正的可点 CTA;非 owner 点击由 onCta 拦截弹 toast。 */}
+                      {isCur ? (
+                        <div className="plan-cta-current">
+                          <TlnIcon name="check" size={13} />
+                          {t('billing.currentBtn')}
+                        </div>
+                      ) : (
+                        <Button
+                          variant={ctaVariant}
+                          disabled={upgradeMutation.isPending && confirm?.code === p.code}
+                          loading={upgradeMutation.isPending && confirm?.code === p.code}
+                          onClick={() => onCta(p)}
+                          title={!canManage ? t('billing.ownerOnly') : undefined}
+                        >
+                          {ctaLabel}
+                        </Button>
+                      )}
                     </div>
                   </div>
                 );
