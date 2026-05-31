@@ -218,7 +218,7 @@ export function Shell() {
                 <div className="me">
                   {/* API Key flow has no email — fallback to name, then tenant_id sans prefix */}
                   <span className="email">{me?.name || me?.email || me?.tenant_id?.replace(/^tnt_/, '') || '—'}</span>
-                  <span className="role">{me?.role ?? ''}</span>
+                  <span className="role">{me?.role ? t(`members.role.${normalizeRole(me.role)}`) : ''}</span>
                 </div>
                 <TlnIcon name="chevronUp" size={13} style={{ color: 'var(--fg-3)', flex: '0 0 auto' }} />
               </button>

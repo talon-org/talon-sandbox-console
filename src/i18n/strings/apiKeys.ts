@@ -23,5 +23,5 @@ export const apiKeys = {
   'apiKeys.empty.head':          { en: 'No API keys', zh: '尚无 API Key' },
   'apiKeys.empty.desc':          { en: 'Create a key to get programmatic access.', zh: '创建 Key 以获得程序访问权限。' },
   'apiKeys.neverUsed':           { en: 'Never used', zh: '从未使用' },
-  'apiKeys.viewerNote':          { en: 'Viewer role — create/revoke requires developer or above.', zh: 'Viewer 角色 — 创建/吊销需要 developer 或以上权限。' },
+  'apiKeys.viewerNote':          { en: 'Guest role — create/revoke requires member or above.', zh: '访客角色 — 创建/吊销需要成员或以上权限。' },
 } as const;

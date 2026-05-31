@@ -1,7 +1,7 @@
 /* src/i18n/strings/billing.ts — 租户计费页 */
 export const billing = {
   'billing.title':            { en: 'Plans & Billing', zh: '套餐与计费' },
-  'billing.desc':             { en: 'Choose the plan that fits your workload. Only owners can change the plan.', zh: '选择匹配你工作负载的套餐。仅 owner 可变更套餐。' },
+  'billing.desc':             { en: 'Choose the plan that fits your workload. Only admins can change the plan.', zh: '选择匹配你工作负载的套餐。仅管理员可变更套餐。' },
 
   'billing.currentPlan':      { en: 'Current plan', zh: '当前套餐' },
   'billing.renewsOn':         { en: 'Renews', zh: '续费' },
@@ -49,5 +49,5 @@ export const billing = {
   'billing.downgrade':        { en: 'Downgrade', zh: '降级' },
   'billing.switchedTo':       { en: 'Switched to {plan}', zh: '已切换到 {plan}' },
   'billing.upgradeFailed':    { en: 'Failed to change plan', zh: '套餐变更失败' },
-  'billing.ownerOnly':        { en: 'Only the workspace owner can change the plan.', zh: '仅空间 owner 可变更套餐。' },
+  'billing.ownerOnly':        { en: 'Only the workspace admin can change the plan.', zh: '仅工作区管理员可变更套餐。' },
 } as const;
