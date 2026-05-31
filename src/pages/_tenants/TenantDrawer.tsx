@@ -1,12 +1,14 @@
 /* src/pages/_tenants/TenantDrawer.tsx
  * Read-only detail drawer for a workspace (tenant).
  *
- * Backend tenant API exposes only: list / get / create / suspend.
- * Quota editing, plan switching, member invitation are NOT supported
- * server-side — historically this drawer rendered editable controls
- * for those, but the "Save" button only fired a toast. Editable UI for
- * unsavable fields is a product bug, not a "todo": removed. When the
- * backend grows those endpoints, re-add the controls then.
+ * 超管视角：以任意租户身份查看其详情（GET /v1/admin/tenants/{id}）。
+ * detail 已内嵌 members 数组，这里只读展示即可。
+ *
+ * 成员的邀请 / 改角色 / 移除是租户自助功能，走 PageMembers
+ * （/v1/tenants/{tid}/members + /invitations），不在本超管抽屉范围内。
+ *
+ * Quota editing / plan switching 后端仍无更新端点 —— 历史上这里曾渲染可编辑
+ * 控件但 "Save" 只弹 toast，属产品 bug 已移除；后端长出这些端点时再加回。
  */
 import { useState } from 'react';
 import {
@@ -98,10 +100,10 @@ export function TenantDrawer({ tenant, onClose }: Props) {
                 {members.length} {t('tenants.drawer.members')} · {tenant.active_sandboxes} {t('tenants.drawer.running')}
               </div>
             </div>
+            {/* 套餐名:用列表带来的 plan_name(plans 表显示名),回退 code。
+                Badge 配色仅内置三档有专属色,自定义套餐(如 starter)落 muted。 */}
             <Badge variant={plan === 'enterprise' ? 'magenta' : plan === 'team' ? 'info' : 'muted'}>
-              {plan === 'enterprise' ? t('tenants.drawer.planEnt')
-               : plan === 'team' ? t('tenants.drawer.planTeam')
-               : t('tenants.drawer.planFree')}
+              {tenant.plan_name ?? plan}
             </Badge>
           </div>
 
@@ -144,9 +146,8 @@ export function TenantDrawer({ tenant, onClose }: Props) {
             </div>
           </div>
 
-          {/* Members — read-only list. Inviting members isn't wired up
-           * server-side yet; the trigger is omitted rather than shown as
-           * a disabled placeholder. */}
+          {/* Members — 只读列表（超管视角）。成员的邀请 / 改角色 / 移除由
+           * 租户自助页 PageMembers 负责，此超管抽屉不放写操作入口。 */}
           <div className="ten-section">
             <div className="ten-section-title">
               <TlnIcon name="users" size={12} className="ic" />

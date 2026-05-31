@@ -173,14 +173,13 @@ export function PageTenants() {
                     </div>
                   </div>
 
-                  {/* plan 读取 API 字段，缺省回退 free */}
+                  {/* 套餐:优先显示后端 plan_name(plans 表显示名,支持 starter 等自定义套餐),
+                      缺失时回退用 plan code。CSS 着色类沿用 code 首字母大写,
+                      仅内置三档(Free/Team/Enterprise)有专属配色,其余套餐落默认样式。 */}
                   {(() => {
-                    const plan = tenant.plan ?? 'free';
-                    // CSS 类名使用首字母大写的格式（Free / Team / Enterprise）
-                    const cls  = plan.charAt(0).toUpperCase() + plan.slice(1);
-                    const lbl  = plan === 'enterprise' ? t('tenants.drawer.planEnt')
-                               : plan === 'team'       ? t('tenants.drawer.planTeam')
-                               :                        t('tenants.drawer.planFree');
+                    const code = tenant.plan ?? 'free';
+                    const cls  = code.charAt(0).toUpperCase() + code.slice(1);
+                    const lbl  = tenant.plan_name ?? code;
                     return <div><span className={`tplan ${cls}`}>{lbl}</span></div>;
                   })()}
 

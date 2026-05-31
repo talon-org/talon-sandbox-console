@@ -201,7 +201,11 @@ export interface TenantDTO {
   created_at: number;   // Unix seconds
   quota_max_sandboxes: number;
   active_sandboxes: number;
-  plan?: 'free' | 'team' | 'enterprise';   // backend-gaps G4：列表响应已扩展此字段
+  /** 套餐 code，指向 plans 表（超管可自定义，如 free/team/starter/enterprise）。
+   *  列表响应扩展字段；旧响应可能缺失。 */
+  plan?: string;
+  /** 套餐显示名（plans 表 name）；列表端点扩展，缺失时前端回退用 plan code。 */
+  plan_name?: string;
   member_count?: number;                    // G4 (v30)：该租户的用户数（列表端点扩展）
   /** 套餐配额上限，0 表示不限；列表端点扩展字段，旧响应可能缺失 */
   quota?: TenantQuotaDTO;
@@ -245,7 +249,7 @@ export interface TenantSecurityDTO {
 export interface TenantDetailDTO {
   id: string;
   name: string;
-  plan: 'free' | 'team' | 'enterprise';
+  plan: string;         // 套餐 code，指向 plans 表（超管可自定义）
   created_at: number;   // Unix seconds
   status: 'active' | 'suspended';
   quota: TenantQuotaDTO;
@@ -258,7 +262,7 @@ export interface TenantDetailDTO {
 export interface CreateTenantRequest {
   id: string;
   name: string;
-  plan?: 'free' | 'team' | 'enterprise';
+  plan?: string;        // 套餐 code，指向 plans 表；省略时后端落默认套餐
   quota?: TenantQuotaDTO;
 }
 
