@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter,
   Button, Input, toast,
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
   FormField, FormLabel, FormControl, FormDescription, FormSection,
 } from '@talon-sandbox/react';
 import { useT } from '../../i18n/useT';
@@ -33,6 +34,11 @@ export function PlanDrawer({ plan, open, onClose }: Props) {
   const [mem,        setMem]        = useState('8');
   const [disk,       setDisk]       = useState('40');
   const [isActive,   setIsActive]   = useState(true);
+  // 计费定价。price 以「元」为单位输入（UX 友好），提交时换算成 cents。
+  const [price,      setPrice]      = useState('0');
+  const [currency,   setCurrency]   = useState('usd');
+  const [interval,   setInterval]   = useState('');   // '' = 免费档不计费
+  const [stripeId,   setStripeId]   = useState('');
 
   // 编辑时回填
   useEffect(() => {
@@ -44,6 +50,10 @@ export function PlanDrawer({ plan, open, onClose }: Props) {
       setMem(String(plan.quota_mem_gb));
       setDisk(String(plan.quota_disk_gb));
       setIsActive(plan.is_active);
+      setPrice((plan.price_cents / 100).toString());
+      setCurrency(plan.currency || 'usd');
+      setInterval(plan.billing_interval);
+      setStripeId(plan.stripe_price_id);
     } else {
       setCode('');
       setName('');
@@ -52,15 +62,25 @@ export function PlanDrawer({ plan, open, onClose }: Props) {
       setMem('8');
       setDisk('40');
       setIsActive(true);
+      setPrice('0');
+      setCurrency('usd');
+      setInterval('');
+      setStripeId('');
     }
   }, [plan, open]);
+
+  const priceCents = Math.round(Number(price) * 100);
+  // 付费档（价格 > 0）必须选计费周期，与后端校验一致。
+  const billingValid = priceCents === 0 || interval !== '';
 
   const valid = name.trim().length > 0
     && (isEdit || code.trim().length > 0)
     && Number(sandboxes) > 0
     && Number(vcpu) > 0
     && Number(mem) > 0
-    && Number(disk) > 0;
+    && Number(disk) > 0
+    && priceCents >= 0
+    && billingValid;
 
   const busy = upsertMutation.isPending;
 
@@ -75,6 +95,10 @@ export function PlanDrawer({ plan, open, onClose }: Props) {
         quota_mem_gb: Number(mem),
         quota_disk_gb: Number(disk),
         is_active: isActive,
+        price_cents: priceCents,
+        currency: priceCents > 0 ? currency : '',
+        billing_interval: interval,
+        stripe_price_id: stripeId.trim(),
       },
       {
         onSuccess: () => {
@@ -185,6 +209,69 @@ export function PlanDrawer({ plan, open, onClose }: Props) {
                   onChange={e => setDisk(e.target.value)}
                 />
               </FormControl>
+            </FormField>
+          </FormSection>
+
+          {/* 计费定价 */}
+          <FormSection
+            icon={<TlnIcon name="zap" size={14} />}
+            title={t('plans.field.pricing')}
+          >
+            <FormField>
+              <FormLabel htmlFor="plan-price">{t('plans.field.price')}</FormLabel>
+              <FormControl>
+                <Input
+                  id="plan-price" type="number" min={0} step="0.01" mono
+                  value={price}
+                  onChange={e => setPrice(e.target.value)}
+                />
+              </FormControl>
+              <FormDescription>{t('plans.field.priceHint')}</FormDescription>
+            </FormField>
+            <FormField>
+              <FormLabel htmlFor="plan-currency">{t('plans.field.currency')}</FormLabel>
+              <FormControl>
+                <Select value={currency} onValueChange={setCurrency} disabled={priceCents === 0}>
+                  <SelectTrigger id="plan-currency">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="usd">USD</SelectItem>
+                    <SelectItem value="cny">CNY</SelectItem>
+                    <SelectItem value="eur">EUR</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+            </FormField>
+            <FormField error={!billingValid ? true : undefined}>
+              <FormLabel htmlFor="plan-interval">{t('plans.field.interval')}</FormLabel>
+              <FormControl>
+                {/* 免费档可留空(不计费);付费档必须选周期,与后端校验一致 */}
+                <Select value={interval} onValueChange={setInterval}>
+                  <SelectTrigger id="plan-interval" error={!billingValid}>
+                    <SelectValue placeholder={t('plans.field.intervalFree')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="month">{t('plans.field.intervalMonth')}</SelectItem>
+                    <SelectItem value="year">{t('plans.field.intervalYear')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              {!billingValid && (
+                <FormDescription>{t('plans.field.intervalRequired')}</FormDescription>
+              )}
+            </FormField>
+            <FormField>
+              <FormLabel htmlFor="plan-stripe">{t('plans.field.stripePriceId')}</FormLabel>
+              <FormControl>
+                <Input
+                  id="plan-stripe" mono
+                  value={stripeId}
+                  onChange={e => setStripeId(e.target.value)}
+                  placeholder="price_..."
+                />
+              </FormControl>
+              <FormDescription>{t('plans.field.stripePriceIdHint')}</FormDescription>
             </FormField>
           </FormSection>
 

@@ -488,6 +488,11 @@ export interface PlanDTO {
   quota_disk_gb: number;
   is_default: boolean;
   is_active: boolean;
+  // 计费定价（migrate_v37）
+  price_cents: number;        // 单价，最小货币单位（分）；0 = 免费
+  currency: string;           // ISO 4217 货币码小写（usd / cny）；免费档可空
+  billing_interval: string;   // month / year；空 = 免费档不计费
+  stripe_price_id: string;    // Stripe Price ID；空 = 未接 Stripe
 }
 
 /** GET /v1/admin/plans 响应体 */
@@ -504,6 +509,11 @@ export interface UpsertPlanRequest {
   quota_mem_gb: number;
   quota_disk_gb: number;
   is_active: boolean;
+  // 计费定价（migrate_v37）
+  price_cents: number;
+  currency: string;
+  billing_interval: string;
+  stripe_price_id: string;
 }
 
 /** PATCH /v1/admin/plans/{code} 请求体（仅设默认） */
