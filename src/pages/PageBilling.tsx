@@ -294,7 +294,7 @@ export function PageBilling() {
             <DialogTitle>{t('billing.confirmTitle')}</DialogTitle>
           </DialogHeader>
           {confirm && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className="dlg-form-body" style={{ gap: 14, minWidth: 'auto' }}>
               <div style={{ fontSize: 13, color: 'var(--fg-1)', lineHeight: 1.6 }}>
                 {t('billing.confirmFrom')}{' '}
                 <span className="tln-mono" style={{ color: 'var(--fg-1)' }}>{cur?.name}</span>{' '}
