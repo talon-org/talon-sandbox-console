@@ -21,6 +21,7 @@ import { apiKeys }    from './apiKeys';
 import { plans }      from './plans';
 import { members }    from './members';
 import { billing }    from './billing';
+import { settings }   from './settings';
 
 export type LangKey = 'en' | 'zh';
 
@@ -42,10 +43,11 @@ export const STRINGS: Record<string, { en: string; zh: string }> = {
   ...plans,
   ...members,
   ...billing,
+  ...settings,
 };
 
 export {
   shell, common, tweaks, cmdk, dashboard, sandboxes,
   login, secrets, audit, workers, tenants, recordings, terminal,
-  apiKeys, plans, members, billing,
+  apiKeys, plans, members, billing, settings,
 };

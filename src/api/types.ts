@@ -14,7 +14,20 @@ export interface MeResponse {
   email?: string;
   name?: string;
   created_at?: number;   // Unix seconds
+  prefs?: string;        // 偏好原始 JSON 串 {"lang":..,"theme":..}；空时省略
   preview_suffix?: string;
+}
+
+/** 用户偏好（解析自 MeResponse.prefs）。 */
+export interface UserPrefs {
+  lang?: 'en' | 'zh';
+  theme?: 'light' | 'dark' | 'system';
+}
+
+/** PATCH /v1/auth/me 请求体。两字段都可选 = 部分更新。 */
+export interface UpdateMeRequest {
+  name?: string;
+  prefs?: UserPrefs;
 }
 
 // ── Baseimages ────────────────────────────────────────────────────────────────

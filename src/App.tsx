@@ -21,6 +21,7 @@ import { PageSecrets } from './pages/PageSecrets';
 import { PageApiKeys } from './pages/PageApiKeys';
 import { PageMembers } from './pages/PageMembers';
 import { PageBilling } from './pages/PageBilling';
+import { PageSettings } from './pages/PageSettings';
 import { PageAcceptInvite } from './pages/PageAcceptInvite';
 import { PageWorkers } from './pages/PageWorkers';
 import { PageTenants } from './pages/PageTenants';
@@ -114,6 +115,7 @@ export default function App() {
           <Route path="/api-keys" element={<PageApiKeys />} />
           <Route path="/members" element={<PageMembers />} />
           <Route path="/billing" element={<PageBilling />} />
+          <Route path="/settings" element={<PageSettings />} />
           <Route path="/audit" element={<PageAudit />} />
           <Route path="/workers" element={<PageWorkers />} />
           <Route path="/tenants" element={<PageTenants />} />

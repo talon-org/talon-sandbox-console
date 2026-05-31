@@ -21,6 +21,9 @@ export interface Me {
   name: string;
   role: string;
   tenant_id: string;
+  /** 用户偏好原始 JSON 串 {"lang":..,"theme":..}（后端 users.prefs）。空 = 未设置。
+   *  登录/hydrate 时据此把 lang/mode 同步到本地,实现跨设备偏好。 */
+  prefs?: string;
   /** 细粒度权限集预留(RBAC membership spec §6)。本期三档角色够用,权威源已收口到
    *  membership;未来加 role→permission 细粒度时后端回填此字段,前端 permissions.ts
    *  的判定可平滑切到它,不必翻地基。后端当前不返回 → undefined。 */
@@ -79,6 +82,34 @@ function applyAttrs() {
 }
 applyAttrs();
 
+// applyServerPrefs 解析服务端 prefs JSON,把 lang/mode 写入 localStorage + <html>,
+// 返回要 merge 进 store 的局部 state。容错:非法 JSON / 未知值静默忽略。
+// 注:服务端偏好里的 theme 是「明/暗」语义(light/dark/system),映射到 console 的
+// mode(dark|light);console 的 theme(调色板)不在服务端偏好范围内,保持本地。
+function applyServerPrefs(raw: string): Partial<Pick<AppState, 'lang' | 'mode'>> {
+  const out: Partial<Pick<AppState, 'lang' | 'mode'>> = {};
+  let p: { lang?: string; theme?: string };
+  try {
+    p = JSON.parse(raw);
+  } catch {
+    return out;
+  }
+  const setAttr = (k: string, v: string, lsKey: string) => {
+    try { localStorage.setItem(lsKey, v); } catch { /* ignore */ }
+    document.documentElement.setAttribute(`data-${k}`, v);
+  };
+  if (p.lang === 'en' || p.lang === 'zh') {
+    out.lang = p.lang;
+    setAttr('lang', p.lang, LS.lang);
+  }
+  // system 视为「不强制」,交给本地默认(dark);只有显式 light/dark 才落。
+  if (p.theme === 'light' || p.theme === 'dark') {
+    out.mode = p.theme;
+    setAttr('mode', p.theme, LS.mode);
+  }
+  return out;
+}
+
 export const useApp = create<AppState>((set) => ({
   authToken: read<string>(LS.token, '') || null,
   me: null,
@@ -98,7 +129,11 @@ export const useApp = create<AppState>((set) => ({
     } catch {
       /* ignore */
     }
-    set({ authToken: token, me, tenantId: me?.tenant_id ?? null });
+    // 把服务端偏好(lang/theme)同步到本地 + <html> data-attrs,实现跨设备偏好。
+    // 本地已有显式选择时不覆盖(用户在本机刚改过,以本机为准);仅当 prefs 提供
+    // 且本地缺失时套用。这样换设备登录能继承,本机微调又不被服务端旧值打回。
+    const applied = me?.prefs ? applyServerPrefs(me.prefs) : {};
+    set({ authToken: token, me, tenantId: me?.tenant_id ?? null, ...applied });
   },
 
   logout: () => {

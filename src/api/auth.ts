@@ -1,5 +1,6 @@
-import { apiGet, apiPost, ApiError } from './client';
+import { apiGet, apiPost, apiPatch, ApiError } from './client';
 import type { Me } from '../store';
+import type { UpdateMeRequest } from './types';
 
 export interface LoginApiKeyPayload {
   api_key: string;
@@ -37,6 +38,11 @@ export async function logout(signal?: AbortSignal): Promise<void> {
 
 export async function getMe(signal?: AbortSignal): Promise<Me> {
   return apiGet<Me>('/v1/auth/me', signal);
+}
+
+/** 账户设置:改自己的显示名/偏好(部分更新)。成功返回 {status:"ok"}。 */
+export async function updateMe(body: UpdateMeRequest, signal?: AbortSignal): Promise<{ status: string }> {
+  return apiPatch<{ status: string }>('/v1/auth/me', body, signal);
 }
 
 // helper: one-shot Authorization override (used by API-key login before the

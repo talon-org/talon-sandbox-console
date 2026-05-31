@@ -62,6 +62,7 @@ function crumbsForPath(path: string, t: (key: string) => string): string[] {
     '/workers':    t('nav.workers'),
     '/tenants':    t('nav.tenants'),
     '/plans':      t('nav.plans'),
+    '/settings':   t('settings.title'),
   };
   const match = Object.keys(map).find(k => path.startsWith(k));
   return match ? [map[match]!] : ['—'];
@@ -124,6 +125,7 @@ export function Shell() {
     { group: t('cmdk.group.actions'), name: t('cmdk.action.newSandbox'), icon: <TlnIcon name="plus"   size={15} />, kbd: ['mod', 'N'], action: () => navigate('/sandboxes?new=1') },
     { group: t('cmdk.group.actions'), name: t('cmdk.action.newSecret'),  icon: <TlnIcon name="key"    size={15} />, kbd: ['mod', 'shift', 'K'], action: () => navigate('/secrets?new=1') },
     // Sign out — no shortcut by design (destructive).
+    { group: t('cmdk.group.actions'), name: t('settings.title'),         icon: <TlnIcon name="settings" size={15} />, action: () => navigate('/settings') },
     { group: t('cmdk.group.actions'), name: t('cmdk.action.signOut'),    icon: <TlnIcon name="logout" size={15} />, action: () => { logout(); navigate('/login'); } },
   ] as Array<{
     group: string;
@@ -202,12 +204,28 @@ export function Shell() {
 
         {/* User foot */}
         <div className="sidebar-foot">
-          <div className="me-avatar" aria-hidden="true">{initials}</div>
-          <div className="me">
-            {/* API Key flow has no email — fallback to name, then tenant_id sans prefix */}
-            <span className="email">{me?.email ?? me?.name ?? me?.tenant_id?.replace(/^tnt_/, '') ?? '—'}</span>
-            <span className="role">{me?.role ?? ''}</span>
-          </div>
+          <button
+            type="button"
+            className="me-trigger"
+            title={t('settings.title')}
+            onClick={() => navigate('/settings')}
+          >
+            <div className="me-avatar" aria-hidden="true">{initials}</div>
+            <div className="me">
+              {/* API Key flow has no email — fallback to name, then tenant_id sans prefix */}
+              <span className="email">{me?.name || me?.email || me?.tenant_id?.replace(/^tnt_/, '') || '—'}</span>
+              <span className="role">{me?.role ?? ''}</span>
+            </div>
+          </button>
+          <button
+            type="button"
+            className="logout-btn"
+            title={t('settings.title')}
+            aria-label={t('settings.title')}
+            onClick={() => navigate('/settings')}
+          >
+            <TlnIcon name="settings" size={14} />
+          </button>
           <button
             type="button"
             className="logout-btn"
