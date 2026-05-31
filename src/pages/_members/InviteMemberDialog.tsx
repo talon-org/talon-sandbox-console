@@ -123,10 +123,10 @@ export function InviteMemberDialog({ open, onClose }: Props) {
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
+                  {/* owner 不可经邀请直接授予（后端 400），故只提供 developer / admin。 */}
                   <SelectContent>
                     <SelectItem value="developer">{t('members.role.developer')}</SelectItem>
-                    <SelectItem value="viewer">{t('members.role.viewer')}</SelectItem>
-                    <SelectItem value="owner">{t('members.role.owner')}</SelectItem>
+                    <SelectItem value="admin">{t('members.role.admin')}</SelectItem>
                   </SelectContent>
                 </Select>
               </FormControl>

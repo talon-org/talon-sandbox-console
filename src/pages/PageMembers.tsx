@@ -15,10 +15,10 @@ import type { BadgeVariant } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { useApp, useIsApiKeySession } from '../store';
-import { useRole, canManageMembers, canInviteMembers } from '../lib/permissions';
+import { useRole, canManageMembers, canInviteMembers, canGrantOwner } from '../lib/permissions';
 import {
   useMembers, useInvitations,
-  useUpdateMemberRole, useRemoveMember, useRevokeInvitation,
+  useUpdateMemberRole, useRemoveMember, useRevokeInvitation, useResendInvitation,
 } from '../hooks/useMembers';
 import { EmptyState, ConfirmDialog } from '../components';
 import { InviteMemberDialog } from './_members/InviteMemberDialog';
@@ -26,12 +26,14 @@ import type { MemberDTO, MemberRole, InvitationDTO } from '../api/types';
 
 import './PageMembers.css';
 
-// 角色 → Badge variant 映射（owner 强调色，developer 信息色，viewer 静默）
-const ROLE_VARIANT: Record<MemberRole, BadgeVariant> = {
+// 角色 → Badge variant 映射（owner 强调色，admin 信息色，developer 静默）。
+// 未知/历史角色（如已废弃的 viewer）回退 muted，避免渲染崩。
+const ROLE_VARIANT: Record<string, BadgeVariant> = {
   owner:     'magenta',
-  developer: 'info',
-  viewer:    'muted',
+  admin:     'info',
+  developer: 'muted',
 };
+const roleVariant = (r: string): BadgeVariant => ROLE_VARIANT[r] ?? 'muted';
 
 // Unix 秒 → 相对时间（与其它 page 的本地 relTime 风格一致）
 function relTime(sec: number): string {
@@ -47,6 +49,7 @@ export function PageMembers() {
   const role     = useRole();
   const canManage = canManageMembers(role);
   const canInvite = canInviteMembers(role);
+  const grantOwner = canGrantOwner(role); // 只有 owner 能授予 owner 角色
   const myId     = useApp(s => s.me?.id);
   const isApiKey = useIsApiKeySession();
 
@@ -55,15 +58,22 @@ export function PageMembers() {
   const updateRole   = useUpdateMemberRole();
   const removeMember = useRemoveMember();
   const revokeInvite = useRevokeInvitation();
+  const resendInvite = useResendInvitation();
 
   const [invite,        setInvite]        = useState(false);
   const [removeTarget,  setRemoveTarget]  = useState<MemberDTO | null>(null);
   const [revokeTarget,  setRevokeTarget]  = useState<InvitationDTO | null>(null);
 
   const memberList = data?.members ?? [];
-  const inviteList = invData?.invitations ?? [];
+  // 只展示「待处理」邀请：已接受的早已是成员，已撤销/过期的是死链，都不该出现在待办区。
+  const inviteList = (invData?.invitations ?? []).filter(inv => inv.status === 'pending');
 
-  const roleLabel = (r: MemberRole) => t(`members.role.${r}`);
+  // 角色文案：未知/历史角色（如已废弃的 viewer）回退到原值，绝不裸露 i18n key。
+  const roleLabel = (r: string) => {
+    const k = `members.role.${r}`;
+    const s = t(k);
+    return s === k ? r : s;
+  };
 
   /** 行内改角色：owner 调 PATCH */
   const handleRoleChange = (m: MemberDTO, next: MemberRole) => {
@@ -98,6 +108,13 @@ export function PageMembers() {
     revokeInvite.mutate(id, {
       onSuccess: () => toast.success(t('members.pending.revokeSuccess')),
       onError: () => toast.error(t('common.loadFailed')),
+    });
+  };
+
+  const handleResend = (inv: InvitationDTO) => {
+    resendInvite.mutate(inv.id, {
+      onSuccess: () => toast.success(inv.email + ' — ' + t('members.pending.resendSuccess')),
+      onError: () => toast.error(t('members.pending.resendFailed')),
     });
   };
 
@@ -164,10 +181,12 @@ export function PageMembers() {
                     </div>
                   </div>
 
-                  {/* 角色：owner 可改（下拉），否则展示 Badge。
-                      不允许改自己的角色，避免 owner 误把自己降级锁死。 */}
+                  {/* 角色:admin+ 可改（下拉），否则展示 Badge。
+                      - 不允许改自己的角色，避免误把自己降级锁死。
+                      - owner 角色的授予/降级只有 owner 能做：非 owner 操作者对 owner 成员
+                        只读展示，且下拉里不出现 owner 选项（与后端二级守卫一致）。 */}
                   <div>
-                    {canManage && !isSelf ? (
+                    {canManage && !isSelf && !(m.role === 'owner' && !grantOwner) ? (
                       <Select
                         value={m.role}
                         onValueChange={(v) => handleRoleChange(m, v as MemberRole)}
@@ -176,13 +195,13 @@ export function PageMembers() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="owner">{roleLabel('owner')}</SelectItem>
+                          {grantOwner && <SelectItem value="owner">{roleLabel('owner')}</SelectItem>}
+                          <SelectItem value="admin">{roleLabel('admin')}</SelectItem>
                           <SelectItem value="developer">{roleLabel('developer')}</SelectItem>
-                          <SelectItem value="viewer">{roleLabel('viewer')}</SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (
-                      <Badge variant={ROLE_VARIANT[m.role]}>{roleLabel(m.role)}</Badge>
+                      <Badge variant={roleVariant(m.role)}>{roleLabel(m.role)}</Badge>
                     )}
                   </div>
 
@@ -253,7 +272,7 @@ export function PageMembers() {
                   <div key={inv.id} className="tln-tbl-row mbr-inv-row" style={{ cursor: 'default' }}>
                     <div className="mbr-email" title={inv.email}>{inv.email}</div>
                     <div>
-                      <Badge variant={ROLE_VARIANT[inv.role]}>{roleLabel(inv.role)}</Badge>
+                      <Badge variant={roleVariant(inv.role)}>{roleLabel(inv.role)}</Badge>
                     </div>
                     <div className="mbr-joined">
                       {expiresIn > 0 ? relTime(expiresIn) : '—'}
@@ -271,6 +290,17 @@ export function PageMembers() {
                           <TlnIcon name="copy" size={13} />
                         </Button>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        iconOnly
+                        onClick={() => handleResend(inv)}
+                        loading={resendInvite.isPending && resendInvite.variables === inv.id}
+                        title={t('members.pending.resend')}
+                        aria-label={t('members.pending.resend')}
+                      >
+                        <TlnIcon name="refresh" size={13} />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"

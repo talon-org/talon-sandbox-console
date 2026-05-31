@@ -612,7 +612,7 @@ export interface UpgradePlanResponse {
 // 与 sandbox-api 的 /v1/tenants/{tenant_id}/members、/invitations 契约对齐。
 // 注意：这是租户内自助端点，区别于超管的 /v1/admin/tenants/{id}（后者 members 内嵌在 detail）。
 
-export type MemberRole = 'owner' | 'developer' | 'viewer';
+export type MemberRole = 'owner' | 'admin' | 'developer';
 
 /** 单个成员（GET /v1/tenants/{id}/members） */
 export interface MemberDTO {

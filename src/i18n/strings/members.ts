@@ -5,10 +5,10 @@ export const members = {
   'members.desc':             { en: 'Manage who can access this workspace and their roles. Only admins can invite or change roles.', zh: '管理可访问此工作区的成员及其角色。仅管理员可邀请成员或修改角色。' },
   'members.invite':           { en: 'Invite member', zh: '邀请成员' },
 
-  // ── 角色名 ────────────────────────────────────────────────────────────────
-  'members.role.owner':       { en: 'Admin', zh: '管理员' },
-  'members.role.developer':   { en: 'Member', zh: '成员' },
-  'members.role.viewer':      { en: 'Guest', zh: '访客' },
+  // ── 角色名（Spec 49：owner > admin > developer） ──────────────────────────
+  'members.role.owner':       { en: 'Owner', zh: '拥有者' },
+  'members.role.admin':       { en: 'Admin', zh: '管理员' },
+  'members.role.developer':   { en: 'Developer', zh: '开发者' },
 
   // ── 列表列头 ──────────────────────────────────────────────────────────────
   'members.colMember':        { en: 'Member', zh: '成员' },
@@ -32,15 +32,15 @@ export const members = {
   'members.empty.head':       { en: 'No members yet', zh: '尚无成员' },
   'members.empty.desc':       { en: 'Invite teammates to collaborate in this workspace.', zh: '邀请团队成员加入此工作区协作。' },
 
-  // ── 权限提示 banner（非 owner） ────────────────────────────────────────────
-  'members.viewerNote':       { en: 'Only admins can invite members or change roles.', zh: '仅管理员可邀请成员或修改角色。' },
+  // ── 权限提示 banner（非 admin） ────────────────────────────────────────────
+  'members.viewerNote':       { en: 'Only admins and owners can invite members or change roles.', zh: '仅管理员和拥有者可邀请成员或修改角色。' },
 
   // ── 邀请对话框 ────────────────────────────────────────────────────────────
   'members.inviteTitle':      { en: 'Invite member', zh: '邀请成员' },
   'members.inviteEmail':      { en: 'Email', zh: '邮箱' },
   'members.inviteEmailPlaceholder': { en: 'teammate@example.com', zh: 'teammate@example.com' },
   'members.inviteRole':       { en: 'Role', zh: '角色' },
-  'members.inviteRoleHint':   { en: 'Members can manage sandboxes & keys. Guests are read-only. Admins can manage members.', zh: '成员可管理 sandbox 与 Key；访客只读；管理员可管理成员。' },
+  'members.inviteRoleHint':   { en: 'Developers can run sandboxes, use API keys & manage secrets. Admins can also manage the team.', zh: '开发者可跑 sandbox、用 API Key、管理凭据；管理员还能管理团队成员。' },
   'members.inviteSubmit':     { en: 'Send invitation', zh: '发送邀请' },
   'members.inviteSuccess':    { en: 'Invitation sent', zh: '邀请已发送' },
   'members.inviteFailed':     { en: 'Failed to send invitation', zh: '邀请发送失败' },
@@ -57,7 +57,9 @@ export const members = {
   'members.pending.colRole':  { en: 'Role', zh: '角色' },
   'members.pending.colExpires': { en: 'Expires', zh: '过期时间' },
   'members.pending.copyLink': { en: 'Copy invite link', zh: '复制邀请链接' },
-  'members.pending.revoke':   { en: 'Revoke invitation', zh: '撤销邀请' },
+  'members.pending.resend':   { en: 'Resend invitation', zh: '重新发送邀请' },
+  'members.pending.resendSuccess': { en: 'Invitation resent', zh: '邀请已重新发送' },
+  'members.pending.resendFailed':  { en: 'Failed to resend invitation', zh: '邀请重发失败' },
   'members.pending.revokeTitle':   { en: 'Revoke invitation?', zh: '撤销邀请？' },
   'members.pending.revokeBody':    { en: 'The invite link will stop working. You can send a new invitation later.', zh: '该邀请链接将立即失效，之后可重新发送邀请。' },
   'members.pending.revokeConfirm': { en: 'Revoke', zh: '撤销' },

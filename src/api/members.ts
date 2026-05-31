@@ -61,13 +61,22 @@ export async function createInvitation(
   return apiPost<InvitationDTO>(`/v1/tenants/${tenantId}/invitations`, req, signal);
 }
 
-/** DELETE 撤销邀请（owner） */
+/** DELETE 撤销邀请（admin+） */
 export async function revokeInvitation(
   tenantId: string,
   inviteId: string,
   signal?: AbortSignal,
 ): Promise<void> {
   return apiDelete(`/v1/tenants/${tenantId}/invitations/${inviteId}`, signal);
+}
+
+/** POST 重新发送邀请（admin+）。撤销旧封 + 新建刷新过期 + 重发邮件，返回新邀请。 */
+export async function resendInvitation(
+  tenantId: string,
+  inviteId: string,
+  signal?: AbortSignal,
+): Promise<InvitationDTO> {
+  return apiPost<InvitationDTO>(`/v1/tenants/${tenantId}/invitations/${inviteId}/resend`, {}, signal);
 }
 
 /** POST 接受邀请（公开端点，无需登录） */

@@ -8,7 +8,7 @@ import { useApp } from '../store';
 import { canInviteMembers, normalizeRole } from '../lib/permissions';
 import {
   listMembers, updateMemberRole, removeMember,
-  listInvitations, createInvitation, revokeInvitation,
+  listInvitations, createInvitation, revokeInvitation, resendInvitation,
 } from '../api/members';
 import type {
   MemberListResponse, InvitationListResponse,
@@ -28,14 +28,14 @@ export function useMembers() {
   });
 }
 
-/** 待处理邀请列表（仅 owner 可读；非 owner 不发请求避免吃 403） */
+/** 待处理邀请列表（admin+ 可读；权限不足不发请求避免吃 403） */
 export function useInvitations() {
   const tenantId = useApp((s) => s.tenantId) ?? '';
-  const isOwner  = useApp((s) => canInviteMembers(normalizeRole(s.me?.role)));
+  const canManage = useApp((s) => canInviteMembers(normalizeRole(s.me?.role)));
   return useQuery<InvitationListResponse>({
     queryKey: invitationsKey(tenantId),
     queryFn: ({ signal }) => listInvitations(tenantId, signal),
-    enabled: !!tenantId && isOwner,
+    enabled: !!tenantId && canManage,
   });
 }
 
@@ -70,12 +70,22 @@ export function useCreateInvitation() {
   });
 }
 
-/** 撤销邀请（owner） */
+/** 撤销邀请（admin+） */
 export function useRevokeInvitation() {
   const qc = useQueryClient();
   const tenantId = useApp((s) => s.tenantId) ?? '';
   return useMutation({
     mutationFn: (inviteId: string) => revokeInvitation(tenantId, inviteId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: invitationsKey(tenantId) }),
+  });
+}
+
+/** 重新发送邀请（admin+）。后端撤销旧封 + 新建刷新过期 + 重发邮件。 */
+export function useResendInvitation() {
+  const qc = useQueryClient();
+  const tenantId = useApp((s) => s.tenantId) ?? '';
+  return useMutation({
+    mutationFn: (inviteId: string) => resendInvitation(tenantId, inviteId),
     onSuccess: () => qc.invalidateQueries({ queryKey: invitationsKey(tenantId) }),
   });
 }

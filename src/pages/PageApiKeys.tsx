@@ -1,7 +1,7 @@
 /* PageApiKeys — 自助 API Key 管理（普通用户可见）。
  * 数据：useApiKeys() / useDeleteApiKey() / useRevealApiKey()
- * 权限：列表 viewer 可读；创建/reveal/吊销 developer+ —— 后端已用 chainDev 挡，
- *        前端对非 developer 禁用按钮，403 时 toast 后端错误。
+ * 权限：创建/reveal/吊销走 chainDev（developer+）。Spec 49 起最低档 developer 就能写，
+ *        没有纯只读角色，故所有登录用户均可操作；403 时 toast 后端错误兜底。
  */
 import { useState } from 'react';
 import {
@@ -10,7 +10,6 @@ import {
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { useApiKeys, useDeleteApiKey, useRevealApiKey } from '../hooks/useApiKeys';
-import { useRole, isViewer as roleIsViewer } from '../lib/permissions';
 import { EmptyState, ConfirmDialog } from '../components';
 import { CreateApiKeyDrawer } from './_apiKeys/CreateApiKeyDrawer';
 import type { ApiKeyDTO } from '../api/types';
@@ -19,9 +18,6 @@ import './PageApiKeys.css';
 
 export function PageApiKeys() {
   const t = useT();
-
-  // 判断角色：viewer 不可写，developer/owner 可写 —— 判定收口到 lib/permissions
-  const isViewer = roleIsViewer(useRole());
 
   const { data, isLoading, isError, error } = useApiKeys();
   const deleteMutation = useDeleteApiKey();
@@ -81,8 +77,6 @@ export function PageApiKeys() {
           <Button
             variant="primary"
             onClick={() => setDrawer(true)}
-            disabled={isViewer}
-            title={isViewer ? t('apiKeys.viewerNote') : undefined}
           >
             <TlnIcon name="plus" size={14} />
             {t('apiKeys.create.title')}
@@ -91,14 +85,6 @@ export function PageApiKeys() {
       />
 
       <div className="page-body">
-        {/* viewer 角色提示 banner */}
-        {isViewer && (
-          <div className="ak-viewer-note">
-            <TlnIcon name="info" size={13} />
-            {t('apiKeys.viewerNote')}
-          </div>
-        )}
-
         {isLoading && <EmptyState variant="loading" title={t('common.loading')} />}
         {isError   && <EmptyState variant="error"   error={error} />}
 
@@ -142,7 +128,7 @@ export function PageApiKeys() {
                       size="sm"
                       iconOnly
                       onClick={() => handleCopy(key)}
-                      disabled={!key.can_reveal || isViewer || isCopying}
+                      disabled={!key.can_reveal || isCopying}
                       loading={isCopying}
                       title={key.can_reveal
                         ? t('apiKeys.copyToClipboard')
@@ -172,7 +158,6 @@ export function PageApiKeys() {
                       size="sm"
                       iconOnly
                       onClick={() => setRevokeTarget(key)}
-                      disabled={isViewer}
                       title={t('apiKeys.revoke')}
                       aria-label={t('apiKeys.revoke')}
                     >
@@ -190,12 +175,10 @@ export function PageApiKeys() {
                   title={t('apiKeys.empty.head')}
                   description={t('apiKeys.empty.desc')}
                   action={
-                    !isViewer ? (
-                      <Button variant="primary" onClick={() => setDrawer(true)}>
-                        <TlnIcon name="plus" size={14} />
-                        {t('apiKeys.create.title')}
-                      </Button>
-                    ) : undefined
+                    <Button variant="primary" onClick={() => setDrawer(true)}>
+                      <TlnIcon name="plus" size={14} />
+                      {t('apiKeys.create.title')}
+                    </Button>
                   }
                 />
               </div>
