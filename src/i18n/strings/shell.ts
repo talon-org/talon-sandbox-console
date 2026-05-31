@@ -3,6 +3,9 @@ export const shell = {
   'app.subtitle':              { en: 'agent sandbox runtime', zh: 'agent 沙箱运行时' },
   'sidebar.workspace':         { en: 'Workspace', zh: '工作区' },
   'sidebar.admin':             { en: 'Admin', zh: '管理' },
+  // API Key 登录标识(角色被固定为「成员」,与真实角色无关)
+  'session.apiKey':            { en: 'API Key', zh: 'API Key' },
+  'session.apiKeyNote':        { en: 'You are signed in with an API key — a limited machine credential. Sign in with your email to manage members, billing, or workspace settings.', zh: '你正用 API Key 登录(受限的机器凭据)。如需管理成员、计费或工作区设置,请改用邮箱登录。' },
   'sidebar.newSandbox':        { en: 'New sandbox', zh: '新建 sandbox' },
   'nav.dashboard':             { en: 'Dashboard', zh: '仪表盘' },
   'nav.sandboxes':             { en: 'Sandboxes', zh: '沙箱' },

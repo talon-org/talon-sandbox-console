@@ -5,7 +5,7 @@
  */
 import { useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { useApp, useIsAdmin } from '../store';
+import { useApp, useIsAdmin, useIsApiKeySession } from '../store';
 import { useT } from '../i18n/useT';
 import { TlnIcon, Mark } from '../icons/TlnIcon';
 import { useSandboxes } from '../hooks/useSandboxes';
@@ -81,6 +81,7 @@ export function Shell() {
   const cmdkOpen = useApp(s => s.cmdkOpen);
   const setCmdK  = useApp(s => s.setCmdK);
   const isAdmin  = useIsAdmin();
+  const isApiKey = useIsApiKeySession();
 
   // Real sandbox count for the sidebar badge — undefined while loading (hides badge)
   const { data: sandboxesData } = useSandboxes();
@@ -218,13 +219,22 @@ export function Shell() {
                 <div className="me">
                   {/* API Key flow has no email — fallback to name, then tenant_id sans prefix */}
                   <span className="email">{me?.name || me?.email || me?.tenant_id?.replace(/^tnt_/, '') || '—'}</span>
-                  <span className="role">{me?.role ? t(`members.role.${normalizeRole(me.role)}`) : ''}</span>
+                  {/* API Key 会话:角色被后端固定为「成员」,显角色会误导;改显「API Key」标识。 */}
+                  {isApiKey
+                    ? <span className="role api-key-tag">{t('session.apiKey')}</span>
+                    : <span className="role">{me?.role ? t(`members.role.${normalizeRole(me.role)}`) : ''}</span>}
                 </div>
                 <TlnIcon name="chevronUp" size={13} style={{ color: 'var(--fg-3)', flex: '0 0 auto' }} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" side="top" sideOffset={8} className="user-menu">
               <DropdownMenuLabel>{me?.email ?? me?.name ?? '—'}</DropdownMenuLabel>
+              {isApiKey && (
+                <div className="user-menu-note">
+                  <TlnIcon name="info" size={13} />
+                  <span>{t('session.apiKeyNote')}</span>
+                </div>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => navigate('/settings')}>
                 <TlnIcon name="user" size={14} />

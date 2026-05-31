@@ -14,7 +14,7 @@ import {
 import type { BadgeVariant } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
-import { useApp } from '../store';
+import { useApp, useIsApiKeySession } from '../store';
 import { useRole, canManageMembers, canInviteMembers } from '../lib/permissions';
 import {
   useMembers, useInvitations,
@@ -48,6 +48,7 @@ export function PageMembers() {
   const canManage = canManageMembers(role);
   const canInvite = canInviteMembers(role);
   const myId     = useApp(s => s.me?.id);
+  const isApiKey = useIsApiKeySession();
 
   const { data, isLoading, isError, error } = useMembers();
   const { data: invData } = useInvitations();
@@ -127,11 +128,11 @@ export function PageMembers() {
       />
 
       <div className="page-body">
-        {/* 非 owner 提示 banner */}
+        {/* 受限提示 banner:API Key 会话说明是凭据限权(非角色问题),否则说仅管理员 */}
         {!canManage && (
           <div className="mbr-note">
             <TlnIcon name="info" size={13} />
-            {t('members.viewerNote')}
+            {isApiKey ? t('session.apiKeyNote') : t('members.viewerNote')}
           </div>
         )}
 

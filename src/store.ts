@@ -167,3 +167,11 @@ export const ADMIN_TENANT_ID = '__admin';
 export function useIsAdmin(): boolean {
   return useApp((s) => s.me?.tenant_id === ADMIN_TENANT_ID);
 }
+
+/** API Key 登录会话:token 以 ask_ 前缀。
+ *  后端对 API Key 路径把角色固定为「成员」(机器凭据故意限权,防泄露能管成员/计费),
+ *  与登录用户的真实角色无关。前端据此给「Key 登录权限受限」标识,避免管理员误以为
+ *  自己没权限。判据收口到这里,各处统一调用。 */
+export function useIsApiKeySession(): boolean {
+  return useApp((s) => !!s.authToken && s.authToken.startsWith('ask_'));
+}
