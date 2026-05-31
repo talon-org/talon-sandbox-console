@@ -16,12 +16,12 @@ export const billing = {
   'billing.status.canceled':  { en: 'Canceled', zh: '已取消' },
   'billing.status.none':      { en: 'No subscription', zh: '无订阅' },
 
-  // 用量
-  'billing.usageTitle':       { en: 'Usage this period', zh: '本周期用量' },
-  'billing.usage.vcpuHours':  { en: 'vCPU·hours', zh: 'vCPU·时' },
-  'billing.usage.memGbHours': { en: 'GB·hours (mem)', zh: 'GB·时（内存）' },
-  'billing.usage.sandboxHours': { en: 'sandbox·hours', zh: '沙箱·时' },
-  'billing.usage.requests':   { en: 'requests', zh: '请求数' },
+  // 用量（24h，用量 vs 套餐上限进度条）
+  'billing.usageTitle':         { en: 'Usage · last 24h', zh: '近 24 小时用量' },
+  'billing.usage.vcpu':         { en: 'vCPU', zh: 'vCPU' },
+  'billing.usage.mem':          { en: 'Memory', zh: '内存' },
+  'billing.usage.secretsReads': { en: 'Secret reads', zh: 'Secret 读取' },
+  'billing.usage.failures':     { en: 'Failures', zh: '失败数' },
 
   // 套餐卡片配额
   'billing.quota.sandboxes':  { en: 'sandboxes', zh: '沙箱' },
@@ -29,9 +29,14 @@ export const billing = {
   'billing.quota.mem':        { en: 'GB memory', zh: 'GB 内存' },
   'billing.quota.disk':       { en: 'GB disk', zh: 'GB 磁盘' },
 
+  // 套餐卡片标记
+  'billing.recommended':      { en: 'Recommended', zh: '推荐' },
+  'billing.currentBtn':       { en: 'Current plan', zh: '当前套餐' },
+
   // 操作
-  'billing.choosePlan':       { en: 'Choose plan', zh: '选择套餐' },
+  'billing.choosePlan':       { en: 'Upgrade', zh: '升级' },
   'billing.switchPlan':       { en: 'Switch', zh: '切换' },
+  'billing.downgrade':        { en: 'Downgrade', zh: '降级' },
   'billing.switchedTo':       { en: 'Switched to {plan}', zh: '已切换到 {plan}' },
   'billing.upgradeFailed':    { en: 'Failed to change plan', zh: '套餐变更失败' },
   'billing.ownerOnly':        { en: 'Only the workspace owner can change the plan.', zh: '仅空间 owner 可变更套餐。' },

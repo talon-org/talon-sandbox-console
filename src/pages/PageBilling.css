@@ -1,139 +1,170 @@
-/* PageBilling — 计费页样式。卡片网格 + 当前订阅/用量概览。
+/* PageBilling — SaaS 定价页观感。Hero 调资卡 + 套餐卡片网格。
  * 复用全局设计 token（--bg-*/--line-*/--acc-*/--fg-*/--r-*）。 */
 
 .billing-body {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+  max-width: 1080px;
 }
 
-/* ── 当前订阅概览 ── */
-.billing-current {
+/* ════ Hero 调资卡:当前套餐(左) + 用量进度(右) ════ */
+.billing-hero {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) 1.2fr;
+  gap: 0;
   border: 1px solid var(--line);
-  border-radius: var(--r-2);
-  background: var(--bg-1);
-  padding: 16px 18px;
+  border-radius: var(--r-3, 14px);
+  background: linear-gradient(135deg, var(--bg-1), var(--bg-2));
+  overflow: hidden;
+}
+.bh-left {
+  padding: 24px 26px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  border-right: 1px solid var(--line-soft);
 }
-.bc-row {
+.bh-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+.bh-plan-row {
   display: flex;
   align-items: center;
+  gap: 10px;
+}
+.bh-plan {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--fg-0);
+}
+.bh-price {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-top: 2px;
+}
+.bh-amount {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--fg-1);
+}
+.bh-int { font-size: 12px; color: var(--fg-3); }
+.bh-renews {
+  margin-top: auto;
+  font-size: 12px;
+  color: var(--fg-3);
+  font-family: var(--font-mono);
+}
+
+.bh-right {
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
-.bc-label {
-  color: var(--fg-3);
-  font-size: 12px;
-  min-width: 72px;
-}
-.bc-plan {
-  font-weight: 600;
-  font-size: 15px;
-  color: var(--fg-0);
-}
-.bc-sub .bc-mono,
-.bc-mono {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--fg-2);
-}
-
-/* ── 周期用量 ── */
-.billing-usage {
-  border: 1px solid var(--line);
-  border-radius: var(--r-2);
-  background: var(--bg-1);
-  padding: 16px 18px;
-}
-.bu-head {
-  font-size: 12px;
-  color: var(--fg-3);
-  margin-bottom: 12px;
-}
-.bu-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-.bu-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.bu-num {
-  font-family: var(--font-mono);
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--fg-0);
-}
-.bu-unit {
+.bh-usage-title {
   font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--fg-3);
 }
+.bh-bars {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 28px;
+}
+.bh-usage-empty { font-size: 12px; color: var(--fg-3); }
 
-/* ── 套餐卡片网格 ── */
+.ub-row { display: flex; flex-direction: column; gap: 5px; }
+.ub-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.ub-label { font-size: 12px; color: var(--fg-2); }
+.ub-val { font-size: 11px; color: var(--fg-3); font-family: var(--font-mono); }
+.ub-used { color: var(--fg-1); font-weight: 600; }
+
+/* ════ 套餐卡片网格 ════ */
 .billing-plans {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 16px;
+  align-items: stretch;
 }
 .plan-card {
+  position: relative;
   border: 1px solid var(--line);
-  border-radius: var(--r-2);
+  border-radius: var(--r-3, 14px);
   background: var(--bg-1);
-  padding: 18px;
+  padding: 22px 20px 20px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  transition: border-color 120ms, box-shadow 120ms, transform 120ms;
+}
+.plan-card:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
 }
 .plan-card.current {
+  border-color: var(--ok, #3fb950);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ok) 5%, var(--bg-1)), var(--bg-1));
+}
+.plan-card.recommended {
   border-color: var(--acc);
-  box-shadow: 0 0 0 1px var(--acc-soft);
+  box-shadow: 0 0 0 1px var(--acc), 0 8px 24px -12px var(--acc);
+}
+.pc-ribbon {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  background: var(--acc);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 0 var(--r-3, 14px) 0 10px;
 }
 .pc-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 22px;
 }
-.pc-name {
-  font-weight: 600;
-  font-size: 15px;
-  color: var(--fg-0);
-}
+.pc-name { font-weight: 600; font-size: 15px; color: var(--fg-0); }
 .pc-price {
   display: flex;
   align-items: baseline;
   gap: 6px;
 }
-.pc-amount {
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--fg-0);
-}
-.pc-interval {
-  font-size: 12px;
-  color: var(--fg-3);
-}
+.pc-amount { font-size: 30px; font-weight: 800; color: var(--fg-0); letter-spacing: -0.02em; }
+.pc-interval { font-size: 13px; color: var(--fg-3); }
 .pc-quota {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 .pc-quota li {
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
   color: var(--fg-2);
-  font-family: var(--font-mono);
 }
-.pc-action {
-  margin-top: auto;
-}
-.pc-action button {
-  width: 100%;
-}
+.pc-quota li svg { color: var(--fg-3); flex-shrink: 0; }
+.pc-quota li b { color: var(--fg-0); font-weight: 600; font-variant-numeric: tabular-nums; }
+.pc-action { margin-top: auto; }
+.pc-action button { width: 100%; }
 
 /* ── owner-only 提示 ── */
 .billing-note {
@@ -142,4 +173,10 @@
   gap: 6px;
   font-size: 12px;
   color: var(--fg-3);
+}
+
+@media (max-width: 720px) {
+  .billing-hero { grid-template-columns: 1fr; }
+  .bh-left { border-right: none; border-bottom: 1px solid var(--line-soft); }
+  .bh-bars { grid-template-columns: 1fr; }
 }
