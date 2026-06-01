@@ -10,6 +10,7 @@ export const audit = {
   'audit.filterAuth':        { en: 'Auth', zh: '认证' },
   'audit.filterPty':         { en: 'PTY', zh: 'PTY' },
   'audit.filterImage':       { en: 'Image', zh: '镜像' },
+  'audit.filterSystem':      { en: 'System', zh: '系统' },
   'audit.colTime':           { en: 'Time', zh: '时间' },
   'audit.colEvent':          { en: 'Event', zh: '事件' },
   'audit.colActor':          { en: 'Actor', zh: '发起者' },

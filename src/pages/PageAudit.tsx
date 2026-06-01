@@ -200,6 +200,7 @@ export function PageAudit() {
     auth:    allEvents.filter(e => typeKind(e.event_type) === 'auth').length,
     pty:     allEvents.filter(e => typeKind(e.event_type) === 'pty').length,
     image:   allEvents.filter(e => typeKind(e.event_type) === 'image').length,
+    system:  allEvents.filter(e => typeKind(e.event_type) === 'system').length,
   }), [allEvents]);
 
   // 类别过滤(typeKind)+ 关键词搜索,都在前端做。
@@ -307,7 +308,7 @@ export function PageAudit() {
         {/* 筛选行:类型 chip + 时间范围 chip + 搜索框 */}
         <div className="sbx-filters" style={{ marginBottom: 14 }}>
           <div className="group">
-            {(['all','sandbox','secret','auth','pty','image'] as const).map(v => (
+            {(['all','sandbox','secret','auth','pty','image','system'] as const).map(v => (
               <button key={v} className="sbx-filter" aria-pressed={filter === v} onClick={() => setFilter(v)}>
                 <span>{t(`audit.filter${v.charAt(0).toUpperCase() + v.slice(1)}`)}</span>
                 {typeCounts[v] != null && <span className="num">{typeCounts[v]}</span>}
