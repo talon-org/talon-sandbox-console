@@ -27,8 +27,9 @@ import './PageDashboard.css';
 
 // dashboard 列表封顶：最多展示 20 条，超出由列表页承接。
 const DASH_LIST_CAP = 20;
-// 活动流只展示最新 6 条（dashboard 是概览，完整历史走审计日志页）。
-const ACTIVITY_CAP = 6;
+// 活动流只展示最新 5 条（dashboard 是概览，完整历史走审计日志页）。
+// 与左侧状态分布卡视觉等高,避免右长左短留白。
+const ACTIVITY_CAP = 5;
 
 // 状态分布柱状条用色（与原型 STATE_COLORS 对齐；created 用 info 蓝补全）。
 const STATE_COLORS: Partial<Record<string, string>> = {
