@@ -1,81 +1,56 @@
-/* PageDashboard — metrics overview wired to useDashboard() hook. */
-import { useEffect, useState } from 'react';
+/* PageDashboard — 工作区概览。按最新原型（page-dashboard.jsx）重构：
+ *   顶部 4 张 Stat 卡（label/value/delta/hint + Sparkline，vCPU/内存带进度条）
+ *   中间行 1.4fr/1fr：Sandbox 状态分布（SandboxStateBar + legend）+ 活动流（Timeline）
+ *   底部：最近 sandbox DataTable（ID·状态 / 名称 / 镜像 / 工作区 / CPU / 时长 / 操作）
+ * 数据走 useDashboard()。 */
 import { useNavigate } from 'react-router-dom';
 import {
-  Card, CardHeader, CardTitle, CardAction, CardContent, CardFooter,
-  Button, ProgressBar, PageHeader,
+  Card, CardContent, Button, PageHeader, Sparkline, ProgressBar,
+  Grid, Flex, StatusBadge,
+  Stat, StatLabel, StatValue, StatDelta, StatHint,
+  Timeline, TimelineItem, TimelineDot, TimelineContent, TimelineTitle, TimelineTime, TimelineDesc,
+  DataTable, DataTableContent, DataTableToolbar,
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
 } from '@talon-sandbox/react';
-import type { SandboxState as DSStateBase } from '@talon-sandbox/react';
-
-// Widened local state alias — the design-system union excludes 'created',
-// but the backend returns it. Keep the palette aligned with the prototype
-// and add a dedicated blue for the new state.
-type DSState = DSStateBase | 'created';
-
-// DEFAULT_STATE_COLORS was removed in v0.3; inline the palette used by the dashboard bar
-const DEFAULT_STATE_COLORS: Partial<Record<DSState, string>> = {
-  running:         'var(--ok)',
-  provisioning:    'var(--acc)',
-  'pulling-image': 'var(--info)',
-  idle:            'var(--warn)',
-  paused:          'var(--warn)',
-  terminating:     'var(--fg-3)',
-  evicted:         'var(--bg-3)',
-  failed:          'var(--err)',
-  // Backend returns `created` for freshly-inserted sandboxes that have not
-  // yet been picked up by a worker. Use --info (blue) to differentiate.
-  created:         'var(--info)',
-};
+import type { ColumnDef, StatDeltaKind, TimelineItemKind, SandboxState } from '@talon-sandbox/react';
 import { useApp } from '../store';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
-import { Sparkline } from '../components/Sparkline';
 import { EmptyState } from '../components/EmptyState';
 import { useDashboard } from '../hooks';
-import type { DashboardActivity } from '../api/types';
+import type { DashboardActivity, DashboardSandbox } from '../api/types';
 
 import './PageDashboard.css';
 
-// ── count-up animation ────────────────────────────────────────────────────────
-function useCount(target: number, duration = 700): number {
-  const [v, setV] = useState(0);
-  useEffect(() => {
-    let raf: number;
-    const start = performance.now();
-    const tick = (t: number) => {
-      const k = Math.min(1, (t - start) / duration);
-      const ease = 1 - Math.pow(1 - k, 3);
-      setV(target * ease);
-      if (k < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, duration]);
-  return v;
-}
+// dashboard 列表封顶：最多展示 20 条，超出由列表页承接。
+const DASH_LIST_CAP = 20;
 
-function fmtNum(n: number): string {
-  return n >= 100 ? Math.round(n).toString() : n.toFixed(1);
-}
+// 状态分布柱状条用色（与原型 STATE_COLORS 对齐；created 用 info 蓝补全）。
+const STATE_COLORS: Partial<Record<string, string>> = {
+  running: 'var(--ok)',
+  idle: 'var(--fg-3)',
+  paused: 'var(--magenta)',
+  provisioning: 'var(--warn)',
+  'pulling-image': 'var(--warn)',
+  created: 'var(--info)',
+  terminating: 'var(--warn)',
+  failed: 'var(--err)',
+  evicted: 'var(--fg-4)',
+};
+const STATE_ORDER = [
+  'running', 'pulling-image', 'provisioning', 'created', 'idle', 'paused', 'terminating', 'failed', 'evicted',
+];
 
 function relTime(secAgo: number): string {
   if (secAgo < 60) return `${secAgo}s`;
   if (secAgo < 3600) return `${Math.floor(secAgo / 60)}m`;
-  return `${Math.floor(secAgo / 3600)}h`;
+  if (secAgo < 86400) return `${Math.floor(secAgo / 3600)}h`;
+  return `${Math.floor(secAgo / 86400)}d`;
 }
-
-// 计算 sandbox 已运行时长，格式如 "5m"、"2h"；缺少 created_at 时返回 —
-function fmtAge(createdAt?: string): string {
-  if (!createdAt) return '—';
-  const ageSec = (Date.now() - new Date(createdAt).getTime()) / 1000;
-  if (ageSec < 60)    return Math.floor(ageSec) + 's';
-  if (ageSec < 3600)  return Math.floor(ageSec / 60) + 'm';
-  return Math.floor(ageSec / 3600) + 'h';
+function ageSecOf(createdAt?: string): number {
+  if (!createdAt) return 0;
+  return Math.max(0, Math.round((Date.now() - new Date(createdAt).getTime()) / 1000));
 }
-
-// dashboard 列表封顶：最多展示 20 条，超出由「查看全部」承接。
-const DASH_LIST_CAP = 20;
-
 // cpu_millis → "0.5 vCPU"；0/缺省走默认标签。
 function fmtVCPU(millis: number | undefined, t: (k: string) => string): string {
   if (!millis) return t('dash.cpuDefault');
@@ -83,26 +58,8 @@ function fmtVCPU(millis: number | undefined, t: (k: string) => string): string {
   return (v >= 10 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/, '')) + ' vCPU';
 }
 
-// memory_bytes → "512 MiB" / "2 GiB"；0/缺省走默认标签。
-function fmtMem(bytes: number | undefined, t: (k: string) => string): string {
-  if (!bytes) return t('dash.memDefault');
-  const gib = bytes / (1024 ** 3);
-  if (gib >= 1) return (gib >= 10 ? gib.toFixed(0) : gib.toFixed(1).replace(/\.0$/, '')) + ' GiB';
-  return Math.round(bytes / (1024 ** 2)) + ' MiB';
-}
-
-// 网络策略 → 短标签 + 色调（offline 红 / restricted 黄 / full 绿）。
-function netPolicyMeta(pol: string | undefined): { label: string; color: string } | null {
-  if (!pol) return null;
-  const color =
-    pol === 'offline'           ? 'var(--err)'  :
-    pol === 'restricted-egress' ? 'var(--warn)' :
-    pol === 'full-egress'       ? 'var(--ok)'   : 'var(--fg-3)';
-  return { label: `netpol.${pol}`, color };
-}
-
-// 审计事件类型 → 活动行的色调 kind（与 PageAudit 同族语义）。
-function activityKind(eventKind: string, outcome?: string): 'ok' | 'warn' | 'err' | 'info' {
+// 审计事件类型 → Timeline 行色调。
+function activityKind(eventKind: string, outcome?: string): TimelineItemKind {
   if (outcome === 'failure') return 'err';
   if (eventKind.includes('failed') || eventKind.includes('invalid') || eventKind.includes('rate_limited')) return 'err';
   if (eventKind.startsWith('sandbox_')) return 'ok';
@@ -110,115 +67,10 @@ function activityKind(eventKind: string, outcome?: string): 'ok' | 'warn' | 'err
   return 'info';
 }
 
-// ── Metric card ───────────────────────────────────────────────────────────────
-interface MetricProps {
-  micro: string;
-  value: number;
-  unit?: string;
-  of?: number | string;
-  delta?: string;
-  deltaKind?: 'neut' | 'bad' | 'ok';
-  series?: number[];
-  color?: string;
-}
-
-function Metric({ micro, value, unit, of: ofVal, delta, deltaKind = 'neut', series, color }: MetricProps) {
-  const animated = useCount(value);
-  return (
-    <Card>
-      <CardContent>
-        <div className="dash-metric">
-          <div className="top">
-            <span className="micro">{micro}</span>
-            {delta && <span className={'delta ' + deltaKind}>{delta}</span>}
-          </div>
-          <div className="num">
-            <span>{fmtNum(animated)}</span>
-            {unit && <span className="unit">{unit}</span>}
-            {ofVal != null && <span className="of">/ {ofVal}</span>}
-          </div>
-          {series && (
-            <Sparkline data={series} height={36} color={color ?? 'var(--acc-strong)'} className="spark" />
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-const DS_STATE_ORDER: DSState[] = [
-  'running', 'pulling-image', 'provisioning', 'created', 'idle', 'paused', 'terminating', 'failed', 'evicted',
-];
-
-// 1:1 port of the prototype's StatesOverview: stacked bar + 4-col legend grid.
-// Legend labels go through i18n via t(`state.<key>`) so they render in zh/en.
-// When the total is 0, show an empty-state CTA instead of an empty bar (which
-// would also trigger a divide-by-zero in the percentage calculation).
-function StatesOverview({
-  order,
-  counts,
-  t,
-  onNewSandbox,
-}: {
-  order: DSState[];
-  counts: Partial<Record<string, number>>;
-  t: (k: string) => string;
-  onNewSandbox: () => void;
-}) {
-  const rawTotal = order.reduce((s, k) => s + (counts[k] ?? 0), 0);
-
-  if (rawTotal === 0) {
-    return (
-      <div className="states-empty">
-        <div className="states-empty-text">
-          <div className="head">{t('dash.statesEmpty.head')}</div>
-          <div className="desc">{t('dash.statesEmpty.desc')}</div>
-        </div>
-        <Button variant="primary" size="sm" onClick={onNewSandbox}>
-          <TlnIcon name="plus" size={12} />
-          {t('dash.statesEmpty.cta')}
-        </Button>
-      </div>
-    );
-  }
-
-  const total = rawTotal;
-  return (
-    <div>
-      <div className="states-bar" role="img" aria-label="sandbox states distribution">
-        {order.map((k) => {
-          const c = counts[k] ?? 0;
-          if (!c) return null;
-          return (
-            <div
-              key={k}
-              style={{ flex: c, background: DEFAULT_STATE_COLORS[k] }}
-              title={`${t(`state.${k}`)}: ${c} (${Math.round((c / total) * 100)}%)`}
-            />
-          );
-        })}
-      </div>
-      <div className="states-legend">
-        {order.map((k) => {
-          const c = counts[k] ?? 0;
-          return (
-            <div key={k} className="item">
-              <span className="swatch" style={{ background: DEFAULT_STATE_COLORS[k] }} />
-              <span className="label">{t(`state.${k}`)}</span>
-              <span className={'count' + (c === 0 ? ' zero' : '')}>{c}</span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ── Page ──────────────────────────────────────────────────────────────────────
 export function PageDashboard() {
-  const t   = useT();
+  const t = useT();
   const nav = useNavigate();
-  const me  = useApp((s) => s.me);
+  const me = useApp((s) => s.me);
 
   const { data, isLoading, error, refetch } = useDashboard();
 
@@ -234,21 +86,64 @@ export function PageDashboard() {
   }
 
   const summary  = data?.summary;
-  const quota    = data?.quota_24h;
   const activity = data?.recent_activity ?? [];
-  const running  = data?.running_sandboxes ?? [];
+  const sandboxes = data?.running_sandboxes ?? [];   // 后端已扩为「所有非终态 sandbox」
   const stateMap = data?.states_by_count ?? {};
-
-  const stateCounts: Partial<Record<DSState, number>> = {};
-  for (const key of DS_STATE_ORDER) {
-    if (stateMap[key] != null) stateCounts[key] = stateMap[key];
-  }
+  const total = Object.values(stateMap).reduce((a, b) => a + b, 0);
 
   const activeSeries = summary?.active_sandboxes.series.map(p => p.value) ?? [];
   const cpuSeries    = summary?.vcpu.series.map(p => p.value) ?? [];
   const memSeries    = summary?.memory_gib.series.map(p => p.value) ?? [];
   const egressSeries = summary?.egress_mbps.series.map(p => p.value) ?? [];
-  const deltaEgress  = summary?.egress_mbps.delta_24h_pct;
+
+  const vcpuCur = summary?.vcpu.current ?? 0;
+  const vcpuLim = summary?.vcpu.limit ?? 0;
+  const memCur  = summary?.memory_gib.current ?? 0;
+  const memLim  = summary?.memory_gib.limit ?? 0;
+  const egress  = summary?.egress_mbps.current ?? 0;
+  const deltaEgress = summary?.egress_mbps.delta_24h_pct;
+  const deltaActive = summary?.active_sandboxes.delta_24h;
+
+  // 最近 sandbox 表：按 age 降序（最新在前），封顶。
+  const rows = [...sandboxes]
+    .sort((a, b) => ageSecOf(b.created_at) - ageSecOf(a.created_at))
+    .slice(0, DASH_LIST_CAP);
+
+  const columns: ColumnDef<DashboardSandbox>[] = [
+    {
+      key: 'id', label: t('dash.col.idState'), width: 230,
+      render: (r) => (
+        <div className="dsb-idstate">
+          <span className="dsb-id">{r.id}</span>
+          <StatusBadge state={r.status as SandboxState} />
+        </div>
+      ),
+    },
+    { key: 'name', label: t('dash.col.name'), truncate: true, render: (r) => <span style={{ color: 'var(--fg-1)' }}>{r.name || '—'}</span> },
+    { key: 'image', label: t('dash.col.image'), truncate: true, render: (r) => <span className="dsb-mono">{r.image || '—'}</span> },
+    { key: 'tenant', label: t('dash.col.tenant'), width: 150, render: (r) => <span className="dsb-mono">{r.tenant}</span> },
+    {
+      key: 'cpu', label: t('dash.col.cpu'), width: 120, align: 'right',
+      render: (r) => <span className="dsb-mono" style={{ color: r.cpu_millis ? 'var(--fg-0)' : 'var(--fg-4)' }}>{fmtVCPU(r.cpu_millis, t)}</span>,
+    },
+    { key: 'age', label: t('dash.col.age'), width: 80, align: 'right', render: (r) => <span className="dsb-mono">{relTime(ageSecOf(r.created_at))}</span> },
+    {
+      key: 'a', label: '', width: 40, align: 'center', stopClick: true,
+      render: (r) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button iconOnly variant="ghost" size="sm" aria-label="actions"><TlnIcon name="more" size={14} /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => nav('/sandboxes/' + r.id)}><TlnIcon name="box" size={13} />{t('dash.menu.open')}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => nav('/sandboxes/' + r.id + '?tab=terminal')}><TlnIcon name="terminal" size={13} />{t('dash.menu.terminal')}</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="danger" onClick={() => nav('/sandboxes/' + r.id)}><TlnIcon name="stop" size={13} />{t('dash.menu.stop')}</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
 
   return (
     <>
@@ -277,233 +172,180 @@ export function PageDashboard() {
       />
 
       <div className="page-body">
-        <div className="dash-grid">
-          <Metric
-            micro={t('dash.metric.active')}
-            value={summary?.active_sandboxes.current ?? 0}
-            delta={summary?.active_sandboxes.delta_24h != null ? `24h +${summary.active_sandboxes.delta_24h}` : undefined}
-            deltaKind="neut"
-            series={activeSeries}
-          />
-          <Metric
-            micro={t('dash.metric.cpu')}
-            value={summary?.vcpu.current ?? 0}
-            unit="vCPU"
-            /* limit=0 means "no quota configured" — render 'Unset' instead of '/ 0' which looks like a hard cap. */
-            of={summary?.vcpu.limit === 0 ? t('dash.unset') : summary?.vcpu.limit}
-            delta={summary?.vcpu.delta_24h != null ? `+${summary.vcpu.delta_24h.toFixed(1)} vCPU` : undefined}
-            deltaKind="neut"
-            series={cpuSeries}
-          />
-          <Metric
-            micro={t('dash.metric.mem')}
-            value={summary?.memory_gib.current ?? 0}
-            unit="GiB"
-            of={summary?.memory_gib.limit === 0 ? t('dash.unset') : summary?.memory_gib.limit}
-            delta={summary?.memory_gib.delta_24h != null ? `+${summary.memory_gib.delta_24h.toFixed(1)} GiB` : undefined}
-            deltaKind="neut"
-            series={memSeries}
-            color="var(--info)"
-          />
-          <Metric
-            micro={t('dash.metric.egress')}
-            value={summary?.egress_mbps.current ?? 0}
-            unit="MB/s"
-            delta={deltaEgress != null ? `24h ${deltaEgress > 0 ? '+' : ''}${deltaEgress.toFixed(0)}%` : undefined}
-            deltaKind={deltaEgress != null && deltaEgress < 0 ? 'bad' : 'neut'}
-            series={egressSeries}
-            color="var(--info)"
-          />
-        </div>
-
-        <div className="dash-2col">
+        {/* ── 顶部指标行 ── */}
+        <Grid cols={4} gap="md">
           <Card>
-            <CardHeader>
-              <CardTitle>
-                <TlnIcon name="box" size={14} style={{ color: 'var(--fg-2)' }} />
-                {t('dash.sandboxStates')}
-              </CardTitle>
-            </CardHeader>
             <CardContent>
-              <StatesOverview
-                order={DS_STATE_ORDER}
-                counts={stateMap}
-                t={t}
-                onNewSandbox={() => nav('/sandboxes?new=1')}
-              />
+              <Flex justify="between" align="end">
+                <Stat>
+                  <StatLabel>{t('dash.metric.active')}</StatLabel>
+                  <StatValue>{summary?.active_sandboxes.current ?? 0}</StatValue>
+                  {deltaActive != null && <StatDelta kind={deltaActive >= 0 ? 'up' : 'down'}>{(deltaActive >= 0 ? '+' : '') + deltaActive}</StatDelta>}
+                  <StatHint>vs 24h</StatHint>
+                </Stat>
+                {activeSeries.length > 1 && <Sparkline data={activeSeries} height={42} style={{ width: 100 }} color="var(--ok)" />}
+              </Flex>
             </CardContent>
-            <CardFooter>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-3)' }}>{t('dash.lastRefresh')}</span>
-            </CardFooter>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>
-                <TlnIcon name="clock" size={14} style={{ color: 'var(--fg-2)' }} />
-                {t('dash.quota24h')}
-              </CardTitle>
-            </CardHeader>
             <CardContent>
-              <div className="dash-quota-row">
-              {quota && (
+              <Flex justify="between" align="end">
+                <Stat>
+                  <StatLabel>{t('dash.metric.cpu')}</StatLabel>
+                  <StatValue>{vcpuLim ? `${vcpuCur.toFixed(1)} / ${vcpuLim}` : vcpuCur.toFixed(1)}</StatValue>
+                  <StatHint>{vcpuLim ? Math.round((vcpuCur / vcpuLim) * 100) + '%' : t('dash.unset')}</StatHint>
+                </Stat>
+                {cpuSeries.length > 1 && <Sparkline data={cpuSeries} height={42} style={{ width: 100 }} />}
+              </Flex>
+              {vcpuLim > 0 && <ProgressBar value={vcpuCur} max={vcpuLim} style={{ marginTop: 10 }} />}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent>
+              <Flex justify="between" align="end">
+                <Stat>
+                  <StatLabel>{t('dash.metric.mem')} · GiB</StatLabel>
+                  <StatValue>{memLim ? `${memCur} / ${memLim}` : String(memCur)}</StatValue>
+                  <StatHint>{memLim ? Math.round((memCur / memLim) * 100) + '%' : t('dash.unset')}</StatHint>
+                </Stat>
+                {memSeries.length > 1 && <Sparkline data={memSeries} height={42} style={{ width: 100 }} color="var(--info)" />}
+              </Flex>
+              {memLim > 0 && <ProgressBar value={memCur} max={memLim} style={{ marginTop: 10, '--pb-color': 'var(--info)' } as React.CSSProperties} />}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent>
+              <Flex justify="between" align="end">
+                <Stat>
+                  <StatLabel>{t('dash.metric.egress')} · MB/s</StatLabel>
+                  <StatValue>{egress.toFixed(1)}</StatValue>
+                  {deltaEgress != null && <StatDelta kind={(deltaEgress >= 0 ? 'up' : 'down') as StatDeltaKind}>{(deltaEgress >= 0 ? '+' : '') + deltaEgress.toFixed(0) + '%'}</StatDelta>}
+                  <StatHint>vs 24h</StatHint>
+                </Stat>
+                {egressSeries.length > 1 && <Sparkline data={egressSeries} height={42} style={{ width: 100 }} color="var(--teal)" />}
+              </Flex>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* ── 中间行：状态分布 + 活动流 ── */}
+        <Grid template="1.4fr 1fr" gap="md" style={{ marginTop: 24 }}>
+          <Card>
+            <CardContent>
+              <div className="dash-card-head">
+                <div className="dch-title">
+                  <TlnIcon name="box" size={14} style={{ color: 'var(--fg-2)' }} />
+                  {t('dash.stateDist')}
+                  <span className="dch-count">{t('dash.totalCount').replace('{n}', String(total))}</span>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => nav('/sandboxes')}>{t('dash.viewAllAudit')}<TlnIcon name="arrowRight" size={12} /></Button>
+              </div>
+
+              {total === 0 ? (
+                <div className="states-empty">
+                  <div className="states-empty-text">
+                    <div className="head">{t('dash.statesEmpty.head')}</div>
+                    <div className="desc">{t('dash.statesEmpty.desc')}</div>
+                  </div>
+                  <Button variant="primary" size="sm" onClick={() => nav('/sandboxes?new=1')}>
+                    <TlnIcon name="plus" size={12} />{t('dash.statesEmpty.cta')}
+                  </Button>
+                </div>
+              ) : (
                 <>
-                  <div className="dash-quota-item">
-                    <div className="qi-header">
-                      <span className="qi-label">vCPU</span>
-                      {/* limit=0 means "no quota configured"; show 'Unset' instead of an empty bar. */}
-                      <span className="qi-value">
-                        {quota.vcpu.limit === 0
-                          ? t('dash.unset')
-                          : `${quota.vcpu.used.toFixed(1)} / ${quota.vcpu.limit}`}
-                      </span>
-                    </div>
-                    {quota.vcpu.limit === 0
-                      ? <div className="qi-unset" aria-hidden="true" />
-                      : <ProgressBar value={quota.vcpu.used} max={quota.vcpu.limit || 1} />}
+                  {/* 堆叠条:1:1 原型(inline，非 SandboxStateBar——后者强制带英文 legend) */}
+                  <div className="dash-state-bar" role="img" aria-label="sandbox state distribution">
+                    {STATE_ORDER.map((k) => {
+                      const n = stateMap[k] ?? 0;
+                      if (!n) return null;
+                      return <div key={k} style={{ flex: n, background: STATE_COLORS[k] ?? 'var(--fg-3)' }} title={`${t(`state.${k}`)} · ${n}`} />;
+                    })}
                   </div>
-                  <div className="dash-quota-item">
-                    <div className="qi-header">
-                      <span className="qi-label">{t('dash.metric.mem')}</span>
-                      <span className="qi-value">
-                        {quota.memory_gib.limit === 0
-                          ? t('dash.unset')
-                          : `${quota.memory_gib.used} / ${quota.memory_gib.limit} GiB`}
-                      </span>
-                    </div>
-                    {quota.memory_gib.limit === 0
-                      ? <div className="qi-unset" aria-hidden="true" />
-                      : <ProgressBar value={quota.memory_gib.used} max={quota.memory_gib.limit || 1} />}
-                  </div>
-                  <div className="dash-quota-item">
-                    <div className="qi-header">
-                      <span className="qi-label">{t('dash.secretsAccessed')}</span>
-                      <span className="qi-value">{quota.secrets_reads.used.toLocaleString()}</span>
-                    </div>
-                    {/* 原型：color="var(--magenta)"；用 --pb-color 局部覆盖 .fill 颜色 */}
-                    <ProgressBar value={quota.secrets_reads.used} max={quota.secrets_reads.limit || 100} style={{ '--pb-color': 'var(--magenta)' } as React.CSSProperties} />
-                  </div>
-                  <div className="dash-quota-item">
-                    <div className="qi-header">
-                      <span className="qi-label">{t('dash.failures24h')}</span>
-                      <span className="qi-value danger">{quota.failures.used}</span>
-                    </div>
-                    {/* 原型：color="var(--err)"；用 --pb-color 局部覆盖 .fill 颜色 */}
-                    <ProgressBar value={quota.failures.used} max={quota.failures.limit || 100} style={{ '--pb-color': 'var(--err)' } as React.CSSProperties} />
-                  </div>
+                  {/* legend:每格 色点 + 中文状态名 + 大号数字（自渲染保证 created 也有 zh 文案） */}
+                  <Grid cols={4} gap="sm" style={{ marginTop: 16 }}>
+                    {STATE_ORDER.map((k) => (
+                      <div key={k} className="dash-legend-cell">
+                        <div className="dlc-label">
+                          <span className="dlc-swatch" style={{ background: STATE_COLORS[k] ?? 'var(--fg-3)' }} />
+                          {t(`state.${k}`)}
+                        </div>
+                        <div className={'dlc-num' + ((stateMap[k] ?? 0) === 0 ? ' zero' : '')}>{stateMap[k] ?? 0}</div>
+                      </div>
+                    ))}
+                  </Grid>
                 </>
               )}
-              </div>
             </CardContent>
           </Card>
-        </div>
 
-        <div className="dash-2col">
           <Card>
-            <CardHeader>
-              <CardTitle>
-                <TlnIcon name="zap" size={14} style={{ color: 'var(--fg-2)' }} />
-                {t('dash.recentActivity')}
-              </CardTitle>
-              <CardAction>
-                <Button variant="ghost" size="sm" onClick={() => nav('/audit')}>{t('dash.viewAllAudit')}<TlnIcon name="arrowRight" size={12} /></Button>
-              </CardAction>
-            </CardHeader>
             <CardContent>
+              <div className="dash-card-head">
+                <div className="dch-title">
+                  <TlnIcon name="zap" size={14} style={{ color: 'var(--fg-2)' }} />
+                  {t('dash.recentActivity')}
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => nav('/audit')}>{t('dash.auditLog')}</Button>
+              </div>
+
               {activity.length === 0 ? (
                 <div className="activity-empty">{t('dash.activityEmpty')}</div>
               ) : (
-              <div className="activity-list">
-              {activity.slice(0, DASH_LIST_CAP).map((r: DashboardActivity, i: number) => {
-                const secAgo = Math.round((Date.now() - new Date(r.ts).getTime()) / 1000);
-                const kind = activityKind(r.kind, r.outcome);
-                return (
-                  <div key={i} className={'activity-item ' + kind}>
-                    <div className="dotw"><span className="d" /></div>
-                    <div className="time">{relTime(secAgo)}</div>
-                    <div className="abody">
-                      <div className="text">
-                        {r.summary.split(/(sb_[a-z0-9]+|[A-Z_]{3,}|\d+%|\d+\.\d+)/).map((part, j) =>
-                          /(sb_[a-z0-9]+|[A-Z_]{3,}|\d+%|\d+\.\d+)/.test(part)
-                            ? <span key={j} style={{ fontFamily: 'var(--font-mono)', color: 'var(--fg-0)' }}>{part}</span>
-                            : part
-                        )}
-                      </div>
-                      <div className="ameta">
-                        {/* 事件类型标签 */}
-                        <span className="aev">{r.kind}</span>
-                        {/* 发起者 */}
-                        {r.actor && <span className="aactor"><TlnIcon name="user" size={10} />{r.actor}</span>}
-                        {/* 作用对象 */}
-                        {r.target && <span className="atgt" title={r.target}>{r.target}</span>}
-                        {/* 结果 */}
-                        {r.outcome && (
-                          <span className={'aoutcome ' + (r.outcome === 'failure' ? 'err' : 'ok')}>
-                            {r.outcome === 'failure' ? t('audit.outcome.err') : t('audit.outcome.ok')}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              {activity.length > DASH_LIST_CAP && (
-                <button className="dash-more" onClick={() => nav('/audit')}>
-                  {t('dash.moreItems').replace('{n}', String(activity.length - DASH_LIST_CAP))}
-                </button>
-              )}
-              </div>
+                <Timeline>
+                  {activity.slice(0, DASH_LIST_CAP).map((r: DashboardActivity, i: number) => {
+                    const secAgo = Math.round((Date.now() - new Date(r.ts).getTime()) / 1000);
+                    return (
+                      <TimelineItem key={i} kind={activityKind(r.kind, r.outcome)}>
+                        <TimelineDot />
+                        <TimelineContent>
+                          <TimelineTitle>
+                            {r.summary}
+                            <TimelineTime>{relTime(secAgo)}</TimelineTime>
+                          </TimelineTitle>
+                          <TimelineDesc>
+                            <span className="tl-ev">{r.kind}</span>
+                            {r.actor && <span className="tl-actor"><TlnIcon name="user" size={10} />{r.actor}</span>}
+                            {r.target && <span className="tl-tgt" title={r.target}>{r.target}</span>}
+                            {r.outcome && (
+                              <span className={'tl-out ' + (r.outcome === 'failure' ? 'err' : 'ok')}>
+                                {r.outcome === 'failure' ? t('audit.outcome.err') : t('audit.outcome.ok')}
+                              </span>
+                            )}
+                          </TimelineDesc>
+                        </TimelineContent>
+                      </TimelineItem>
+                    );
+                  })}
+                </Timeline>
               )}
             </CardContent>
           </Card>
+        </Grid>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                <TlnIcon name="dot" size={14} style={{ color: 'var(--ok)', animation: 'tln-pulse 1.6s ease-in-out infinite' }} />
-                {t('dash.runningNow')}
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)', marginLeft: 4 }}>{running.length}</span>
-              </CardTitle>
-              <CardAction>
-                <Button variant="ghost" size="sm" onClick={() => nav('/sandboxes')}>{t('dash.viewAllSandboxes')}<TlnIcon name="arrowRight" size={12} /></Button>
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              <div className="run-list">
-              {running.slice(0, DASH_LIST_CAP).map(s => {
-                const isPulling = s.status === 'pulling-image';
-                const dotColor  = isPulling ? 'var(--warn)' : 'var(--ok)';
-                const dotShadow = isPulling ? '0 0 0 3px var(--warn-soft)' : '0 0 0 3px var(--ok-soft)';
-                const np = netPolicyMeta(s.network_policy);
-                return (
-                  <div key={s.id} className="run-row" onClick={() => nav('/sandboxes/' + s.id)} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && nav('/sandboxes/' + s.id)}>
-                    <span className="run-dot" style={{ background: dotColor, boxShadow: dotShadow }} />
-                    <div className="who">
-                      <div className="who-top">
-                        <span className="id">{s.id}</span>
-                        {s.name && <span className="rname">{s.name}</span>}
-                      </div>
-                      {/* 规格行：镜像 · vCPU · 内存 · 网络策略 */}
-                      <div className="rspec">
-                        {s.image && <span className="rseg img" title={s.image}>{s.image}</span>}
-                        <span className="rseg">{fmtVCPU(s.cpu_millis, t)}</span>
-                        <span className="rseg">{fmtMem(s.memory_bytes, t)}</span>
-                        {np && <span className="rseg np" style={{ color: np.color }}>{t(np.label)}</span>}
-                      </div>
-                    </div>
-                    {/* age 列显示已运行时长，而非状态标签（与原型语义对齐） */}
-                    <span className="age">{fmtAge(s.created_at)}</span>
-                  </div>
-                );
-              })}
-              {running.length > DASH_LIST_CAP && (
-                <button className="dash-more" onClick={() => nav('/sandboxes')}>
-                  {t('dash.moreItems').replace('{n}', String(running.length - DASH_LIST_CAP))}
-                </button>
-              )}
-              </div>
-            </CardContent>
-          </Card>
+        {/* ── 底部：最近 sandbox 表 ── */}
+        <div style={{ marginTop: 24 }}>
+          <DataTable
+            data={rows}
+            columns={columns}
+            rowKey="id"
+            onRowClick={(r) => nav('/sandboxes/' + r.id)}
+            empty={t('dash.sbEmpty')}
+          >
+            <DataTableToolbar>
+              <span className="dt-title">{t('dash.recentSandboxes')} <span className="dt-count">{sandboxes.length}</span></span>
+              <span style={{ flex: 1 }} />
+              <Button size="sm" variant="ghost" onClick={() => nav('/sandboxes')}>
+                <TlnIcon name="filter" size={13} />{t('dash.viewAllShort')}
+              </Button>
+              <Button size="sm" variant="primary" onClick={() => nav('/sandboxes?new=1')}>
+                <TlnIcon name="plus" size={13} />{t('dash.create')}
+              </Button>
+            </DataTableToolbar>
+            <DataTableContent />
+          </DataTable>
         </div>
       </div>
     </>

@@ -1,156 +1,65 @@
-.dash-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-@media (max-width: 1200px) { .dash-grid { grid-template-columns: repeat(2, 1fr); } }
-.dash-metric { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.dash-metric .top { display: flex; align-items: center; justify-content: space-between; }
-.dash-metric .top .micro { display: flex; align-items: center; gap: 6px; color: var(--fg-2); font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em; }
-.dash-metric .top .delta {
-  font-family: var(--font-mono); font-size: 10.5px;
-  color: var(--ok); padding: 2px 7px;
-  border-radius: 4px; background: var(--ok-soft);
-}
-.dash-metric .top .delta.bad  { color: var(--err); background: var(--err-soft); }
-.dash-metric .top .delta.neut { color: var(--fg-2); background: var(--bg-3); }
-.dash-metric .num {
-  font-size: 28px; font-weight: 600; letter-spacing: -0.025em; color: var(--fg-0);
-  font-variant-numeric: tabular-nums;
-  display: flex; align-items: baseline; gap: 4px;
-}
-.dash-metric .num .unit { font-size: 12px; color: var(--fg-3); font-weight: 400; font-family: var(--font-mono); }
-.dash-metric .num .of   { font-family: var(--font-mono); font-size: 13px; color: var(--fg-3); font-weight: 400; margin-left: 4px; }
-.dash-metric .spark { height: 36px; margin-top: -6px; }
+/* PageDashboard — 按最新原型重构。大部分布局/卡片走 ui-lib 组件
+ * (Grid/Flex/Stat/Sparkline/SandboxStateBar/Timeline/DataTable)，本文件只留
+ * 卡片头、状态分布 legend、活动流元信息、最近 sandbox 表内的少量内容类。 */
 
-.activity-list { display: flex; flex-direction: column; gap: 0; }
-.activity-item {
-  display: grid;
-  grid-template-columns: 12px 70px 1fr;
-  gap: 12px;
-  padding: 10px 0;
-  align-items: baseline;
+/* 卡片头：标题 + 右侧动作（替代 prototype 的 TlnCard title/action 槽） */
+.dash-card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
 }
-.activity-item + .activity-item { border-top: 1px solid var(--line-soft); }
-.activity-item .dotw { display: flex; align-items: center; height: 18px; }
-.activity-item .dotw .d { width: 6px; height: 6px; border-radius: 50%; background: var(--fg-3); }
-.activity-item.ok   .dotw .d { background: var(--ok); }
-.activity-item.warn .dotw .d { background: var(--warn); }
-.activity-item.err  .dotw .d { background: var(--err); }
-.activity-item.info .dotw .d { background: var(--info); }
-.activity-item .time { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-3); text-align: right; }
-.activity-item .text { color: var(--fg-1); font-size: 12.5px; }
-.activity-item.dim .text { color: var(--fg-2); }
-/* 活动行正文：摘要 + 元信息（事件类型 · 发起者 · 目标 · 结果） */
-.activity-item .abody { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.activity-item .ameta {
-  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
-  font-family: var(--font-mono); font-size: 10px; color: var(--fg-3);
+.dash-card-head .dch-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: var(--fg-0);
 }
-.activity-item .ameta .aev {
-  text-transform: uppercase; letter-spacing: 0.05em;
+.dash-card-head .dch-count {
+  font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); font-weight: 400;
+}
+
+/* 状态分布堆叠条（inline，1:1 原型；高 8px，空底 bg-2） */
+.dash-state-bar {
+  display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--bg-2);
+}
+.dash-state-bar > div { transition: flex 280ms var(--ease-out, ease-out); }
+
+/* 状态分布 legend：每格 = 色点+中文名 + 大号数字（1:1 原型） */
+.dash-legend-cell .dlc-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11.5px; color: var(--fg-2);
+}
+.dash-legend-cell .dlc-label .dlc-swatch { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+.dash-legend-cell .dlc-num {
+  font-size: 22px; color: var(--fg-0); font-weight: 600; margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.dash-legend-cell .dlc-num.zero { color: var(--fg-3); }
+
+/* 活动流 Timeline 内的元信息行（事件类型 · 发起者 · 目标 · 结果） */
+.tl-ev {
+  font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
   padding: 1px 5px; border-radius: 3px; background: var(--bg-2); color: var(--fg-2);
 }
-.activity-item .ameta .aactor { display: inline-flex; align-items: center; gap: 3px; color: var(--fg-3); }
-.activity-item .ameta .atgt { color: var(--fg-3); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.activity-item .ameta .aoutcome { font-weight: 500; }
-.activity-item .ameta .aoutcome.ok  { color: var(--ok); }
-.activity-item .ameta .aoutcome.err { color: var(--err); }
+.tl-actor { display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); margin-left: 6px; }
+.tl-tgt { font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); margin-left: 6px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; }
+.tl-out { font-family: var(--font-mono); font-size: 10px; font-weight: 500; margin-left: 6px; }
+.tl-out.ok  { color: var(--ok); }
+.tl-out.err { color: var(--err); }
 .activity-empty { padding: 24px 0; text-align: center; color: var(--fg-3); font-size: 12.5px; }
 
-/* 列表封顶后的「还有 N 条 — 查看全部」按钮 */
-.dash-more {
-  margin-top: 4px; padding: 9px 0; width: 100%;
-  background: none; border: none; border-top: 1px solid var(--line-soft);
-  font-family: var(--font-mono); font-size: 11px; color: var(--acc-strong);
-  cursor: pointer; text-align: center; transition: color 0.12s;
-}
-.dash-more:hover { color: var(--acc); }
+/* 最近 sandbox 表内的单元格内容类 */
+.dsb-idstate { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.dsb-idstate .dsb-id { font-family: var(--font-mono); font-size: 12px; color: var(--fg-1); }
+.dsb-mono { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-2); }
+.dt-title { font-size: 13px; font-weight: 600; color: var(--fg-0); }
+.dt-title .dt-count { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); font-weight: 400; margin-left: 6px; }
 
-.run-list { display: flex; flex-direction: column; }
-.run-row {
-  display: grid; grid-template-columns: 9px 1fr auto;
-  align-items: center; gap: 10px; padding: 9px 0; cursor: pointer;
-}
-.run-row + .run-row { border-top: 1px solid var(--line-soft); }
-.run-row:hover { background: var(--bg-hover); margin: 0 -8px; padding: 9px 8px; border-radius: var(--r-2); }
-.run-row .run-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); animation: tln-pulse 1.6s ease-in-out infinite; }
-.run-row .who { display: flex; flex-direction: column; min-width: 0; gap: 3px; }
-.run-row .who .who-top { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-.run-row .who .id   { font-family: var(--font-mono); color: var(--fg-1); font-size: 12px; flex: 0 0 auto; }
-.run-row .who .rname { font-size: 11.5px; color: var(--fg-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* 规格行：镜像 · vCPU · 内存 · 网络策略，分段用细分隔点 */
-.run-row .rspec { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-3); }
-.run-row .rspec .rseg { display: inline-flex; align-items: center; }
-.run-row .rspec .rseg + .rseg::before { content: '·'; margin-right: 8px; color: var(--line-strong); }
-.run-row .rspec .rseg.img { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg-2); }
-.run-row .rspec .rseg.np { font-weight: 500; }
-.run-row .age { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); align-self: flex-start; }
-
-.dash-2col { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; margin-top: 14px; }
-@media (max-width: 1100px) { .dash-2col { grid-template-columns: 1fr; } }
-
-/* 类名前缀 dash- 避免与 PageTenants 的 .quota-row (grid 布局) 全局冲突 */
-.dash-quota-row { display: flex; flex-direction: column; gap: 12px; }
-.dash-quota-item { width: 100%; }
-.dash-quota-item .tln-progress { width: 100%; }
-.dash-quota-item .qi-header {
-  display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;
-}
-.dash-quota-item .qi-label { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg-2); }
-.dash-quota-item .qi-value { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-2); }
-.dash-quota-item .qi-value.danger { color: var(--err); }
-
-/*
- * ProgressBar 组件的 .fill 默认使用 var(--acc)，不识别 --tln-progress-color。
- * 通过在容器上设置 --pb-color 变量，再在此覆盖 .fill 的 background，
- * 从而让 Secret/失败 两行展示原型指定的 magenta / err 颜色。
- */
-.dash-quota-item .tln-progress[style*="--pb-color"] .fill {
-  background: var(--pb-color);
-}
-
-/* States overview — 1:1 port of prototype */
-.states-bar {
-  display: flex;
-  height: 8px;
-  /* 原型用 4px，与 --r-1 圆角一致 */
-  border-radius: 4px;
-  overflow: hidden;
-  /* 原型用 var(--bg-3)，作为空白段底色，与 bg-2 卡片背景有层次区分 */
-  background: var(--bg-3);
-}
-.states-bar > div { transition: flex 280ms var(--ease-out, ease-out); }
-.states-legend {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px 16px;
-  margin-top: 16px;
-  font-size: 11.5px;
-}
-.states-legend .item { display: flex; align-items: center; gap: 8px; }
-.states-legend .item .swatch { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
-.states-legend .item .label { color: var(--fg-2); flex: 1; }
-.states-legend .item .count {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--fg-0);
-}
-.states-legend .item .count.zero { color: var(--fg-3); }
-@media (max-width: 720px) {
-  .states-legend { grid-template-columns: repeat(2, 1fr); }
-}
-
-/* Empty-state for sandbox states card (when total count == 0). */
+/* 状态分布卡片空态（total == 0） */
 .states-empty {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 12px;
-  min-height: 60px;
+  gap: 12px; min-height: 60px;
 }
 .states-empty .head { font-size: 13px; color: var(--fg-1); font-weight: 500; }
 .states-empty .desc { font-size: 11.5px; color: var(--fg-3); margin-top: 2px; }
 
-/* Placeholder bar that visually substitutes a ProgressBar when limit is 0. */
-.qi-unset {
-  height: 6px; width: 100%;
-  background: var(--bg-3);
-  border-radius: 4px;
-  opacity: 0.5;
+@media (max-width: 1200px) {
+  /* 顶部 4 列在窄屏由 ui-lib Grid 自己处理；中间行降级单列由内联 template 控制 */
 }
