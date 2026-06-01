@@ -24,6 +24,8 @@ import './PageDashboard.css';
 
 // dashboard 列表封顶：最多展示 20 条，超出由列表页承接。
 const DASH_LIST_CAP = 20;
+// 活动流只展示最新 5 条（dashboard 是概览，完整历史走审计日志页）。
+const ACTIVITY_CAP = 5;
 
 // 状态分布柱状条用色（与原型 STATE_COLORS 对齐；created 用 info 蓝补全）。
 const STATE_COLORS: Partial<Record<string, string>> = {
@@ -295,7 +297,7 @@ export function PageDashboard() {
                 <div className="activity-empty">{t('dash.activityEmpty')}</div>
               ) : (
                 <Timeline>
-                  {activity.slice(0, DASH_LIST_CAP).map((r: DashboardActivity, i: number) => {
+                  {activity.slice(0, ACTIVITY_CAP).map((r: DashboardActivity, i: number) => {
                     const secAgo = Math.round((Date.now() - new Date(r.ts).getTime()) / 1000);
                     return (
                       <TimelineItem key={i} kind={activityKind(r.kind, r.outcome)}>
