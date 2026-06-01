@@ -34,10 +34,7 @@
 .dash-legend-cell .dlc-num.zero { color: var(--fg-3); }
 
 /* 活动流：每条单行（摘要 · 发起者 · 结果，时间靠右）。
- * ui-lib Timeline 用原生 <ul>/<li> 但没 reset list-style → <li> 会多渲染一个浏览器
- * 默认 bullet，叠在自定义 dot 旁造成「没对齐」。这里兜底清掉 bullet。 */
-.tln-timeline, .tln-timeline-item { list-style: none; }
-/* dot 用 flex 居中对齐到这一行，不再用组件默认的 top:4px（那是按多行算的）。 */
+ * dot 用 flex 居中对齐到这一行，不再用组件默认的 top:4px（那是按多行算的）。 */
 .tln-timeline-item .dot { top: 50%; transform: translateY(-50%); }
 .tl-row {
   display: flex; align-items: center; gap: 8px;
