@@ -73,6 +73,43 @@ function fmtAge(createdAt?: string): string {
   return Math.floor(ageSec / 3600) + 'h';
 }
 
+// dashboard 列表封顶：最多展示 20 条，超出由「查看全部」承接。
+const DASH_LIST_CAP = 20;
+
+// cpu_millis → "0.5 vCPU"；0/缺省走默认标签。
+function fmtVCPU(millis: number | undefined, t: (k: string) => string): string {
+  if (!millis) return t('dash.cpuDefault');
+  const v = millis / 1000;
+  return (v >= 10 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/, '')) + ' vCPU';
+}
+
+// memory_bytes → "512 MiB" / "2 GiB"；0/缺省走默认标签。
+function fmtMem(bytes: number | undefined, t: (k: string) => string): string {
+  if (!bytes) return t('dash.memDefault');
+  const gib = bytes / (1024 ** 3);
+  if (gib >= 1) return (gib >= 10 ? gib.toFixed(0) : gib.toFixed(1).replace(/\.0$/, '')) + ' GiB';
+  return Math.round(bytes / (1024 ** 2)) + ' MiB';
+}
+
+// 网络策略 → 短标签 + 色调（offline 红 / restricted 黄 / full 绿）。
+function netPolicyMeta(pol: string | undefined): { label: string; color: string } | null {
+  if (!pol) return null;
+  const color =
+    pol === 'offline'           ? 'var(--err)'  :
+    pol === 'restricted-egress' ? 'var(--warn)' :
+    pol === 'full-egress'       ? 'var(--ok)'   : 'var(--fg-3)';
+  return { label: `netpol.${pol}`, color };
+}
+
+// 审计事件类型 → 活动行的色调 kind（与 PageAudit 同族语义）。
+function activityKind(eventKind: string, outcome?: string): 'ok' | 'warn' | 'err' | 'info' {
+  if (outcome === 'failure') return 'err';
+  if (eventKind.includes('failed') || eventKind.includes('invalid') || eventKind.includes('rate_limited')) return 'err';
+  if (eventKind.startsWith('sandbox_')) return 'ok';
+  if (eventKind.startsWith('secret') || eventKind.includes('reveal')) return 'warn';
+  return 'info';
+}
+
 // ── Metric card ───────────────────────────────────────────────────────────────
 interface MetricProps {
   micro: string;
@@ -373,24 +410,50 @@ export function PageDashboard() {
               </CardAction>
             </CardHeader>
             <CardContent>
+              {activity.length === 0 ? (
+                <div className="activity-empty">{t('dash.activityEmpty')}</div>
+              ) : (
               <div className="activity-list">
-              {activity.map((r: DashboardActivity, i: number) => {
+              {activity.slice(0, DASH_LIST_CAP).map((r: DashboardActivity, i: number) => {
                 const secAgo = Math.round((Date.now() - new Date(r.ts).getTime()) / 1000);
+                const kind = activityKind(r.kind, r.outcome);
                 return (
-                  <div key={i} className={'activity-item ' + r.kind}>
+                  <div key={i} className={'activity-item ' + kind}>
                     <div className="dotw"><span className="d" /></div>
                     <div className="time">{relTime(secAgo)}</div>
-                    <div className="text">
-                      {r.summary.split(/(sb_[a-z0-9]+|[A-Z_]{3,}|\d+%|\d+\.\d+)/).map((part, j) =>
-                        /(sb_[a-z0-9]+|[A-Z_]{3,}|\d+%|\d+\.\d+)/.test(part)
-                          ? <span key={j} style={{ fontFamily: 'var(--font-mono)', color: 'var(--fg-0)' }}>{part}</span>
-                          : part
-                      )}
+                    <div className="abody">
+                      <div className="text">
+                        {r.summary.split(/(sb_[a-z0-9]+|[A-Z_]{3,}|\d+%|\d+\.\d+)/).map((part, j) =>
+                          /(sb_[a-z0-9]+|[A-Z_]{3,}|\d+%|\d+\.\d+)/.test(part)
+                            ? <span key={j} style={{ fontFamily: 'var(--font-mono)', color: 'var(--fg-0)' }}>{part}</span>
+                            : part
+                        )}
+                      </div>
+                      <div className="ameta">
+                        {/* 事件类型标签 */}
+                        <span className="aev">{r.kind}</span>
+                        {/* 发起者 */}
+                        {r.actor && <span className="aactor"><TlnIcon name="user" size={10} />{r.actor}</span>}
+                        {/* 作用对象 */}
+                        {r.target && <span className="atgt" title={r.target}>{r.target}</span>}
+                        {/* 结果 */}
+                        {r.outcome && (
+                          <span className={'aoutcome ' + (r.outcome === 'failure' ? 'err' : 'ok')}>
+                            {r.outcome === 'failure' ? t('audit.outcome.err') : t('audit.outcome.ok')}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
               })}
+              {activity.length > DASH_LIST_CAP && (
+                <button className="dash-more" onClick={() => nav('/audit')}>
+                  {t('dash.moreItems').replace('{n}', String(activity.length - DASH_LIST_CAP))}
+                </button>
+              )}
               </div>
+              )}
             </CardContent>
           </Card>
 
@@ -407,22 +470,37 @@ export function PageDashboard() {
             </CardHeader>
             <CardContent>
               <div className="run-list">
-              {running.map(s => {
+              {running.slice(0, DASH_LIST_CAP).map(s => {
                 const isPulling = s.status === 'pulling-image';
                 const dotColor  = isPulling ? 'var(--warn)' : 'var(--ok)';
                 const dotShadow = isPulling ? '0 0 0 3px var(--warn-soft)' : '0 0 0 3px var(--ok-soft)';
+                const np = netPolicyMeta(s.network_policy);
                 return (
                   <div key={s.id} className="run-row" onClick={() => nav('/sandboxes/' + s.id)} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && nav('/sandboxes/' + s.id)}>
                     <span className="run-dot" style={{ background: dotColor, boxShadow: dotShadow }} />
                     <div className="who">
-                      <span className="id">{s.id}</span>
-                      <span className="task">{s.name || s.image}</span>
+                      <div className="who-top">
+                        <span className="id">{s.id}</span>
+                        {s.name && <span className="rname">{s.name}</span>}
+                      </div>
+                      {/* 规格行：镜像 · vCPU · 内存 · 网络策略 */}
+                      <div className="rspec">
+                        {s.image && <span className="rseg img" title={s.image}>{s.image}</span>}
+                        <span className="rseg">{fmtVCPU(s.cpu_millis, t)}</span>
+                        <span className="rseg">{fmtMem(s.memory_bytes, t)}</span>
+                        {np && <span className="rseg np" style={{ color: np.color }}>{t(np.label)}</span>}
+                      </div>
                     </div>
                     {/* age 列显示已运行时长，而非状态标签（与原型语义对齐） */}
                     <span className="age">{fmtAge(s.created_at)}</span>
                   </div>
                 );
               })}
+              {running.length > DASH_LIST_CAP && (
+                <button className="dash-more" onClick={() => nav('/sandboxes')}>
+                  {t('dash.moreItems').replace('{n}', String(running.length - DASH_LIST_CAP))}
+                </button>
+              )}
               </div>
             </CardContent>
           </Card>

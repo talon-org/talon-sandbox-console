@@ -23,4 +23,13 @@ export const dashboard = {
   'dash.statesEmpty.head':{ en: 'No sandboxes yet', zh: '暂无 sandbox' },
   'dash.statesEmpty.desc':{ en: 'Spin one up to start exploring.', zh: '新建一个开始' },
   'dash.statesEmpty.cta': { en: 'New sandbox', zh: '新建 sandbox' },
+  // 列表封顶（最多 20 条）后的「还有 N 条」提示，点「查看全部」跳列表页。
+  'dash.moreItems':       { en: '+{n} more — view all', zh: '还有 {n} 条 — 查看全部' },
+  'dash.activityEmpty':   { en: 'No recent activity', zh: '暂无最近活动' },
+  // running 列表的资源/网络规格短标签。
+  'dash.cpuDefault':      { en: 'default CPU', zh: 'CPU 默认' },
+  'dash.memDefault':      { en: 'default mem', zh: '内存默认' },
+  'netpol.offline':           { en: 'offline', zh: '离线' },
+  'netpol.restricted-egress': { en: 'restricted', zh: '受限出网' },
+  'netpol.full-egress':       { en: 'full egress', zh: '完全出网' },
 } as const;

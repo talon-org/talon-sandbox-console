@@ -398,6 +398,8 @@ export interface DashboardActivity {
   kind: string;
   actor: string;
   summary: string;
+  outcome?: string;   // "success" | "failure" | ""；前端据此染色
+  target?: string;    // 事件作用对象（sandbox_id / secret_id / 邮箱等）
 }
 
 export interface DashboardSandbox {
@@ -407,6 +409,9 @@ export interface DashboardSandbox {
   status: string;
   tenant: string;
   created_at?: string;   // RFC3339；后端 T10 扩展字段，用于计算 age 列
+  cpu_millis?: number;   // 1/1000 vCPU；0/缺省 = worker 默认
+  memory_bytes?: number; // 内存上限 byte；0/缺省 = worker 默认
+  network_policy?: string; // offline | restricted-egress | full-egress | ""
 }
 
 /** GET /v1/metrics/dashboard response (T10) */
