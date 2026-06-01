@@ -8,7 +8,7 @@ import {
   Card, CardContent, Button, PageHeader, Sparkline, ProgressBar,
   Grid, Flex, StatusBadge,
   Stat, StatLabel, StatValue, StatDelta, StatHint,
-  Timeline, TimelineItem, TimelineDot,
+  Timeline, TimelineItem, TimelineDot, TimelineContent, TimelineTitle, TimelineTime, TimelineDesc,
   DataTable, DataTableContent, DataTableToolbar,
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
 } from '@talon-sandbox/react';
@@ -58,6 +58,13 @@ function fmtVCPU(millis: number | undefined, t: (k: string) => string): string {
   if (!millis) return t('dash.cpuDefault');
   const v = millis / 1000;
   return (v >= 10 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/, '')) + ' vCPU';
+}
+
+// 事件类型 → 中文标题（人话）；未映射的回退原始 type，绝不裸露 i18n key。
+function eventLabel(kind: string, t: (k: string) => string): string {
+  const k = `event.${kind}`;
+  const s = t(k);
+  return s === k ? kind : s;
 }
 
 // 审计事件类型 → Timeline 行色调。
@@ -234,7 +241,7 @@ export function PageDashboard() {
         </Grid>
 
         {/* ── 中间行：状态分布 + 活动流 ── */}
-        <Grid template="1.4fr 1fr" gap="md" style={{ marginTop: 24 }}>
+        <Grid template="1.7fr 1fr" gap="md" style={{ marginTop: 24 }}>
           <Card>
             <CardContent>
               <div className="dash-card-head">
@@ -299,20 +306,26 @@ export function PageDashboard() {
                 <Timeline>
                   {activity.slice(0, ACTIVITY_CAP).map((r: DashboardActivity, i: number) => {
                     const secAgo = Math.round((Date.now() - new Date(r.ts).getTime()) / 1000);
+                    // 标题用中文事件名（人话）；描述行左=发起者·目标，右=状态(成功/失败)。
+                    const title = eventLabel(r.kind, t);
+                    const left = [r.actor, r.target].filter(Boolean).join(' · ');
                     return (
                       <TimelineItem key={i} kind={activityKind(r.kind, r.outcome)}>
                         <TimelineDot />
-                        {/* 单行布局：摘要 · 发起者 · 结果，时间靠右 */}
-                        <div className="tl-row">
-                          <span className="tl-sum">{r.summary}</span>
-                          {r.actor && <span className="tl-actor" title={r.actor}><TlnIcon name="user" size={10} />{r.actor}</span>}
-                          {r.outcome && (
-                            <span className={'tl-out ' + (r.outcome === 'failure' ? 'err' : 'ok')}>
-                              {r.outcome === 'failure' ? t('audit.outcome.err') : t('audit.outcome.ok')}
-                            </span>
-                          )}
-                          <span className="tl-time">{relTime(secAgo)}</span>
-                        </div>
+                        <TimelineContent>
+                          <TimelineTitle>
+                            {title}
+                            <TimelineTime>{relTime(secAgo)}</TimelineTime>
+                          </TimelineTitle>
+                          <TimelineDesc>
+                            <span className="tl-meta">{left}</span>
+                            {r.outcome && (
+                              <span className={'tl-status ' + (r.outcome === 'failure' ? 'err' : 'ok')}>
+                                {r.outcome === 'failure' ? t('audit.outcome.err') : t('audit.outcome.ok')}
+                              </span>
+                            )}
+                          </TimelineDesc>
+                        </TimelineContent>
                       </TimelineItem>
                     );
                   })}
