@@ -33,16 +33,31 @@
 }
 .dash-legend-cell .dlc-num.zero { color: var(--fg-3); }
 
-/* 活动流 Timeline 内的元信息行（事件类型 · 发起者 · 目标 · 结果） */
-.tl-ev {
-  font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
-  padding: 1px 5px; border-radius: 3px; background: var(--bg-2); color: var(--fg-2);
+/* 活动流：每条单行（摘要 · 发起者 · 结果，时间靠右）。
+ * dot 用 flex 居中对齐到这一行，不再用组件默认的 top:4px（那是按多行算的）。 */
+.tln-timeline-item .dot { top: 50%; transform: translateY(-50%); }
+.tl-row {
+  display: flex; align-items: center; gap: 8px;
+  min-width: 0; min-height: 22px;
+  font-size: 12.5px;
 }
-.tl-actor { display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); margin-left: 6px; }
-.tl-tgt { font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); margin-left: 6px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; }
-.tl-out { font-family: var(--font-mono); font-size: 10px; font-weight: 500; margin-left: 6px; }
-.tl-out.ok  { color: var(--ok); }
-.tl-out.err { color: var(--err); }
+.tl-row .tl-sum {
+  color: var(--fg-0); font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 220px; flex: 0 1 auto;
+}
+.tl-row .tl-actor {
+  display: inline-flex; align-items: center; gap: 3px; flex: 0 1 auto; min-width: 0;
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tl-row .tl-out { font-family: var(--font-mono); font-size: 10px; font-weight: 500; flex: 0 0 auto; }
+.tl-row .tl-out.ok  { color: var(--ok); }
+.tl-row .tl-out.err { color: var(--err); }
+.tl-row .tl-time {
+  margin-left: auto; flex: 0 0 auto;
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-3);
+}
 .activity-empty { padding: 24px 0; text-align: center; color: var(--fg-3); font-size: 12.5px; }
 
 /* 最近 sandbox 表内的单元格内容类 */

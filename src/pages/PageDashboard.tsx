@@ -8,7 +8,7 @@ import {
   Card, CardContent, Button, PageHeader, Sparkline, ProgressBar,
   Grid, Flex, StatusBadge,
   Stat, StatLabel, StatValue, StatDelta, StatHint,
-  Timeline, TimelineItem, TimelineDot, TimelineContent, TimelineTitle, TimelineTime, TimelineDesc,
+  Timeline, TimelineItem, TimelineDot,
   DataTable, DataTableContent, DataTableToolbar,
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
 } from '@talon-sandbox/react';
@@ -24,8 +24,8 @@ import './PageDashboard.css';
 
 // dashboard 列表封顶：最多展示 20 条，超出由列表页承接。
 const DASH_LIST_CAP = 20;
-// 活动流只展示最新 5 条（dashboard 是概览，完整历史走审计日志页）。
-const ACTIVITY_CAP = 5;
+// 活动流只展示最新 6 条（dashboard 是概览，完整历史走审计日志页）。
+const ACTIVITY_CAP = 6;
 
 // 状态分布柱状条用色（与原型 STATE_COLORS 对齐；created 用 info 蓝补全）。
 const STATE_COLORS: Partial<Record<string, string>> = {
@@ -302,22 +302,17 @@ export function PageDashboard() {
                     return (
                       <TimelineItem key={i} kind={activityKind(r.kind, r.outcome)}>
                         <TimelineDot />
-                        <TimelineContent>
-                          <TimelineTitle>
-                            {r.summary}
-                            <TimelineTime>{relTime(secAgo)}</TimelineTime>
-                          </TimelineTitle>
-                          <TimelineDesc>
-                            <span className="tl-ev">{r.kind}</span>
-                            {r.actor && <span className="tl-actor"><TlnIcon name="user" size={10} />{r.actor}</span>}
-                            {r.target && <span className="tl-tgt" title={r.target}>{r.target}</span>}
-                            {r.outcome && (
-                              <span className={'tl-out ' + (r.outcome === 'failure' ? 'err' : 'ok')}>
-                                {r.outcome === 'failure' ? t('audit.outcome.err') : t('audit.outcome.ok')}
-                              </span>
-                            )}
-                          </TimelineDesc>
-                        </TimelineContent>
+                        {/* 单行布局：摘要 · 发起者 · 结果，时间靠右 */}
+                        <div className="tl-row">
+                          <span className="tl-sum">{r.summary}</span>
+                          {r.actor && <span className="tl-actor" title={r.actor}><TlnIcon name="user" size={10} />{r.actor}</span>}
+                          {r.outcome && (
+                            <span className={'tl-out ' + (r.outcome === 'failure' ? 'err' : 'ok')}>
+                              {r.outcome === 'failure' ? t('audit.outcome.err') : t('audit.outcome.ok')}
+                            </span>
+                          )}
+                          <span className="tl-time">{relTime(secAgo)}</span>
+                        </div>
                       </TimelineItem>
                     );
                   })}
