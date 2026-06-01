@@ -13,6 +13,7 @@ import { useAuditStream } from '../hooks';
 import { listAuditEvents } from '../api/audit';
 import type { AuditEventDTO, AuditStreamEvent } from '../api/types';
 import { typeKind } from '../lib/auditUtils';
+import { eventLabel } from '../lib/eventLabel';
 import { relTime as sharedRelTime } from '../lib/relTime';
 
 import './PageAudit.css';
@@ -241,8 +242,14 @@ export function PageAudit() {
       key: 'event', label: t('audit.colEvent'),
       render: (e) => {
         const kind = typeKind(e.event_type);
-        const sub  = e.event_type.split('.').slice(1).join('.');
-        return <div className="atype"><span className={'kind ' + kind}>{kind}</span>{sub}</div>;
+        // 类别用一个色点表示(色由 .cat-<kind> 决定),事件名走统一中文映射;
+        // 不再把英文类别词裸贴在中文前面(之前 "auth请求验证码" 那种)。
+        return (
+          <div className="atype">
+            <span className={'cat-dot cat-' + kind} title={kind} />
+            <span className="aname">{eventLabel(e.event_type, t)}</span>
+          </div>
+        );
       },
     },
     {
@@ -263,11 +270,15 @@ export function PageAudit() {
     },
     {
       key: 'result', label: t('audit.colResult'), width: '0.7fr',
-      render: (e) => (
-        <Badge variant={e.outcome === 'ok' ? 'ok' : 'err'} dot>
-          {t(`audit.outcome.${e.outcome}`, e.outcome)}
-        </Badge>
-      ),
+      render: (e) => {
+        // 后端 outcome 可能是 success/failure(REST)或 ok/err(SSE);统一归一化。
+        const ok = e.outcome === 'ok' || e.outcome === 'success';
+        return (
+          <Badge variant={ok ? 'ok' : 'err'} dot>
+            {ok ? t('audit.outcome.ok') : t('audit.outcome.err')}
+          </Badge>
+        );
+      },
     },
     {
       key: 'meta', label: t('audit.colMeta'), width: '1.5fr', truncate: true,

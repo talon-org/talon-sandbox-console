@@ -48,6 +48,7 @@ interface PillVisual {
 // variant 必须是 ui-lib Badge 的合法值:info|magenta|teal|default|muted|ok|warn|err
 // (不是 success/danger/warning/neutral —— 那些是非法值,会渲染成无色默认徽章)
 const SANDBOX_CONFIG: Record<SandboxState, PillVisual> = {
+  'created':       { variant: 'info',  dot: true,  labelKey: 'state.created' },
   'running':       { variant: 'ok',    dot: true,  labelKey: 'state.running' },
   'pulling-image': { variant: 'info',  dot: true,  labelKey: 'state.pulling-image' },
   'provisioning':  { variant: 'info',  dot: true,  labelKey: 'state.provisioning' },

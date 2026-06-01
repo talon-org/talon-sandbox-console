@@ -1,10 +1,11 @@
 /* PageSandboxes — sandbox list + create drawer, wired to useSandboxes(). */
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button, Input, Badge, ProgressBar, PageHeader } from '@talon-sandbox/react';
+import { Button, Input, ProgressBar, PageHeader } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { EmptyState } from '../components/EmptyState';
+import { StatusPill } from '../components/StatusPill';
 import { useSandboxes } from '../hooks';
 import type { SandboxState, SandboxDTO } from '../api/types';
 import { CreateSandboxDrawer } from './_sandboxes/CreateSandboxDrawer';
@@ -26,15 +27,6 @@ const STATE_COLORS: Partial<Record<SandboxState, string>> = {
 };
 
 const ACTIVE_STATES: SandboxState[] = ['running', 'pulling-image', 'provisioning'];
-
-// variant 用 ui-lib Badge 合法值 ok|info|warn|err|muted(非 success/danger/...)
-function stateVariant(state: SandboxState): 'ok' | 'info' | 'warn' | 'err' | 'muted' {
-  if (state === 'running') return 'ok';
-  if (state === 'pulling-image' || state === 'provisioning') return 'info';
-  if (state === 'terminating') return 'warn';
-  if (state === 'failed' || state === 'evicted') return 'err';
-  return 'muted';
-}
 
 function fmtCpu(millis?: number): string {
   if (!millis) return '—';
@@ -58,8 +50,6 @@ function fmtAge(createdAt?: number): string {
 function SandboxRow({ s, onClick }: { s: SandboxDTO; onClick: () => void }) {
   const t     = useT();
   const color = STATE_COLORS[s.state] ?? 'var(--fg-3)';
-  // 状态标签通过 i18n 翻译，不直接渲染原始 API 字符串
-  const stateLabel = t(`state.${s.state}`, s.state);
   return (
     <div className="tln-tbl-row sbx-row" onClick={onClick} role="row" tabIndex={0} onKeyDown={e => e.key === 'Enter' && onClick()}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
@@ -82,7 +72,7 @@ function SandboxRow({ s, onClick }: { s: SandboxDTO; onClick: () => void }) {
         )}
       </div>
       <div>
-        <Badge variant={stateVariant(s.state)} dot={s.state === 'running'}>{stateLabel}</Badge>
+        <StatusPill state={s.state} />
       </div>
       <div className="actions" onClick={e => e.stopPropagation()}>
         <Button variant="ghost" size="sm" iconOnly aria-label="More">

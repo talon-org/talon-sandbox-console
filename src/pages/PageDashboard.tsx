@@ -6,18 +6,21 @@
 import { useNavigate } from 'react-router-dom';
 import {
   Card, CardContent, Button, PageHeader, Sparkline, ProgressBar,
-  Grid, Flex, StatusBadge,
+  Grid, Flex,
   Stat, StatLabel, StatValue, StatDelta, StatHint,
   Timeline, TimelineItem, TimelineDot, TimelineContent, TimelineTitle, TimelineTime, TimelineDesc,
   DataTable, DataTableContent, DataTableToolbar,
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
 } from '@talon-sandbox/react';
-import type { ColumnDef, StatDeltaKind, TimelineItemKind, SandboxState } from '@talon-sandbox/react';
+import type { ColumnDef, StatDeltaKind, TimelineItemKind } from '@talon-sandbox/react';
 import { useApp } from '../store';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { EmptyState } from '../components/EmptyState';
+import { StatusPill } from '../components/StatusPill';
+import { eventLabel } from '../lib/eventLabel';
 import { useDashboard } from '../hooks';
+import type { SandboxState } from '../api/types';
 import type { DashboardActivity, DashboardSandbox } from '../api/types';
 
 import './PageDashboard.css';
@@ -58,13 +61,6 @@ function fmtVCPU(millis: number | undefined, t: (k: string) => string): string {
   if (!millis) return t('dash.cpuDefault');
   const v = millis / 1000;
   return (v >= 10 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/, '')) + ' vCPU';
-}
-
-// 事件类型 → 中文标题（人话）；未映射的回退原始 type，绝不裸露 i18n key。
-function eventLabel(kind: string, t: (k: string) => string): string {
-  const k = `event.${kind}`;
-  const s = t(k);
-  return s === k ? kind : s;
 }
 
 // 审计事件类型 → Timeline 行色调。
@@ -120,17 +116,17 @@ export function PageDashboard() {
 
   const columns: ColumnDef<DashboardSandbox>[] = [
     {
-      key: 'id', label: t('dash.col.idState'), width: 230,
+      key: 'id', label: t('dash.col.idState'), width: 230, truncate: true,
       render: (r) => (
         <div className="dsb-idstate">
           <span className="dsb-id">{r.id}</span>
-          <StatusBadge state={r.status as SandboxState} />
+          <StatusPill state={r.status as SandboxState} />
         </div>
       ),
     },
     { key: 'name', label: t('dash.col.name'), truncate: true, render: (r) => <span style={{ color: 'var(--fg-1)' }}>{r.name || '—'}</span> },
     { key: 'image', label: t('dash.col.image'), truncate: true, render: (r) => <span className="dsb-mono">{r.image || '—'}</span> },
-    { key: 'tenant', label: t('dash.col.tenant'), width: 150, render: (r) => <span className="dsb-mono">{r.tenant}</span> },
+    { key: 'tenant', label: t('dash.col.tenant'), width: 150, truncate: true, render: (r) => <span className="dsb-mono">{r.tenant}</span> },
     {
       key: 'cpu', label: t('dash.col.cpu'), width: 120, align: 'right',
       render: (r) => <span className="dsb-mono" style={{ color: r.cpu_millis ? 'var(--fg-0)' : 'var(--fg-4)' }}>{fmtVCPU(r.cpu_millis, t)}</span>,
@@ -273,14 +269,11 @@ export function PageDashboard() {
                       return <div key={k} style={{ flex: n, background: STATE_COLORS[k] ?? 'var(--fg-3)' }} title={`${t(`state.${k}`)} · ${n}`} />;
                     })}
                   </div>
-                  {/* legend:每格 色点 + 中文状态名 + 大号数字（自渲染保证 created 也有 zh 文案） */}
+                  {/* legend:每格 StatusPill(统一状态徽章) + 大号数字 */}
                   <Grid cols={4} gap="sm" style={{ marginTop: 16 }}>
                     {STATE_ORDER.map((k) => (
                       <div key={k} className="dash-legend-cell">
-                        <div className="dlc-label">
-                          <span className="dlc-swatch" style={{ background: STATE_COLORS[k] ?? 'var(--fg-3)' }} />
-                          {t(`state.${k}`)}
-                        </div>
+                        <StatusPill state={k as SandboxState} />
                         <div className={'dlc-num' + ((stateMap[k] ?? 0) === 0 ? ' zero' : '')}>{stateMap[k] ?? 0}</div>
                       </div>
                     ))}

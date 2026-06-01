@@ -68,7 +68,7 @@ export interface ImageListResponse {
 // ── Sandboxes ─────────────────────────────────────────────────────────────────
 
 export type SandboxState =
-  | 'running' | 'pulling-image' | 'provisioning' | 'idle'
+  | 'created' | 'running' | 'pulling-image' | 'provisioning' | 'idle'
   | 'paused' | 'terminating' | 'failed' | 'evicted' | 'stopped' | 'destroyed';
 
 export interface SecretBindingDTO {

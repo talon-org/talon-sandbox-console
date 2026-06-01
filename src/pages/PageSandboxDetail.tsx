@@ -12,10 +12,11 @@
  */
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Badge } from '@talon-sandbox/react';
+import { Button, Tabs, TabsList, TabsTrigger, TabsContent } from '@talon-sandbox/react';
 import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { EmptyState } from '../components/EmptyState';
+import { StatusPill } from '../components/StatusPill';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import {
   useSandbox, useDeleteSandbox, useAuditEvents,
@@ -44,17 +45,6 @@ function fmtCpu(millis?: number): string {
 
 function fmtMem(bytes?: number): string {
   return bytes ? (bytes / (1024 ** 3)).toFixed(1) + ' GiB' : '';
-}
-
-// Badge variant must use one of the ui-lib's accepted values
-// ('ok' | 'warn' | 'err' | 'info' | 'magenta' | 'teal' | 'muted' | 'default').
-// Earlier code used semantic shadcn-style names ('success' / 'warning' / 'danger' / 'neutral')
-// which fell through to the default fallback and rendered the badge in plain gray.
-function stateVariant(s: SandboxState): 'ok' | 'warn' | 'err' | 'muted' {
-  if (s === 'running') return 'ok';
-  if (['pulling-image', 'provisioning', 'terminating', 'paused', 'idle'].includes(s)) return 'warn';
-  if (s === 'failed') return 'err';
-  return 'muted';
 }
 
 // Decide what TTL to show on the header. The raw `ttl_seconds` field is the
@@ -137,9 +127,7 @@ export function PageSandboxDetail() {
             <h1 className="title" title={typeof displayName === 'string' ? displayName : undefined}>
               {displayName}
             </h1>
-            <Badge variant={stateVariant(s.state)} dot={s.state === 'running'}>
-              {t(`state.${s.state}`, s.state)}
-            </Badge>
+            <StatusPill state={s.state} />
           </div>
           <div className="meta-row">
             <span className="sbxid" title={s.id}>{s.id}</span>
