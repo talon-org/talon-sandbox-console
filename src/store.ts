@@ -28,6 +28,9 @@ export interface Me {
    *  membership;未来加 role→permission 细粒度时后端回填此字段,前端 permissions.ts
    *  的判定可平滑切到它,不必翻地基。后端当前不返回 → undefined。 */
   permissions?: string[];
+  /** 当前租户资源配额上限(后端 /v1/auth/me 回带)。创建 sandbox 时据此限定
+   *  CPU/内存/磁盘可选最大值,避免超配额被后端 422 拒。0/缺省 = 不限。 */
+  quota?: { vcpu: number; mem_gb: number; disk_gb: number; max_sandboxes: number };
 }
 
 interface AppState {

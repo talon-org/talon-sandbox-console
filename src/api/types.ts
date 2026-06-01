@@ -16,6 +16,15 @@ export interface MeResponse {
   created_at?: number;   // Unix seconds
   prefs?: string;        // 偏好原始 JSON 串 {"lang":..,"theme":..}；空时省略
   preview_suffix?: string;
+  quota?: MeQuota;       // 当前租户配额上限(创建 sandbox 时限定可选最大值);0=不限
+}
+
+/** 当前租户资源配额上限(来自 /v1/auth/me)。0 表示不限。 */
+export interface MeQuota {
+  vcpu: number;          // 最大 vCPU(核)
+  mem_gb: number;        // 最大内存(GiB)
+  disk_gb: number;       // 最大磁盘(GiB)
+  max_sandboxes: number; // 最大并发 sandbox 数
 }
 
 /** 用户偏好（解析自 MeResponse.prefs）。 */
@@ -69,7 +78,10 @@ export interface ImageListResponse {
 
 export type SandboxState =
   | 'created' | 'running' | 'pulling-image' | 'provisioning' | 'idle'
-  | 'paused' | 'terminating' | 'failed' | 'evicted' | 'stopped' | 'destroyed';
+  | 'paused' | 'terminating' | 'failed' | 'evicted' | 'stopped' | 'destroyed'
+  // 后端还会返回这些(reserving=调度占位 / exited=进程退出 / killed=被杀 /
+  // lost=失联 / unknown=未知),前端必须全覆盖,否则 StatusPill 渲染会崩。
+  | 'reserving' | 'exited' | 'killed' | 'lost' | 'unknown';
 
 export interface SecretBindingDTO {
   secret_id: string;

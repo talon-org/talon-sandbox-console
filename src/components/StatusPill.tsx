@@ -54,12 +54,21 @@ const SANDBOX_CONFIG: Record<SandboxState, PillVisual> = {
   'provisioning':  { variant: 'info',  dot: true,  labelKey: 'state.provisioning' },
   'idle':          { variant: 'muted', dot: false, labelKey: 'state.idle' },
   'paused':        { variant: 'muted', dot: false, labelKey: 'state.paused' },
+  'reserving':     { variant: 'info',  dot: true,  labelKey: 'state.reserving' },
   'terminating':   { variant: 'warn',  dot: true,  labelKey: 'state.terminating' },
   'failed':        { variant: 'err',   dot: false, labelKey: 'state.failed' },
   'evicted':       { variant: 'err',   dot: false, labelKey: 'state.evicted' },
+  'killed':        { variant: 'err',   dot: false, labelKey: 'state.killed' },
+  'lost':          { variant: 'err',   dot: false, labelKey: 'state.lost' },
   'stopped':       { variant: 'muted', dot: false, labelKey: 'state.stopped' },
+  'exited':        { variant: 'muted', dot: false, labelKey: 'state.exited' },
   'destroyed':     { variant: 'muted', dot: false, labelKey: 'state.destroyed' },
+  'unknown':       { variant: 'muted', dot: false, labelKey: 'state.unknown' },
 };
+
+// 未知 state 的兜底:即便后端将来再加新 state、字典一时没跟上,也只渲染成一个
+// 中性徽章而非整页崩溃(之前 destructure undefined.variant 直接抛错炸掉详情页)。
+const FALLBACK: PillVisual = { variant: 'muted', dot: false, labelKey: '' };
 
 const WORKER_CONFIG: Record<WorkerStatus, PillVisual> = {
   'healthy':   { variant: 'ok',   dot: true,  labelKey: 'worker.healthy' },
@@ -72,20 +81,24 @@ const TENANT_CONFIG: Record<TenantStatus, PillVisual> = {
   'suspended': { variant: 'err', dot: false, labelKey: 'tenant.suspended' },
 };
 
-function resolveConfig(props: StatusPillProps): PillVisual {
-  if ((props as StatusPillSandboxProps).state !== undefined)
-    return SANDBOX_CONFIG[(props as StatusPillSandboxProps).state];
-  if ((props as StatusPillWorkerProps).workerStatus !== undefined)
-    return WORKER_CONFIG[(props as StatusPillWorkerProps).workerStatus];
-  return TENANT_CONFIG[(props as StatusPillTenantProps).tenantStatus];
+// resolveConfig 返回 [视觉, 原始值] —— 原始值在字典未命中时作为兜底显示文本。
+function resolveConfig(props: StatusPillProps): [PillVisual, string] {
+  const s = (props as StatusPillSandboxProps).state;
+  if (s !== undefined) return [SANDBOX_CONFIG[s] ?? FALLBACK, s];
+  const w = (props as StatusPillWorkerProps).workerStatus;
+  if (w !== undefined) return [WORKER_CONFIG[w] ?? FALLBACK, w];
+  const tt = (props as StatusPillTenantProps).tenantStatus;
+  return [TENANT_CONFIG[tt] ?? FALLBACK, tt];
 }
 
 export function StatusPill(props: StatusPillProps) {
   const t = useT();
-  const { variant, dot, labelKey } = resolveConfig(props);
+  const [{ variant, dot, labelKey }, raw] = resolveConfig(props);
+  // labelKey 为空(未知 state 兜底)时直接显示原始值,不查 i18n。
+  const label = labelKey ? t(labelKey) : raw;
   return (
     <Badge variant={variant} dot={dot} style={props.style}>
-      {t(labelKey)}
+      {label}
     </Badge>
   );
 }

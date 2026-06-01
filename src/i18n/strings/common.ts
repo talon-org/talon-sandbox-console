@@ -46,6 +46,11 @@ export const common = {
   'state.evicted':         { en: 'Evicted', zh: '已驱逐' },
   'state.stopped':         { en: 'Stopped', zh: '已停止' },
   'state.destroyed':       { en: 'Destroyed', zh: '已销毁' },
+  'state.reserving':       { en: 'Reserving', zh: '占位中' },
+  'state.exited':          { en: 'Exited', zh: '已退出' },
+  'state.killed':          { en: 'Killed', zh: '已终止' },
+  'state.lost':            { en: 'Lost', zh: '已失联' },
+  'state.unknown':         { en: 'Unknown', zh: '未知' },
 
   // ── Worker status ───────────────────────────────────────────────────────
   'worker.healthy':        { en: 'Healthy', zh: '健康' },

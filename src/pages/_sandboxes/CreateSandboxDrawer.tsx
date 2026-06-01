@@ -12,6 +12,12 @@ import { useT } from '../../i18n/useT';
 import { TlnIcon } from '../../icons/TlnIcon';
 import { useCreateSandbox, useImages } from '../../hooks';
 import { useSecrets } from '../../hooks';
+import { useApp } from '../../store';
+
+// 配额为 0(不限)或缺省时回退到的硬上限——给个合理的产品上界,而非无穷。
+const FALLBACK_MAX = { cpu: 16, mem: 32, disk: 64 };
+// clamp 到 [min, max]。
+const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
 import './CreateSandboxDrawer.css';
 
@@ -64,12 +70,20 @@ function ResourceRow({
 export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps) {
   const t = useT();
 
+  // 当前租户配额上限:有配额(>0)就用它当资源滑块上界,否则回退硬上限。
+  // 这样用户选不出超套餐的值,避免创建时被后端 422 拒(have/limit 超限)。
+  const quota = useApp((s) => s.me?.quota);
+  const maxCpu  = quota?.vcpu   ? Math.floor(quota.vcpu)   : FALLBACK_MAX.cpu;
+  const maxMem  = quota?.mem_gb ? Math.floor(quota.mem_gb) : FALLBACK_MAX.mem;
+  const maxDisk = quota?.disk_gb ? Math.floor(quota.disk_gb) : FALLBACK_MAX.disk;
+
   const [name,        setName]        = useState('');
   // image holds ImageDTO.id (short code), not the user-visible name.
   const [image,       setImage]       = useState('');
-  const [cpu,         setCpu]         = useState(2);
-  const [mem,         setMem]         = useState(4);
-  const [disk,        setDisk]        = useState(8);
+  // 默认值 clamp 到配额内:小套餐(如内存上限 2GiB)下默认就落在上限内,不超配额。
+  const [cpu,         setCpu]         = useState(() => clamp(2, 1, maxCpu));
+  const [mem,         setMem]         = useState(() => clamp(2, 1, maxMem));
+  const [disk,        setDisk]        = useState(() => clamp(8, 4, maxDisk));
   const [policy,      setPolicy]      = useState<'allow-all' | 'allowlist' | 'block-all'>('allowlist');
   const [allowed,     setAllowed]     = useState('api.acme.dev\nregistry.npmjs.org\n*.github.com');
   const [selectedSec, setSelectedSec] = useState<string[]>([]);
@@ -97,6 +111,13 @@ export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps)
       setImage(def.id);
     }
   }, [images, image]);
+
+  // 配额异步到达后,把已选值收敛到新上限内(初始 useState 时 quota 可能还没拉到)。
+  useEffect(() => {
+    setCpu((v) => clamp(v, 1, maxCpu));
+    setMem((v) => clamp(v, 1, maxMem));
+    setDisk((v) => clamp(v, 4, maxDisk));
+  }, [maxCpu, maxMem, maxDisk]);
 
   const handleLaunch = () => {
     const envRecord: Record<string, string> = {};
@@ -205,9 +226,9 @@ export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps)
             }
           >
             <div className="csd-res-stack">
-              <ResourceRow label="vCPU"   value={cpu}  min={1} max={16} step={1} unit="vCPU" onChange={setCpu} />
-              <ResourceRow label="MEMORY" value={mem}  min={1} max={32} step={1} unit="GiB"  onChange={setMem} />
-              <ResourceRow label="DISK"   value={disk} min={4} max={64} step={4} unit="GiB"  onChange={setDisk} />
+              <ResourceRow label="vCPU"   value={cpu}  min={1} max={maxCpu}  step={1} unit="vCPU" onChange={setCpu} />
+              <ResourceRow label="MEMORY" value={mem}  min={1} max={maxMem}  step={1} unit="GiB"  onChange={setMem} />
+              <ResourceRow label="DISK"   value={disk} min={4} max={maxDisk} step={4} unit="GiB"  onChange={setDisk} />
             </div>
           </FormSection>
 
