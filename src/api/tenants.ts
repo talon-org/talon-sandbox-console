@@ -8,6 +8,16 @@ import type {
   CreateTenantRequest,
 } from './types';
 
+/** 超管直接给工作区添加成员(建用户+active membership,无需邀请确认)。
+ *  POST /v1/admin/tenants/{tenant_id}/members  body { email, role } */
+export async function adminAddTenantMember(
+  tenantId: string,
+  body: { email: string; role: string },
+  signal?: AbortSignal,
+): Promise<void> {
+  return apiPost<void>(`/v1/admin/tenants/${tenantId}/members`, body, signal);
+}
+
 export async function listTenants(signal?: AbortSignal): Promise<TenantListResponse> {
   return apiGet<TenantListResponse>('/v1/admin/tenants', signal);
 }

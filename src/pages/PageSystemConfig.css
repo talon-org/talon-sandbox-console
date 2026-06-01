@@ -1,0 +1,65 @@
+/* PageSystemConfig — 超管平台配置中心(Spec 52)布局 */
+
+.syscfg-card {
+  margin-bottom: 16px;
+}
+
+.syscfg-loading {
+  padding: 32px;
+  color: var(--tln-text-muted, #888);
+  font-size: 14px;
+}
+
+/* 两列网格放配置项;宽项跨两列。 */
+.syscfg-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 24px;
+}
+
+.syscfg-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.syscfg-field-wide {
+  grid-column: 1 / -1;
+}
+
+.syscfg-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.syscfg-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--tln-text-muted, #888);
+}
+
+/* 开关行:左文右开关,行间分隔线。 */
+.syscfg-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--tln-border, #2a2a2a);
+}
+.syscfg-toggle-row:last-child {
+  border-bottom: none;
+}
+.syscfg-toggle-row:first-child {
+  padding-top: 0;
+}
+
+.syscfg-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

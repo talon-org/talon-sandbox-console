@@ -4,8 +4,10 @@
  * 超管视角：以任意租户身份查看其详情（GET /v1/admin/tenants/{id}）。
  * detail 已内嵌 members 数组，这里只读展示即可。
  *
- * 成员的邀请 / 改角色 / 移除是租户自助功能，走 PageMembers
- * （/v1/tenants/{tid}/members + /invitations），不在本超管抽屉范围内。
+ * 成员区:超管可在此直接「添加成员」(建用户 + active membership,无需邀请确认)。
+ * 解决「超管新建工作区后是空壳、无人可登录」的尴尬——超管先放一个 owner/admin 进去,
+ * 该用户即可凭邮箱验证码登录接管。成员的改角色 / 移除等精细管理仍由租户自助页
+ * PageMembers(/v1/tenants/{tid}/members)负责,此抽屉只提供「补第一个成员」入口。
  *
  * Quota editing / plan switching 后端仍无更新端点 —— 历史上这里曾渲染可编辑
  * 控件但 "Save" 只弹 toast，属产品 bug 已移除；后端长出这些端点时再加回。
@@ -13,11 +15,12 @@
 import { useState } from 'react';
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter,
-  Button, ProgressBar, Badge, KV, toast,
+  Button, ProgressBar, Badge, KV, toast, Input,
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '@talon-sandbox/react';
 import { useT } from '../../i18n/useT';
 import { TlnIcon } from '../../icons/TlnIcon';
-import { useTenantDetail, useSuspendTenant } from '../../hooks/useTenants';
+import { useTenantDetail, useSuspendTenant, useAdminAddTenantMember } from '../../hooks/useTenants';
 import { ConfirmDialog } from '../../components';
 import type { TenantDTO, TenantDetailDTO } from '../../api/types';
 
@@ -37,10 +40,30 @@ interface Props {
 export function TenantDrawer({ tenant, onClose }: Props) {
   const t = useT();
   const suspendMutation = useSuspendTenant();
+  const addMember = useAdminAddTenantMember(tenant?.id ?? '');
 
   const [confirmSuspend, setConfirmSuspend] = useState(false);
+  // 添加成员内联表单。
+  const [newEmail, setNewEmail] = useState('');
+  const [newRole, setNewRole] = useState('owner');
 
   const { data: detail } = useTenantDetail(tenant?.id ?? '');
+
+  const handleAddMember = () => {
+    const email = newEmail.trim().toLowerCase();
+    if (!email) return;
+    addMember.mutate(
+      { email, role: newRole },
+      {
+        onSuccess: () => {
+          toast.success(t('tenants.drawer.memberAdded'));
+          setNewEmail('');
+          setNewRole('owner');
+        },
+        onError: (e) => toast.error((e as Error)?.message || t('common.loadFailed')),
+      },
+    );
+  };
 
   if (!tenant) return null;
 
@@ -146,8 +169,8 @@ export function TenantDrawer({ tenant, onClose }: Props) {
             </div>
           </div>
 
-          {/* Members — 只读列表（超管视角）。成员的邀请 / 改角色 / 移除由
-           * 租户自助页 PageMembers 负责，此超管抽屉不放写操作入口。 */}
+          {/* Members — 列表 + 超管「添加成员」内联表单。新建工作区后用它放第一个
+           * owner,否则工作区无人可登录。改角色/移除等精细管理仍走租户自助 PageMembers。 */}
           <div className="ten-section">
             <div className="ten-section-title">
               <TlnIcon name="users" size={12} className="ic" />
@@ -160,19 +183,46 @@ export function TenantDrawer({ tenant, onClose }: Props) {
                   <div key={m.id} className="member-row">
                     <div className="mav">{(m.name ?? m.email)[0].toUpperCase()}</div>
                     <span className="memail">{m.email}</span>
-                    <span className={'mrole ' + m.role}>{m.role}</span>
+                    <span className={'mrole ' + m.role}>{t('members.role.' + m.role)}</span>
                     <span className="mjoined">{relTime(joinedAgo)}</span>
                   </div>
                 );
               })}
               {members.length === 0 && (
                 <div style={{
-                  fontSize: 12, color: 'var(--fg-3)', padding: 16,
+                  fontSize: 12, color: 'var(--fg-3)', padding: '12px 16px',
                   textAlign: 'center', fontFamily: 'var(--font-mono)',
                 }}>
-                  {t('tenants.drawer.noMembers')}
+                  {t('tenants.drawer.noMembersHint')}
                 </div>
               )}
+            </div>
+
+            {/* 添加成员表单 */}
+            <div className="ten-add-member">
+              <Input
+                type="email"
+                value={newEmail}
+                placeholder={t('tenants.drawer.addMemberEmail')}
+                onChange={(e) => setNewEmail(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleAddMember(); }}
+              />
+              <Select value={newRole} onValueChange={setNewRole}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="owner">{t('members.role.owner')}</SelectItem>
+                  <SelectItem value="admin">{t('members.role.admin')}</SelectItem>
+                  <SelectItem value="developer">{t('members.role.developer')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="primary"
+                disabled={!newEmail.trim() || addMember.isPending}
+                onClick={handleAddMember}
+              >
+                <TlnIcon name="plus" size={13} />
+                {t('tenants.drawer.addMember')}
+              </Button>
             </div>
           </div>
 

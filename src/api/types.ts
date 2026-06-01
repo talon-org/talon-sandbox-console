@@ -691,3 +691,31 @@ export interface RecordingQueryParams {
   limit?: number;
   cursor?: string;
 }
+
+// --- 平台配置中心(Spec 52)---
+
+/** 一个配置项的脱敏展示。secret 项不含 value,只回 masked + set。 */
+export interface PlatformSettingItem {
+  key: string;
+  value?: string;     // 非 secret 项明文值
+  is_secret: boolean;
+  set: boolean;       // 是否已配置(DB 或 env 有有效值)
+  masked?: string;    // secret 项脱敏摘要,如 "····7c64"
+  source: 'db' | 'env' | 'unset';
+  updated_at?: string;
+  updated_by?: string;
+}
+
+export interface PlatformSettingsResponse {
+  settings: PlatformSettingItem[];
+}
+
+/** 一次配置写入项。value 为空串 → 清除该项(回落 env)。 */
+export interface PlatformSettingChange {
+  key: string;
+  value: string;
+}
+
+export interface UpdatePlatformSettingsRequest {
+  settings: PlatformSettingChange[];
+}

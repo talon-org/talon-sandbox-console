@@ -162,3 +162,17 @@
 .member-row .mrole.member { background: var(--bg-3); color: var(--fg-2); border: 1px solid var(--line); }
 .member-row .mrole.agent  { background: var(--magenta-soft, rgba(198,120,221,.1)); color: var(--magenta, #c678dd); }
 .member-row .mjoined { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-3); }
+
+/* 超管工作区详情:添加成员内联表单(Spec 52 配套——避免新建工作区无人可登录) */
+.ten-add-member {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--bd, #2a2a2a);
+}
+.ten-add-member > :first-child {
+  flex: 1;
+  min-width: 0;
+}

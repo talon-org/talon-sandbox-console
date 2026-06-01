@@ -35,9 +35,10 @@ const NAV_WORKSPACE_BASE: Array<{ id: string; labelKey: string; icon: string; pa
 ];
 
 const NAV_ADMIN = [
-  { id: 'workers', labelKey: 'nav.workers', icon: 'server', path: '/workers' },
-  { id: 'tenants', labelKey: 'nav.tenants', icon: 'users',  path: '/tenants' },
-  { id: 'plans',   labelKey: 'nav.plans',   icon: 'server', path: '/plans' },
+  { id: 'workers',  labelKey: 'nav.workers',  icon: 'server',   path: '/workers' },
+  { id: 'tenants',  labelKey: 'nav.tenants',  icon: 'users',    path: '/tenants' },
+  { id: 'plans',    labelKey: 'nav.plans',    icon: 'server',   path: '/plans' },
+  { id: 'sysconf',  labelKey: 'nav.sysconf',  icon: 'settings', path: '/system-settings' },
 ];
 
 function crumbsForPath(path: string, t: (key: string) => string): string[] {
@@ -65,6 +66,7 @@ function crumbsForPath(path: string, t: (key: string) => string): string[] {
     '/workers':    t('nav.workers'),
     '/tenants':    t('nav.tenants'),
     '/plans':      t('nav.plans'),
+    '/system-settings': t('nav.sysconf'),
     '/settings':   t('settings.title'),
     '/workspace':  t('org.title'),
   };

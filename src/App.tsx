@@ -27,6 +27,7 @@ import { PageAcceptInvite } from './pages/PageAcceptInvite';
 import { PageWorkers } from './pages/PageWorkers';
 import { PageTenants } from './pages/PageTenants';
 import { PagePlans } from './pages/PagePlans';
+import { PageSystemConfig } from './pages/PageSystemConfig';
 import { PageAudit } from './pages/PageAudit';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -122,6 +123,7 @@ export default function App() {
           <Route path="/workers" element={<PageWorkers />} />
           <Route path="/tenants" element={<PageTenants />} />
           <Route path="/plans" element={<PagePlans />} />
+          <Route path="/system-settings" element={<PageSystemConfig />} />
         </Route>
 
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

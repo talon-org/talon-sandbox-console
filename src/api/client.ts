@@ -85,6 +85,22 @@ export async function apiPatch<T>(
   return (res.status === 204 ? (undefined as T) : ((await res.json()) as T));
 }
 
+export async function apiPut<T>(
+  path: string,
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'PUT',
+    credentials: credsMode(),
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: body == null ? undefined : JSON.stringify(body),
+    signal,
+  });
+  await check(res);
+  return (res.status === 204 ? (undefined as T) : ((await res.json()) as T));
+}
+
 export async function apiDelete(path: string, signal?: AbortSignal): Promise<void> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'DELETE',
