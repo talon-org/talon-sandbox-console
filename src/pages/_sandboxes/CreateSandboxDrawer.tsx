@@ -73,8 +73,16 @@ export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps)
   const [policy,      setPolicy]      = useState<'allow-all' | 'allowlist' | 'block-all'>('allowlist');
   const [allowed,     setAllowed]     = useState('api.acme.dev\nregistry.npmjs.org\n*.github.com');
   const [selectedSec, setSelectedSec] = useState<string[]>([]);
-  const [env,         setEnv]         = useState('');
+  // 环境变量:KV 行(key/value 两输入框 + 加行)。明文配置走这里,敏感值走上面的凭据。
+  const [envRows,     setEnvRows]     = useState<{ key: string; value: string }[]>([{ key: '', value: '' }]);
   const [advOpen,     setAdvOpen]     = useState(false);
+
+  const setEnvRow = (i: number, patch: Partial<{ key: string; value: string }>) =>
+    setEnvRows(rows => rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  const addEnvRow = () => setEnvRows(rows => [...rows, { key: '', value: '' }]);
+  const removeEnvRow = (i: number) =>
+    setEnvRows(rows => (rows.length === 1 ? [{ key: '', value: '' }] : rows.filter((_, idx) => idx !== i)));
+  const envCount = envRows.filter(r => r.key.trim()).length;
 
   const create = useCreateSandbox();
   const { data: secretsData } = useSecrets();
@@ -92,9 +100,9 @@ export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps)
 
   const handleLaunch = () => {
     const envRecord: Record<string, string> = {};
-    for (const line of env.split('\n')) {
-      const eq = line.indexOf('=');
-      if (eq > 0) envRecord[line.slice(0, eq).trim()] = line.slice(eq + 1).trim();
+    for (const { key, value } of envRows) {
+      const k = key.trim();
+      if (k) envRecord[k] = value;
     }
     const allowedHosts = policy === 'allowlist' ? allowed.split('\n').filter(Boolean) : undefined;
     create.mutate(
@@ -250,9 +258,9 @@ export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps)
               <TlnIcon name="settings" size={13} className="ic" />
               <span>{t('sbx.create.advanced', '高级选项')}</span>
               <TlnIcon name={advOpen ? 'chevronDown' : 'chevronRight'} size={12} className="csd-adv-chev" />
-              {(selectedSec.length > 0 || env.trim().length > 0) && (
+              {(selectedSec.length > 0 || envCount > 0) && (
                 <span className="csd-adv-count">
-                  {selectedSec.length + (env.trim() ? 1 : 0)}
+                  {selectedSec.length + envCount}
                 </span>
               )}
             </button>
@@ -280,13 +288,37 @@ export function CreateSandboxDrawer({ open, onClose }: CreateSandboxDrawerProps)
                 <FormField>
                   <FormLabel>{t('sbx.create.env')}</FormLabel>
                   <FormControl>
-                    <Textarea
-                      value={env}
-                      onChange={e => setEnv(e.target.value)}
-                      rows={3}
-                      placeholder="KEY=value"
-                      style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}
-                    />
+                    <div className="csd-env-rows">
+                      {envRows.map((row, i) => (
+                        <div key={i} className="csd-env-row">
+                          <Input
+                            value={row.key}
+                            onChange={e => setEnvRow(i, { key: e.target.value })}
+                            placeholder="KEY"
+                            style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}
+                          />
+                          <span className="csd-env-eq">=</span>
+                          <Input
+                            value={row.value}
+                            onChange={e => setEnvRow(i, { value: e.target.value })}
+                            placeholder="value"
+                            style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}
+                          />
+                          <Button
+                            variant="ghost" size="sm" iconOnly
+                            onClick={() => removeEnvRow(i)}
+                            aria-label={t('common.remove', '移除')}
+                            title={t('common.remove', '移除')}
+                          >
+                            <TlnIcon name="trash" size={13} />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button variant="ghost" size="sm" onClick={addEnvRow} className="csd-env-add">
+                        <TlnIcon name="plus" size={13} />
+                        {t('sbx.create.envAdd', '添加变量')}
+                      </Button>
+                    </div>
                   </FormControl>
                   <FormDescription>{t('sbx.create.envHint')}</FormDescription>
                 </FormField>
