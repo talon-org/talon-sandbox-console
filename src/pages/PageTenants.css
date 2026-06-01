@@ -163,16 +163,17 @@
 .member-row .mrole.agent  { background: var(--magenta-soft, rgba(198,120,221,.1)); color: var(--magenta, #c678dd); }
 .member-row .mjoined { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-3); }
 
-/* 超管工作区详情:添加成员内联表单(Spec 52 配套——避免新建工作区无人可登录) */
+/* 超管工作区详情:添加成员内联表单(Spec 52 配套——避免新建工作区无人可登录)。
+ * 用 grid 明确分配三列(email 占满 / 角色固定宽 / 按钮自适应),不依赖
+ * :first-child flex——house 的 Input/Select 各自带 wrapper,flex 不一定传导,
+ * 之前正是因此 email 框塌成小方块。 */
 .ten-add-member {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 128px auto;
   align-items: center;
   gap: 8px;
-  margin-top: 10px;
-  padding-top: 12px;
-  border-top: 1px solid var(--bd, #2a2a2a);
+  margin-top: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-soft);
 }
-.ten-add-member > :first-child {
-  flex: 1;
-  min-width: 0;
-}
+.ten-add-member > * { min-width: 0; }

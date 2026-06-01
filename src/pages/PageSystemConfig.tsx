@@ -83,7 +83,7 @@ export function PageSystemConfig() {
     return (
       <>
         <PageHeader title={t('sysconf.title')} desc={t('sysconf.desc')} />
-        <div className="syscfg-loading">{t('common.loading')}</div>
+        <div className="page-body"><div className="syscfg-loading">{t('common.loading')}</div></div>
       </>
     );
   }
@@ -91,7 +91,7 @@ export function PageSystemConfig() {
     return (
       <>
         <PageHeader title={t('sysconf.title')} desc={t('sysconf.desc')} />
-        <div className="syscfg-loading">{t('common.loadFailed')}</div>
+        <div className="page-body"><div className="syscfg-loading">{t('common.loadFailed')}</div></div>
       </>
     );
   }
@@ -111,6 +111,7 @@ export function PageSystemConfig() {
         }
       />
 
+      <div className="page-body">
       {/* 邮件服务 */}
       <Card className="syscfg-card">
         <CardHeader>
@@ -190,6 +191,7 @@ export function PageSystemConfig() {
           </Field>
         </CardContent>
       </Card>
+      </div>
     </>
   );
 }
