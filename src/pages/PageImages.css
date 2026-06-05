@@ -1,0 +1,69 @@
+/* PageImages — 镜像目录列表 + 行内预热进度。
+ * 网格列:名称 / 来源 / 系统架构 / 状态(给进度条留宽) / 创建 / 操作。 */
+.img-row {
+  grid-template-columns: 1.7fr 0.7fr 0.9fr 1.5fr 0.6fr 200px;
+  align-items: center;
+}
+
+/* 名称单元:图标 + 名字 + 描述副行 */
+.img-row .name-cell { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.img-row .name-cell .iic {
+  width: 24px; height: 24px; border-radius: var(--r-2);
+  background: var(--info-soft, rgba(86,182,255,0.1));
+  color: var(--info);
+  display: flex; align-items: center; justify-content: center; flex: 0 0 auto;
+}
+.img-row .name-cell .iinfo { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.img-row .name-cell .inm {
+  font-family: var(--font-mono); font-size: 12.5px; color: var(--fg-0); font-weight: 500;
+  display: flex; align-items: center; gap: 7px; min-width: 0;
+}
+.img-row .name-cell .idesc {
+  font-size: 11px; color: var(--fg-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+
+/* 默认徽标 */
+.img-default-badge {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+  letter-spacing: 0.08em; color: var(--ok, #56cbb8);
+  background: var(--ok-soft, rgba(86,203,184,0.12));
+  padding: 1px 6px; border-radius: 3px; flex: 0 0 auto;
+}
+
+/* 来源 pill */
+.img-source {
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-2);
+  background: var(--bg-3); padding: 2px 8px; border-radius: 3px;
+  border: 1px solid var(--line); width: fit-content;
+}
+.img-source.builtin { color: var(--fg-3); }
+.img-source.admin   { color: var(--info); background: var(--info-soft); border-color: transparent; }
+
+.img-row .img-arch    { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-2); }
+.img-row .img-created { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); }
+
+/* 状态单元 */
+.img-stage {
+  font-family: var(--font-mono); font-size: 11px; display: inline-flex; align-items: center; gap: 4px;
+}
+.img-stage.muted  { color: var(--fg-3); }
+.img-stage.ok     { color: var(--ok, #56cbb8); }
+.img-stage.err    { color: var(--err, #e5484d); cursor: help; }
+.img-stage.active { color: var(--info); }
+
+/* 进行中:阶段标签 + 进度条 + 字节 */
+.img-progress { display: flex; flex-direction: column; gap: 4px; max-width: 220px; }
+.img-progress .img-bytes {
+  font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); font-variant-numeric: tabular-nums;
+}
+
+/* 操作区 */
+.img-row .actions { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+
+/* 注册抽屉:设默认勾选行 */
+.img-default-toggle {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  font-size: 13px; color: var(--fg-1);
+}
+.img-default-toggle input { width: 15px; height: 15px; cursor: pointer; accent-color: var(--acc, #8b7cf6); }

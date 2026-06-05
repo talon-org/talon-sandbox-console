@@ -74,6 +74,39 @@ export interface ImageListResponse {
   images: ImageDTO[];
 }
 
+/** POST /v1/admin/images 请求体. dto.go CreateImageRequest */
+export interface CreateImageRequest {
+  name: string;          // 必填,全局唯一(同时是 worker 缓存目录 key)
+  url: string;           // 必填,必须 https,公网域名
+  sha256: string;        // 必填,64 位小写 hex
+  os?: string;           // 可选,默认 linux
+  arch?: string;         // 可选,默认 amd64
+  description?: string;  // 可选
+  is_default?: boolean;  // 可选,默认 false
+}
+
+/** 镜像异步准备进度阶段. image_progress_handlers.go 的 stage 枚举 */
+export type ImageStage =
+  | 'unknown'
+  | 'pending'
+  | 'downloading'
+  | 'verifying'
+  | 'extracting'
+  | 'ready'
+  | 'failed';
+
+/** GET /v1/images/{id}/status. dto.go ImageStatusDTO */
+export interface ImageStatusDTO {
+  image_id: string;
+  stage: ImageStage;
+  bytes_downloaded: number;
+  bytes_total: number;        // -1 = 服务端未返 Content-Length(进度未知)
+  extracted_entries: number;
+  started_at?: string;        // RFC3339;空表示未开始
+  updated_at?: string;        // RFC3339
+  err?: string;               // 仅 stage === 'failed' 非空(非 admin 被脱敏)
+}
+
 // ── Sandboxes ─────────────────────────────────────────────────────────────────
 
 export type SandboxState =

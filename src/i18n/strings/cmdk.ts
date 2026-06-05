@@ -17,6 +17,7 @@ export const cmdk = {
   'cmdk.nav.workers':      { en: 'Workers', zh: '节点' },
   'cmdk.nav.tenants':      { en: 'Workspaces', zh: '空间' },
   'cmdk.nav.plans':        { en: 'Plans', zh: '套餐' },
+  'cmdk.nav.images':       { en: 'Images', zh: '镜像' },
   'cmdk.action.newSandbox':{ en: 'New sandbox', zh: '新建 sandbox' },
   'cmdk.action.newSecret': { en: 'New secret', zh: '新建凭据' },
   'cmdk.action.signOut':   { en: 'Sign out', zh: '退出登录' },

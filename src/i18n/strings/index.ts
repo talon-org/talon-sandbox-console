@@ -23,6 +23,7 @@ import { members }    from './members';
 import { billing }    from './billing';
 import { settings }   from './settings';
 import { sysconf }    from './sysconf';
+import { images }     from './images';
 
 export type LangKey = 'en' | 'zh';
 
@@ -46,10 +47,11 @@ export const STRINGS: Record<string, { en: string; zh: string }> = {
   ...billing,
   ...settings,
   ...sysconf,
+  ...images,
 };
 
 export {
   shell, common, tweaks, cmdk, dashboard, sandboxes,
   login, secrets, audit, workers, tenants, recordings, terminal,
-  apiKeys, plans, members, billing, settings, sysconf,
+  apiKeys, plans, members, billing, settings, sysconf, images,
 };

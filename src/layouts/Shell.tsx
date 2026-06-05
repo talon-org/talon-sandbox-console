@@ -38,6 +38,7 @@ const NAV_ADMIN = [
   { id: 'workers',  labelKey: 'nav.workers',  icon: 'server',   path: '/workers' },
   { id: 'tenants',  labelKey: 'nav.tenants',  icon: 'users',    path: '/tenants' },
   { id: 'plans',    labelKey: 'nav.plans',    icon: 'server',   path: '/plans' },
+  { id: 'images',   labelKey: 'nav.images',   icon: 'image',    path: '/images' },
   { id: 'sysconf',  labelKey: 'nav.sysconf',  icon: 'settings', path: '/system-settings' },
 ];
 
@@ -66,6 +67,7 @@ function crumbsForPath(path: string, t: (key: string) => string): string[] {
     '/workers':    t('nav.workers'),
     '/tenants':    t('nav.tenants'),
     '/plans':      t('nav.plans'),
+    '/images':     t('nav.images'),
     '/system-settings': t('nav.sysconf'),
     '/settings':   t('settings.title'),
     '/workspace':  t('org.title'),
@@ -128,6 +130,7 @@ export function Shell() {
       { group: t('cmdk.group.nav'), name: t('cmdk.nav.workers'),   icon: <TlnIcon name="server"  size={15} />, kbd: ['G', 'W'], action: () => navigate('/workers') },
       { group: t('cmdk.group.nav'), name: t('cmdk.nav.tenants'),   icon: <TlnIcon name="users"   size={15} />, kbd: ['G', 'T'], action: () => navigate('/tenants') },
       { group: t('cmdk.group.nav'), name: t('cmdk.nav.plans'),     icon: <TlnIcon name="server"  size={15} />, action: () => navigate('/plans') },
+      { group: t('cmdk.group.nav'), name: t('cmdk.nav.images'),    icon: <TlnIcon name="image"   size={15} />, action: () => navigate('/images') },
     ] : []),
     { group: t('cmdk.group.actions'), name: t('cmdk.action.newSandbox'), icon: <TlnIcon name="plus"   size={15} />, kbd: ['mod', 'N'], action: () => navigate('/sandboxes?new=1') },
     { group: t('cmdk.group.actions'), name: t('cmdk.action.newSecret'),  icon: <TlnIcon name="key"    size={15} />, kbd: ['mod', 'shift', 'K'], action: () => navigate('/secrets?new=1') },

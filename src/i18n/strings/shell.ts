@@ -18,6 +18,7 @@ export const shell = {
   'nav.workers':               { en: 'Workers', zh: '节点' },
   'nav.tenants':               { en: 'Workspaces', zh: '工作区' },
   'nav.plans':                 { en: 'Plans', zh: '套餐' },
+  'nav.images':                { en: 'Images', zh: '镜像' },
   'nav.sysconf':               { en: 'System Config', zh: '系统配置' },
   'topbar.cmdk_placeholder':   { en: 'Jump to sandbox, secret, or action…', zh: '跳转到 sandbox、secret 或动作…' },
   'topbar.notifications':      { en: 'Notifications', zh: '通知' },

@@ -29,6 +29,7 @@ import { PageTenants } from './pages/PageTenants';
 import { PagePlans } from './pages/PagePlans';
 import { PageSystemConfig } from './pages/PageSystemConfig';
 import { PageAudit } from './pages/PageAudit';
+import { PageImages } from './pages/PageImages';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const me = useApp((s) => s.me);
@@ -123,6 +124,7 @@ export default function App() {
           <Route path="/workers" element={<PageWorkers />} />
           <Route path="/tenants" element={<PageTenants />} />
           <Route path="/plans" element={<PagePlans />} />
+          <Route path="/images" element={<PageImages />} />
           <Route path="/system-settings" element={<PageSystemConfig />} />
         </Route>
 
