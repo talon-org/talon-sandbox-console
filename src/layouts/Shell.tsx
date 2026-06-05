@@ -42,18 +42,32 @@ const NAV_ADMIN = [
   { id: 'sysconf',  labelKey: 'nav.sysconf',  icon: 'settings', path: '/system-settings' },
 ];
 
-function crumbsForPath(path: string, t: (key: string) => string): string[] {
+// 面包屑一级:label 是展示文案,to 是该级的导航目标。
+// 末级(当前页)恒为纯文本,即使带 to 也不渲染成可点(见下方渲染逻辑)。
+type Crumb = { label: string; to?: string };
+
+function crumbsForPath(path: string, t: (key: string) => string): Crumb[] {
   if (path.startsWith('/sandboxes/') && path.endsWith('/terminal')) {
     const id = path.split('/')[2];
-    return [t('nav.sandboxes'), id!, t('common.terminal')];
+    return [
+      { label: t('nav.sandboxes'), to: '/sandboxes' },
+      { label: id!, to: '/sandboxes/' + id },
+      { label: t('common.terminal') },
+    ];
   }
   if (path.startsWith('/sandboxes/')) {
     const id = path.split('/')[2];
-    return [t('nav.sandboxes'), id!];
+    return [
+      { label: t('nav.sandboxes'), to: '/sandboxes' },
+      { label: id! },
+    ];
   }
   if (path.startsWith('/recordings/')) {
     const id = path.split('/')[2];
-    return [t('nav.recordings'), id!];
+    return [
+      { label: t('nav.recordings'), to: '/recordings' },
+      { label: id! },
+    ];
   }
   const map: Record<string, string> = {
     '/dashboard':  t('nav.dashboard'),
@@ -73,7 +87,7 @@ function crumbsForPath(path: string, t: (key: string) => string): string[] {
     '/workspace':  t('org.title'),
   };
   const match = Object.keys(map).find(k => path.startsWith(k));
-  return match ? [map[match]!] : ['—'];
+  return match ? [{ label: map[match]! }] : [{ label: '—' }];
 }
 
 export function Shell() {
@@ -265,16 +279,32 @@ export function Shell() {
         {/* TopBar */}
         <header className="topbar" role="banner">
           <div className="topbar-crumb" aria-label="Breadcrumb">
-            {crumbs.map((c, i) => (
-              <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                {i > 0 && (
-                  <span className="sep" aria-hidden="true">
-                    <TlnIcon name="chevronRight" size={12} />
-                  </span>
-                )}
-                <span className={'seg' + (i === crumbs.length - 1 ? ' cur' : '')}>{c}</span>
-              </span>
-            ))}
+            {crumbs.map((c, i) => {
+              const isLast = i === crumbs.length - 1;
+              // 非末级且带导航目标 → 渲染成可点 button(回到对应列表/页面);
+              // 末级(当前页)恒为纯文本,即使带 to 也不可点。
+              const clickable = !isLast && !!c.to;
+              return (
+                <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {i > 0 && (
+                    <span className="sep" aria-hidden="true">
+                      <TlnIcon name="chevronRight" size={12} />
+                    </span>
+                  )}
+                  {clickable ? (
+                    <button
+                      type="button"
+                      className="seg seg-link"
+                      onClick={() => navigate(c.to!)}
+                    >
+                      {c.label}
+                    </button>
+                  ) : (
+                    <span className={'seg' + (isLast ? ' cur' : '')}>{c.label}</span>
+                  )}
+                </span>
+              );
+            })}
           </div>
 
           <div className="topbar-cmdk">

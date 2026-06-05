@@ -14,7 +14,7 @@ import {
 import { useT } from '../../i18n/useT';
 import { TlnIcon } from '../../icons/TlnIcon';
 import { useCreateImage } from '../../hooks/useImages';
-import { fetchSha256, archFromUrl } from '../../api/images';
+import { probeImage, archFromUrl } from '../../api/images';
 import type { CreateImageRequest } from '../../api/types';
 
 interface Props {
@@ -51,17 +51,18 @@ export function CreateImageDrawer({ open, onClose }: Props) {
     setIsDef(false); setAutoSha('');
   };
 
-  // url 失焦:尽力抓 sha256。只在 sha 为空或等于上次自动值时覆盖。
+  // url 失焦:走服务端 probe 代理读 <url>.sha256(浏览器跨域抓 github 会被 CORS 拦)。
+  // 只在 sha 为空或等于上次自动值时覆盖,不抹用户手输;失败静默,用户手填。
   const handleUrlBlur = async () => {
     const u = url.trim();
     if (!/^https:\/\/.+\.tar\.gz$/.test(u)) return;
     if (sha256 && sha256 !== autoSha) return; // 用户已手输,不动
     setFetching(true);
-    const fetched = await fetchSha256(u).catch(() => null);
+    const probed = await probeImage(u).catch(() => null);
     setFetching(false);
-    if (fetched) {
-      setSha256(fetched);
-      setAutoSha(fetched);
+    if (probed?.sha256 && /^[a-f0-9]{64}$/.test(probed.sha256)) {
+      setSha256(probed.sha256);
+      setAutoSha(probed.sha256);
     }
   };
 

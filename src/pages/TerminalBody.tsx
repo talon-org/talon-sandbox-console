@@ -13,9 +13,13 @@ interface TerminalBodyProps {
   connectKey: number;
   onConnected: (v: boolean) => void;
   onDimensions: (cols: number, rows: number) => void;
+  /** 可选:WebSocket 真正 open 的边沿回调。父组件用它在 shell 连上的那一刻
+   *  登记中心录像(start),与 onConnected(true) 同步触发但语义更明确——
+   *  onConnected 会在 close/error 时回传 false,onOpen 只在「打开」边沿触发一次。 */
+  onOpen?: () => void;
 }
 
-export function TerminalBody({ sandboxId, connectKey, onConnected, onDimensions }: TerminalBodyProps) {
+export function TerminalBody({ sandboxId, connectKey, onConnected, onDimensions, onOpen }: TerminalBodyProps) {
   const termDivRef = useRef<HTMLDivElement>(null);
   const xtermRef   = useRef<XTerminal | null>(null);
   const fitRef     = useRef<XFitAddon | null>(null);
@@ -98,6 +102,7 @@ export function TerminalBody({ sandboxId, connectKey, onConnected, onDimensions 
       ws.onopen = () => {
         if (disposed) { ws?.close(); return; }
         onConnected(true);
+        onOpen?.();
         const dim = fitRef.current?.proposeDimensions();
         if (dim) {
           onDimensions(dim.cols, dim.rows);

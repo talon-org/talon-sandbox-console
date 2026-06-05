@@ -15,6 +15,7 @@ import type {
   ImageDTO,
   CreateImageRequest,
   ImageStatusDTO,
+  ProbeImageResponse,
 } from './types';
 
 /** GET /v1/images — 列出镜像(普通认证用户即可;超管能看到 url/source 全字段) */
@@ -90,25 +91,18 @@ export async function prewarmImage(id: string, signal?: AbortSignal): Promise<vo
   await expectOk(res);
 }
 
-/** 从 release 的 .sha256 sibling 资产尽力抓取 sha256。
- * GitHub release 资产走 CDN(access-control-allow-origin: *),通常可跨域 GET;
- * 失败(CORS/404/网络)静默返回 null,调用方退回手填——绝不阻塞注册流程。 */
-export async function fetchSha256(url: string, signal?: AbortSignal): Promise<string | null> {
-  try {
-    const res = await fetch(`${url}.sha256`, { signal, redirect: 'follow' });
-    if (!res.ok) return null;
-    const text = await res.text();
-    // .sha256 文件形如 "<64hex>  filename";取第一个 64 位 hex token
-    const m = text.match(/\b[a-f0-9]{64}\b/i);
-    return m ? m[0].toLowerCase() : null;
-  } catch {
-    return null;
-  }
+/** POST /v1/admin/images/probe — 注册前由服务端代理读 <url>.sha256 + 解析 arch。
+ * 走同源后端而非浏览器直接 fetch github:GitHub release 下载 302 跳
+ * objects.githubusercontent.com,重定向响应不带 CORS 头,浏览器跨域抓必被拦。
+ * 失败(抓不到/网络/SSRF 拒)抛 ApiError,调用方降级为手填——不阻塞注册。 */
+export async function probeImage(url: string, signal?: AbortSignal): Promise<ProbeImageResponse> {
+  return apiPost<ProbeImageResponse>('/v1/admin/images/probe', { url }, signal);
 }
 
 /** 从 tarball url 文件名解析架构。约定命名 talon-<flavor>-<ver>-<arch>.tar.gz。
  * arch 是 tarball 实际包含二进制决定的事实,不该让人手填——从命名规律派生即可,
- * 解析不出就回落 amd64(后端默认值,且当前所有产物都是 x86_64)。 */
+ * 解析不出就回落 amd64(后端默认值,且当前所有产物都是 x86_64)。
+ * 这是前端即时显示用的本地解析;probe 端点也会回带服务端解析的 arch。 */
 export function archFromUrl(url: string): string {
   const u = url.toLowerCase();
   if (/\b(aarch64|arm64)\b/.test(u)) return 'arm64';

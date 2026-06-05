@@ -15,8 +15,16 @@ export interface TerminalChromeProps {
   onBack?: () => void;
   /** Whether a recording is active */
   recording?: boolean;
-  /** Toggle recording handler */
+  /** Recording action handler (stop when active). 省略则不渲染录像按钮。 */
   onToggleRecord?: () => void;
+  /** 录像按钮文案(走父组件 i18n)。active 态显示「录像中」,非 active 显示「录像」。
+   *  不传时回退为内置英文,保持旧调用方兼容。 */
+  recordLabel?: string;
+  recordingLabel?: string;
+  /** 录像按钮是否禁用(已手动停止后置灰,不再可点)。 */
+  recordDisabled?: boolean;
+  /** hover 提示(如「停止录像」)。 */
+  recordTitle?: string;
   /** Extra actions on the right side of the top bar */
   topActions?: ReactNode;
   /** Status bar content (rendered below terminal body) */
@@ -32,6 +40,10 @@ export function TerminalChrome({
   onBack,
   recording = false,
   onToggleRecord,
+  recordLabel,
+  recordingLabel,
+  recordDisabled = false,
+  recordTitle,
   topActions,
   bottomStatus,
   children,
@@ -64,9 +76,13 @@ export function TerminalChrome({
               type="button"
               className={'rec-btn' + (recording ? ' on' : '')}
               onClick={onToggleRecord}
+              disabled={recordDisabled}
+              title={recordTitle}
             >
               <span className="rdot" />
-              {recording ? 'Recording' : 'Record'}
+              {recording
+                ? (recordingLabel ?? 'Recording')
+                : (recordLabel ?? 'Record')}
             </button>
           )}
           {topActions}

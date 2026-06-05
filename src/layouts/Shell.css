@@ -143,6 +143,13 @@
 .topbar-crumb .seg { font-size: var(--text-md); color: var(--fg-2); }
 .topbar-crumb .seg.cur { color: var(--fg-0); font-weight: 500; }
 .topbar-crumb .sep { color: var(--fg-4); }
+/* 可点面包屑(非末级)—— 清掉 button 默认样式,继承 .seg 字号/字色,
+ * 仅在 hover 时提供可点反馈。末级当前页不走这条,保持纯文本。 */
+.topbar-crumb .seg-link {
+  border: 0; background: transparent; padding: 0; margin: 0;
+  font-family: inherit; cursor: pointer;
+}
+.topbar-crumb .seg-link:hover { color: var(--fg-0); text-decoration: underline; }
 .topbar-cmdk { flex: 1; max-width: 480px; margin: 0 auto; }
 .topbar-cmdk button {
   width: 100%; height: 30px;
