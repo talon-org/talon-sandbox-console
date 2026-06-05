@@ -61,6 +61,13 @@
 /* 操作区 */
 .img-row .actions { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
 
+/* 注册抽屉:url 下方自动检测到的平台 */
+.img-detected {
+  display: inline-flex; align-items: center; gap: 5px; margin-top: 6px;
+  font-family: var(--font-mono); font-size: 11px; color: var(--ok, #56cbb8);
+}
+.img-detected .img-detected-val { color: var(--fg-1); }
+
 /* 注册抽屉:设默认勾选行 */
 .img-default-toggle {
   display: flex; align-items: center; gap: 8px; cursor: pointer;

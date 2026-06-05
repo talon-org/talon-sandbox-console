@@ -105,3 +105,13 @@ export async function fetchSha256(url: string, signal?: AbortSignal): Promise<st
     return null;
   }
 }
+
+/** 从 tarball url 文件名解析架构。约定命名 talon-<flavor>-<ver>-<arch>.tar.gz。
+ * arch 是 tarball 实际包含二进制决定的事实,不该让人手填——从命名规律派生即可,
+ * 解析不出就回落 amd64(后端默认值,且当前所有产物都是 x86_64)。 */
+export function archFromUrl(url: string): string {
+  const u = url.toLowerCase();
+  if (/\b(aarch64|arm64)\b/.test(u)) return 'arm64';
+  if (/\b(x86[_-]?64|amd64)\b/.test(u)) return 'amd64';
+  return 'amd64';
+}

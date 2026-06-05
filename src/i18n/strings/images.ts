@@ -68,7 +68,7 @@ export const images = {
   'images.field.descLabel':     { en: 'Description', zh: '描述' },
   'images.field.descPlaceholder': { en: 'What this image is for (optional)', zh: '这个镜像用途(可选)' },
 
-  'images.field.archLabel':     { en: 'OS / Arch', zh: '系统 / 架构' },
+  'images.field.detected':      { en: 'Detected platform', zh: '检测到平台' },
   'images.field.defaultLabel':  { en: 'Set as default', zh: '设为默认' },
   'images.field.defaultHint':   { en: 'New sandboxes without an explicit image use the default.', zh: '未指定镜像的新沙箱使用默认镜像。' },
 } as const;

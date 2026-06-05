@@ -14,7 +14,7 @@ import {
 import { useT } from '../../i18n/useT';
 import { TlnIcon } from '../../icons/TlnIcon';
 import { useCreateImage } from '../../hooks/useImages';
-import { fetchSha256 } from '../../api/images';
+import { fetchSha256, archFromUrl } from '../../api/images';
 import type { CreateImageRequest } from '../../api/types';
 
 interface Props {
@@ -32,11 +32,13 @@ export function CreateImageDrawer({ open, onClose }: Props) {
   const [url,     setUrl]     = useState('');
   const [sha256,  setSha256]  = useState('');
   const [desc,    setDesc]    = useState('');
-  const [arch,    setArch]    = useState('amd64');
   const [isDef,   setIsDef]   = useState(false);
   // 记录上次自动填入的 sha,以便 url 变更时安全覆盖而不抹掉手输
   const [autoSha,  setAutoSha]  = useState('');
   const [fetching, setFetching] = useState(false);
+
+  // arch 从 url 文件名派生(os 当前所有产物都是 linux,焊死)。不让人手填。
+  const arch = archFromUrl(url);
 
   const shaValid  = SHA_RE.test(sha256);
   const urlValid  = /^https:\/\/.+/.test(url.trim());
@@ -46,7 +48,7 @@ export function CreateImageDrawer({ open, onClose }: Props) {
 
   const reset = () => {
     setName(''); setUrl(''); setSha256(''); setDesc('');
-    setArch('amd64'); setIsDef(false); setAutoSha('');
+    setIsDef(false); setAutoSha('');
   };
 
   // url 失焦:尽力抓 sha256。只在 sha 为空或等于上次自动值时覆盖。
@@ -69,7 +71,8 @@ export function CreateImageDrawer({ open, onClose }: Props) {
       name: name.trim(),
       url: url.trim(),
       sha256: sha256.trim().toLowerCase(),
-      arch,
+      os: 'linux',
+      arch,  // 从 url 派生,见上
       ...(desc.trim() ? { description: desc.trim() } : {}),
       ...(isDef ? { is_default: true } : {}),
     };
@@ -134,6 +137,13 @@ export function CreateImageDrawer({ open, onClose }: Props) {
                 />
               </FormControl>
               <FormDescription>{t('images.field.urlHint')}</FormDescription>
+              {urlValid && (
+                <div className="img-detected">
+                  <TlnIcon name="check" size={12} />
+                  {t('images.field.detected')}
+                  <span className="img-detected-val">linux / {arch}</span>
+                </div>
+              )}
             </FormField>
 
             <FormField error={sha256.length > 0 && !shaValid ? true : undefined}>
@@ -155,19 +165,6 @@ export function CreateImageDrawer({ open, onClose }: Props) {
                     ? t('images.field.sha256Fetched')
                     : t('images.field.sha256Hint')}
               </FormDescription>
-            </FormField>
-
-            <FormField>
-              <FormLabel htmlFor="img-arch">{t('images.field.archLabel')}</FormLabel>
-              <FormControl>
-                <Input
-                  id="img-arch"
-                  mono
-                  value={arch}
-                  onChange={e => setArch(e.target.value.trim() || 'amd64')}
-                  placeholder="amd64"
-                />
-              </FormControl>
             </FormField>
 
             <FormField>
