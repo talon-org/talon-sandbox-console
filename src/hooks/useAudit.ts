@@ -50,7 +50,8 @@ export function useAuditStream(
       const token = useApp.getState().authToken;
       const params = new URLSearchParams();
       if (tenantId) params.set('tenant_id', tenantId);
-      if (token) params.set('token', token);
+      // 后端只认 ?access_token=(OAuth2 RFC 6750,与 PTY 一致);用 token= 会 403。
+      if (token) params.set('access_token', token);
       const paramStr = params.toString();
       const url = `${API_BASE}/v1/audit/events/stream${paramStr ? `?${paramStr}` : ''}`;
       es = new EventSource(url, { withCredentials: true });

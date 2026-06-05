@@ -36,7 +36,11 @@ export function openAuditStream(
   const token = useApp.getState().authToken;
   const params = new URLSearchParams();
   if (tenantId) params.set('tenant_id', tenantId);
-  if (token) params.set('token', token);
+  // 后端 auth 中间件按 OAuth2 RFC 6750 §2.3 只认 ?access_token=(与 PTY 一致);
+  // EventSource 不能设 Authorization 头,API-Key 模式必须走这个 query 参数。
+  // 之前用了 token= 后端拿不到 → 403。cookie 模式(JWT 登录)由 withCredentials 携带,
+  // 不需要本参数。
+  if (token) params.set('access_token', token);
   const paramStr = params.toString();
   const url = `${API_BASE}/v1/audit/events/stream${paramStr ? `?${paramStr}` : ''}`;
 
