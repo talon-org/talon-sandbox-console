@@ -6,7 +6,7 @@
  */
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Button, Input,
   LoginLayout, LoginLayoutBrand, LoginLayoutForm,
@@ -78,7 +78,18 @@ function LoginBrandContent() {
 export function PageLogin() {
   const t       = useT();
   const nav     = useNavigate();
+  const loc     = useLocation();
   const setAuth = useApp((s) => s.setAuth);
+
+  // 登录成功后的回跳目标:优先 RequireAuth 经 state.from 存下的来源路由
+  // (深链 / 会话过期被弹登录的场景),否则回 dashboard。
+  // pathname 形如 "/sandboxes/sbx_xxx";只取 pathname+search,避免把整个
+  // location 对象塞进 nav。守住一个边界:from 指回 /login 时不回跳(防自环)。
+  const fromState = (loc.state as { from?: { pathname?: string; search?: string } } | null)?.from;
+  const redirectTo =
+    fromState?.pathname && fromState.pathname !== '/login'
+      ? fromState.pathname + (fromState.search ?? '')
+      : '/';
 
   const [tab,      setTab]      = useState<'email' | 'apikey'>('email');
   const [email,    setEmail]    = useState('admin@talon.dev');
@@ -144,7 +155,7 @@ export function PageLogin() {
       }
       // Atomic write — Boot's effect won't fire because me is set.
       setAuth(token, me);
-      nav('/', { replace: true });
+      nav(redirectTo, { replace: true });
     } catch (ex) {
       console.error('[login] failed', ex);
       setErr(t(loginErrorKey(ex, tab)));
