@@ -6,6 +6,7 @@ import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { EmptyState } from '../components/EmptyState';
 import { StatusPill } from '../components/StatusPill';
+import { OriginPill } from '../components/OriginPill';
 import { useSandboxes } from '../hooks';
 import type { SandboxState, SandboxDTO } from '../api/types';
 import { CreateSandboxDrawer } from './_sandboxes/CreateSandboxDrawer';
@@ -47,11 +48,12 @@ function fmtAge(createdAt?: number): string {
 }
 
 // ── SandboxRow ────────────────────────────────────────────────────────────────
-function SandboxRow({ s, onClick }: { s: SandboxDTO; onClick: () => void }) {
+// showOrigin：列表中至少有一条带 created_from 时才插入"来源"列，避免空列占位。
+function SandboxRow({ s, onClick, showOrigin }: { s: SandboxDTO; onClick: () => void; showOrigin: boolean }) {
   const t     = useT();
   const color = STATE_COLORS[s.state] ?? 'var(--fg-3)';
   return (
-    <div className="tln-tbl-row sbx-row" onClick={onClick} role="row" tabIndex={0} onKeyDown={e => e.key === 'Enter' && onClick()}>
+    <div className={'tln-tbl-row sbx-row' + (showOrigin ? ' sbx-row--origin' : '')} onClick={onClick} role="row" tabIndex={0} onKeyDown={e => e.key === 'Enter' && onClick()}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
         <span style={{ width: 5, height: 5, borderRadius: '50%', flex: '0 0 auto', background: color }} />
         <div className="img-row">
@@ -63,6 +65,12 @@ function SandboxRow({ s, onClick }: { s: SandboxDTO; onClick: () => void }) {
       <div className="mono">{s.image_id ?? '—'}</div>
       {/* tenant_id 列：直接渲染 API 字段，无则显示 — */}
       <div className="mono">{(s as { tenant_id?: string }).tenant_id ?? '—'}</div>
+      {/* 来源列：有 created_from 渲染 pill，空值显示 —；仅在整列有数据时存在 */}
+      {showOrigin && (
+        <div className="origin-cell">
+          {s.created_from ? <OriginPill origin={s.created_from} /> : <span className="mono">—</span>}
+        </div>
+      )}
       <div className="mono">{fmtAge(s.created_at)}</div>
       <div className="res">
         {s.state === 'pulling-image' ? (
@@ -89,6 +97,7 @@ export function PageSandboxes() {
   const nav            = useNavigate();
   const [searchParams] = useSearchParams();
   const [filter, setFilter] = useState('all');
+  const [originFilter, setOriginFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [drawer, setDrawer] = useState(false);
 
@@ -106,9 +115,19 @@ export function PageSandboxes() {
     return c;
   }, [sandboxes]);
 
+  // 列表中实际出现过的来源渠道(去重、稳定顺序)。仅当有数据时才出现"来源"列与筛选器。
+  const origins = useMemo(() => {
+    const seen = new Set<string>();
+    for (const s of sandboxes) if (s.created_from) seen.add(s.created_from);
+    return Array.from(seen);
+  }, [sandboxes]);
+  const showOrigin = origins.length > 0;
+
   const filtered = useMemo(() => sandboxes.filter(s => {
     if (filter === 'active') { if (!ACTIVE_STATES.includes(s.state)) return false; }
     else if (filter !== 'all' && s.state !== filter) return false;
+    // 来源筛选:与状态筛选正交,'all' 不过滤
+    if (originFilter !== 'all' && s.created_from !== originFilter) return false;
     if (search) {
       const q = search.toLowerCase();
       // G2：name 字段也参与搜索；admin 视角下 tenant_id 也参与搜索
@@ -121,12 +140,19 @@ export function PageSandboxes() {
       ) return false;
     }
     return true;
-  }), [sandboxes, filter, search]);
+  }), [sandboxes, filter, originFilter, search]);
 
   const filterBtn = (val: string, label: string) => (
     <button type="button" key={val} className="sbx-filter" aria-pressed={filter === val} onClick={() => setFilter(val)}>
       <span>{label}</span>
       <span className="num">{counts[val] ?? 0}</span>
+    </button>
+  );
+
+  // 来源筛选 pill —— 与 filterBtn 同款,但作用于 originFilter 维度,不带计数。
+  const originFilterBtn = (val: string, label: string) => (
+    <button type="button" key={'o-' + val} className="sbx-filter" aria-pressed={originFilter === val} onClick={() => setOriginFilter(val)}>
+      <span>{label}</span>
     </button>
   );
 
@@ -166,6 +192,14 @@ export function PageSandboxes() {
             {filterBtn('idle',          t('sbx.filterIdle'))}
             {filterBtn('failed',        t('sbx.filterFailed'))}
           </div>
+          {/* 来源筛选 —— 仅在列表里实际出现过来源时显示;与状态筛选独立成组。
+           * 复用 .sbx-filter pill 样式,选项动态来自数据中出现过的渠道。 */}
+          {showOrigin && (
+            <div className="group">
+              {originFilterBtn('all', t('sbx.filterOriginAll'))}
+              {origins.map(o => originFilterBtn(o, t(`origin.${o}`, o)))}
+            </div>
+          )}
           <div style={{ flex: 1 }} />
           {/* 搜索框已覆盖筛选意图，原 filter 图标按钮（无 onClick）属冗余装饰，已删除 */}
           <Input
@@ -178,17 +212,19 @@ export function PageSandboxes() {
         </div>
 
         <div className="tln-tbl">
-          <div className="tln-tbl-head sbx-row">
+          {/* showOrigin 时切到 7 列模板(含来源列),否则用原 6 列模板。 */}
+          <div className={'tln-tbl-head sbx-row' + (showOrigin ? ' sbx-row--origin' : '')}>
             <div>{t('sbx.colSandbox')}</div>
             <div>{t('sbx.colImage')}</div>
             <div>{t('sbx.colTenant')}</div>
+            {showOrigin && <div>{t('sbx.colOrigin')}</div>}
             <div>{t('sbx.colAge')}</div>
             <div>{t('sbx.colResources')}</div>
             <div>{t('sbx.colStatus')}</div>
             <div />
           </div>
           {filtered.map(s => (
-            <SandboxRow key={s.id} s={s} onClick={() => nav('/sandboxes/' + s.id)} />
+            <SandboxRow key={s.id} s={s} onClick={() => nav('/sandboxes/' + s.id)} showOrigin={showOrigin} />
           ))}
           {filtered.length === 0 && (
             <div style={{ padding: 32 }}>

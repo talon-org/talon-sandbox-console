@@ -1,8 +1,8 @@
 /* src/api/sandboxes.ts — pure HTTP functions, no React */
-import { apiGet, apiPost, apiDelete, API_BASE } from './client';
+import { apiGet, apiPost, apiDelete, apiGetBlob, triggerBrowserDownload, API_BASE } from './client';
 import { useApp } from '../store';
 import type {
-  SandboxDTO, SandboxListResponse, CreateSandboxRequest,
+  SandboxDTO, SandboxListResponse, CreateSandboxRequest, SandboxOrigin,
 } from './types';
 
 export async function listSandboxes(signal?: AbortSignal): Promise<SandboxListResponse> {
@@ -18,6 +18,13 @@ interface AdminSandboxDTO {
   profile: string;
   created_at: number;   // Unix 秒
   updated_at: number;   // Unix 秒
+  // 来源追踪（后端 omitempty；admin 列表端点接入后透传，未接入时缺失）
+  created_by?: string;
+  created_by_type?: 'jwt' | 'api_key';
+  api_key_id?: string;
+  created_from?: SandboxOrigin;
+  remote_ip?: string;
+  user_agent?: string;
 }
 
 interface AdminSandboxListResponse {
@@ -42,6 +49,13 @@ export async function listAdminSandboxes(signal?: AbortSignal): Promise<SandboxL
     last_active_at: item.updated_at,
     tenant_id: item.tenant_id,
     worker_id: item.worker_id,
+    // 来源追踪字段透传（admin 端点 omitempty，缺失时 undefined，由渲染层兜底）
+    created_by: item.created_by,
+    created_by_type: item.created_by_type,
+    api_key_id: item.api_key_id,
+    created_from: item.created_from,
+    remote_ip: item.remote_ip,
+    user_agent: item.user_agent,
     // 运行时字段（cpu/mem/image_id 等）admin 端点不暴露，留 undefined 由渲染层兜底
   }));
   return { sandboxes };
@@ -60,6 +74,18 @@ export async function createSandbox(
 
 export async function deleteSandbox(id: string, signal?: AbortSignal): Promise<void> {
   return apiDelete(`/v1/sandboxes/${id}`, signal);
+}
+
+/**
+ * exportWorkspace — 拉取整个 workspace 的 tar.gz 并触发浏览器下载(Spec 53)。
+ *
+ * 主要给「销毁前导出」用:销毁会永久删 workspace 数据,导出让用户先把代码/产物
+ * 拿回来。后端是流式端点,这里整体读成 blob 再下载(浏览器无法边收边写盘)。
+ * 文件名优先用后端 Content-Disposition 给的,缺失时本地兜底成 `<id>-workspace.tar.gz`。
+ */
+export async function exportWorkspace(id: string, signal?: AbortSignal): Promise<void> {
+  const { blob, filename } = await apiGetBlob(`/v1/sandboxes/${id}/workspace/export`, signal);
+  triggerBrowserDownload(blob, filename || `${id}-workspace.tar.gz`);
 }
 
 /** POST /v1/sandboxes/{id}/start — 启动已停止的 sandbox。 */

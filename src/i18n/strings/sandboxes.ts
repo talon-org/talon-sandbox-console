@@ -29,9 +29,23 @@ export const sandboxes = {
   // empty + confirm
   'sbx.empty.head':        { en: 'No sandboxes match', zh: '没有 sandbox 匹配这些条件' },
   'sbx.empty.desc':        { en: 'Try clearing filters, or create a new sandbox.', zh: '试试清除过滤器，或创建一个新 sandbox。' },
-  'sbx.kill.title':        { en: 'Terminate sandbox?', zh: '终止 sandbox？' },
-  'sbx.kill.body':         { en: 'This will stop all processes, release the worker, and end all PTY sessions. Files and recordings are preserved.', zh: '终止将停止所有进程、释放 worker、结束所有 PTY 会话。文件系统状态与录像会保留。' },
-  'sbx.kill.confirm':      { en: 'Terminate sandbox', zh: '终止 sandbox' },
+  'sbx.kill.title':        { en: 'Destroy sandbox?', zh: '销毁 sandbox？' },
+  // 文案纠正:destroy 会永久删除 workspace 数据(rm -rf / .trash),不是"文件保留"。
+  // 之前的旧文案("文件系统状态与录像会保留")是错的——那是 stop/pause 的语义。
+  'sbx.kill.body':         { en: 'This permanently deletes the workspace — all files in this sandbox are erased and cannot be recovered. Recordings are kept. Export the workspace first if you need the data.', zh: '销毁会永久删除 workspace —— 这个 sandbox 里的全部文件都将被抹除且无法恢复。录像会保留。如需保留数据，请先导出 workspace。' },
+  'sbx.kill.confirm':      { en: 'Destroy sandbox', zh: '销毁 sandbox' },
+  // 销毁对话框 — 数据导出区
+  'sbx.kill.export.head':  { en: 'Export workspace before destroying', zh: '销毁前导出 workspace' },
+  'sbx.kill.export.desc':  { en: 'Download all workspace files as a .tar.gz. This does not affect the sandbox.', zh: '把全部 workspace 文件打包成 .tar.gz 下载到本地。该操作不影响 sandbox 本身。' },
+  'sbx.kill.export.btn':   { en: 'Export workspace', zh: '导出 workspace' },
+  'sbx.kill.export.busy':  { en: 'Exporting…', zh: '正在导出…' },
+  'sbx.kill.export.done':  { en: 'Workspace exported', zh: 'workspace 已导出' },
+  'sbx.kill.export.again': { en: 'Export again', zh: '重新导出' },
+  'sbx.kill.export.fail':  { en: 'Export failed — try again before destroying.', zh: '导出失败 —— 销毁前请重试。' },
+  // 销毁对话框 — type-to-confirm 区
+  'sbx.kill.confirmLabel': { en: 'Type the sandbox id to confirm', zh: '输入 sandbox id 以确认销毁' },
+  'sbx.kill.confirmHint':  { en: 'Destruction is irreversible. Enter the full id below to unlock the button.', zh: '销毁不可逆。在下方输入完整 id 才能解锁销毁按钮。' },
+  'sbx.kill.idMismatch':   { en: 'Id does not match.', zh: 'id 不匹配。' },
   // detail tabs
   'detail.tab.overview':   { en: 'Overview', zh: '概览' },
   'detail.tab.processes':  { en: 'Processes', zh: '进程' },
@@ -143,6 +157,8 @@ export const sandboxes = {
   'detail.colStatus':        { en: 'Status', zh: '状态' },
 
   // Detail header — 头部信息架构（按业务高频问题排序）
+  // 返回列表入口：详情头标题行左侧，回到 /sandboxes 列表
+  'detail.backToList':       { en: 'Sandboxes', zh: '沙箱' },
   'detail.untitled':         { en: 'Untitled sandbox', zh: '未命名 sandbox' },
   'detail.quota':            { en: 'Quota', zh: '配额' },
   'detail.ttlNone':          { en: 'no auto-expire', zh: '不自动过期' },
@@ -153,4 +169,33 @@ export const sandboxes = {
   // Processes empty CTA — 把空态变成"下一步行动"
   'detail.proc.empty.title': { en: 'Sandbox is idle', zh: 'Sandbox 已就绪，还没有跑任何进程' },
   'detail.proc.empty.desc':  { en: 'Open a shell and the processes you start will show up here.', zh: '在 shell 中启动的进程会出现在这里。' },
+
+  // ── 来源追踪（created_from / created_by / api_key_id / remote_ip / user_agent）──
+  // 列表页"来源"列标题 + 筛选标签
+  'sbx.colOrigin':           { en: 'Origin', zh: '来源' },
+  'sbx.filterOrigin':        { en: 'Origin', zh: '来源' },
+  'sbx.filterOriginAll':     { en: 'All origins', zh: '全部来源' },
+  // 渠道友好展示名 —— created_from 各取值
+  'origin.web-console':      { en: 'Console', zh: '控制台' },
+  'origin.sdk-python':       { en: 'Python SDK', zh: 'Python SDK' },
+  'origin.sdk-go':           { en: 'Go SDK', zh: 'Go SDK' },
+  'origin.sdk-typescript':   { en: 'TypeScript SDK', zh: 'TypeScript SDK' },
+  'origin.sdk-rust':         { en: 'Rust SDK', zh: 'Rust SDK' },
+  'origin.sdk-dotnet':       { en: '.NET SDK', zh: '.NET SDK' },
+  'origin.cli':              { en: 'CLI', zh: '命令行' },
+  'origin.api':              { en: 'API', zh: 'API' },
+  'origin.unknown':          { en: 'Unknown', zh: '未知' },
+  // 详情页"来源"信息区
+  'detail.origin.title':     { en: 'Provenance', zh: '创建来源' },
+  'detail.origin.channel':   { en: 'Channel', zh: '渠道' },
+  'detail.origin.createdBy': { en: 'Created by', zh: '创建者' },
+  'detail.origin.byType.jwt':    { en: 'User session', zh: '用户登录态' },
+  'detail.origin.byType.apiKey': { en: 'API key', zh: 'API Key' },
+  'detail.origin.apiKey':    { en: 'API key', zh: 'API Key' },
+  'detail.origin.remoteIp':  { en: 'Source IP', zh: '来源 IP' },
+  'detail.origin.userAgent': { en: 'User agent', zh: 'User Agent' },
+  'detail.origin.empty':     { en: 'No provenance recorded for this sandbox.', zh: '该 sandbox 未记录创建来源信息。' },
+  // 详情页"事件时间线"区
+  'detail.timeline.title':   { en: 'Event timeline', zh: '事件时间线' },
+  'detail.timeline.empty':   { en: 'No lifecycle events recorded yet.', zh: '暂无生命周期事件记录。' },
 } as const;

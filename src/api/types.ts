@@ -85,6 +85,13 @@ export interface CreateImageRequest {
   is_default?: boolean;  // 可选,默认 false
 }
 
+/** POST /v1/admin/images/probe 响应. dto.go ProbeImageResponse
+ * 服务端代理读 <url>.sha256 + 从 url 解析 arch(绕开浏览器跨域 CORS)。 */
+export interface ProbeImageResponse {
+  sha256: string;
+  arch?: string;
+}
+
 /** 镜像异步准备进度阶段. image_progress_handlers.go 的 stage 枚举 */
 export type ImageStage =
   | 'unknown'
@@ -144,7 +151,20 @@ export interface SandboxDTO {
   network_allowed_hosts?: string[];    // allowlist 模式下允许访问的主机列表
   worker_id?: string;                  // 承载此 sandbox 的 worker id
   tenant_id?: string;                  // 所属租户 id（管理员视角可见）
+  // 来源追踪（后端 omitempty 扩展字段；旧记录 / 未采集时可能全缺失）
+  created_by?: string;                 // 创建者标识：JWT user_id 或 api_key_id
+  created_by_type?: 'jwt' | 'api_key'; // 创建者类型：用户登录态 or API Key
+  api_key_id?: string;                 // 经 API Key 创建时的 key id；JWT 创建则空
+  created_from?: SandboxOrigin;        // 创建渠道：web-console / sdk-* / cli / api
+  remote_ip?: string;                  // 创建请求来源 IP
+  user_agent?: string;                 // 创建请求 User-Agent（SDK 自报 / 浏览器 UA）
 }
+
+/** sandbox 创建渠道枚举（created_from）。后端取值固定如下，未知值前端兜底展示原串。 */
+export type SandboxOrigin =
+  | 'web-console'
+  | 'sdk-python' | 'sdk-go' | 'sdk-typescript' | 'sdk-rust' | 'sdk-dotnet'
+  | 'cli' | 'api';
 
 /** GET /v1/sandboxes response */
 export interface SandboxListResponse {

@@ -30,6 +30,10 @@
  * page-specific column template here. */
 
 .sbx-row { grid-template-columns: 1.6fr 1.2fr 1fr 0.7fr 1.1fr 0.9fr 60px; }
+/* 含"来源"列时切到 7 列(在 Tenant 与 Age 之间插一列 1fr)。 */
+.sbx-row--origin { grid-template-columns: 1.6fr 1.2fr 1fr 1fr 0.7fr 1.1fr 0.9fr 60px; }
+.sbx-row .origin-cell { display: flex; align-items: center; min-width: 0; }
+.sbx-row .origin-cell .mono { color: var(--fg-3); }
 .sbx-row .pull { display: flex; align-items: center; gap: 6px; }
 .sbx-row .pull .pct { font-family: var(--font-mono); font-size: 10.5px; color: var(--warn); }
 .sbx-row .img-row { display: flex; flex-direction: column; gap: 1px; min-width: 0; }

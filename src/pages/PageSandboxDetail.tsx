@@ -17,11 +17,12 @@ import { useT } from '../i18n/useT';
 import { TlnIcon } from '../icons/TlnIcon';
 import { EmptyState } from '../components/EmptyState';
 import { StatusPill } from '../components/StatusPill';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DestroySandboxDialog } from '../components/DestroySandboxDialog';
 import {
   useSandbox, useDeleteSandbox, useAuditEvents,
   useStartSandbox, useStopSandbox, usePauseSandbox,
 } from '../hooks';
+import { exportWorkspace } from '../api/sandboxes';
 import type { SandboxState, SandboxDTO } from '../api/types';
 import { TabOverview, TabProcesses, TabPorts, TabFiles, TabNetwork, TabAudit } from './_sandboxes/DetailTabs';
 
@@ -123,6 +124,10 @@ export function PageSandboxDetail() {
       {/* Header — task as H1 + state badge, secondary mono row for identity. */}
       <div className="sbx-detail-head">
         <div className="head-main">
+          {/* 返回列表入口:沿用 TerminalChrome 的「← 文案」回退样式,点击回到 sandbox 列表 */}
+          <button type="button" className="sbx-back" onClick={() => nav('/sandboxes')}>
+            ← {t('detail.backToList')}
+          </button>
           <div className="title-row">
             <h1 className="title" title={typeof displayName === 'string' ? displayName : undefined}>
               {displayName}
@@ -240,22 +245,15 @@ export function PageSandboxDetail() {
         </div>
       </Tabs>
 
-      {/* kill confirm — title stacks the question + sandbox id on two lines
-       * so the mono id doesn't cause an awkward CJK + ASCII line-break inside
-       * the heading. */}
-      <ConfirmDialog
+      {/* 销毁对话框 — 三段式有摩擦销毁:先导出 workspace(逃生舱口)→ 输入完整
+       * sandbox id 解锁 → filled danger 确认。销毁会永久删 workspace 数据,
+       * 比普通 ConfirmDialog 的一键确认需要更强的确认。 */}
+      <DestroySandboxDialog
         open={confirmKill}
+        sandboxId={s.id}
         onClose={() => setConfirmKill(false)}
-        title={
-          <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span>{t('sbx.kill.title')}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 400, color: 'var(--fg-3)' }}>{s.id}</span>
-          </span>
-        }
-        description={t('sbx.kill.body')}
-        confirmLabel={t('sbx.kill.confirm')}
-        cancelLabel={t('common.cancel')}
         loading={del.isPending}
+        onExport={() => exportWorkspace(s.id)}
         onConfirm={() => {
           del.mutate(s.id, {
             onSuccess: () => { setConfirmKill(false); nav('/sandboxes'); },

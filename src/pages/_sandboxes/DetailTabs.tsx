@@ -13,11 +13,14 @@ import {
 import { useT } from '../../i18n/useT';
 import { TlnIcon } from '../../icons/TlnIcon';
 import { relTime } from '../../lib/relTime';
+import { resolveOrigin } from '../../lib/sandboxOrigin';
 import { EmptyState } from '../../components/EmptyState';
 import { InlineEmpty } from '../../components/InlineEmpty';
+import { OriginPill } from '../../components/OriginPill';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useSandboxProcesses } from '../../hooks/useSandboxProcesses';
 import { useSandboxPorts, useExposePort, useUnexposePort } from '../../hooks/useSandboxPorts';
+import { useAuditEvents } from '../../hooks/useAudit';
 import { FileBrowser } from './FileBrowser';
 import type { SandboxDTO, AuditEventDTO } from '../../api/types';
 
@@ -82,6 +85,137 @@ function PortsPreviewCard({ sandboxId }: { sandboxId: string }) {
           </span>
         </CardFooter>
       )}
+    </Card>
+  );
+}
+
+// ── 来源信息卡（Provenance）──────────────────────────────────────────────────
+// 回答"谁、哪把 key、什么 IP、什么 UA、什么渠道创建了这个 sandbox"。
+// 所有字段后端 omitempty,缺失时整张卡显示空态而非一排"—"。
+function ProvenanceCard({ s }: { s: SandboxDTO }) {
+  const t = useT();
+  // 任一来源字段有值即认为有可展示内容。
+  const hasAny = !!(s.created_from || s.created_by || s.api_key_id || s.remote_ip || s.user_agent);
+  const originColor = resolveOrigin(s.created_from).color;
+
+  // 创建者类型友好名:jwt=用户登录态,api_key=API Key。
+  const byTypeLabel = s.created_by_type === 'jwt'
+    ? t('detail.origin.byType.jwt')
+    : s.created_by_type === 'api_key'
+      ? t('detail.origin.byType.apiKey')
+      : undefined;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <TlnIcon name="gitBranch" size={14} style={{ color: originColor }} />
+          {t('detail.origin.title')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {!hasAny ? (
+          <InlineEmpty size="sm" icon={<TlnIcon name="info" size={14} />}>
+            {t('detail.origin.empty')}
+          </InlineEmpty>
+        ) : (
+          <div className="prov-grid">
+            {/* 渠道:用 OriginPill 与列表页一致呈现 */}
+            {s.created_from && (
+              <div className="prov-row">
+                <span className="prov-k">{t('detail.origin.channel')}</span>
+                <span className="prov-v"><OriginPill origin={s.created_from} size="md" /></span>
+              </div>
+            )}
+            {/* 创建者:created_by + 类型(用户登录态 / API Key) */}
+            {s.created_by && (
+              <div className="prov-row">
+                <span className="prov-k">{t('detail.origin.createdBy')}</span>
+                <span className="prov-v mono">
+                  {s.created_by}
+                  {byTypeLabel && <span className="prov-tag">{byTypeLabel}</span>}
+                </span>
+              </div>
+            )}
+            {/* API Key id:仅 api_key 流有值 */}
+            {s.api_key_id && (
+              <div className="prov-row">
+                <span className="prov-k">{t('detail.origin.apiKey')}</span>
+                <span className="prov-v mono">{s.api_key_id}</span>
+              </div>
+            )}
+            {/* 来源 IP */}
+            {s.remote_ip && (
+              <div className="prov-row">
+                <span className="prov-k">{t('detail.origin.remoteIp')}</span>
+                <span className="prov-v mono">{s.remote_ip}</span>
+              </div>
+            )}
+            {/* User Agent —— 可能很长,允许换行 */}
+            {s.user_agent && (
+              <div className="prov-row">
+                <span className="prov-k">{t('detail.origin.userAgent')}</span>
+                <span className="prov-v mono prov-ua" title={s.user_agent}>{s.user_agent}</span>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── 事件时间线卡（生命周期审计事件流）──────────────────────────────────────────
+// 按 target=sandbox_id 查 audit 事件,与详情页 Audit tab 共享 react-query key,
+// 不会重复请求。展示创建/启动/停止/暂停/恢复/销毁等生命周期事件流。
+function TimelineCard({ sandboxId }: { sandboxId: string }) {
+  const t = useT();
+  const { data, isLoading } = useAuditEvents({ target: sandboxId, limit: 50 });
+  // 按时间倒序(最新在上),后端已基本有序,这里再保险排一次。
+  const events = (data?.events ?? []).slice().sort((a, b) => b.at - a.at);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <TlnIcon name="clock" size={14} style={{ color: 'var(--fg-2)' }} />
+          {t('detail.timeline.title')}
+          {events.length > 0 && (
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-3)', fontWeight: 400 }}>
+              {events.length}
+            </span>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading && (
+          <InlineEmpty size="sm" icon={<TlnIcon name="refresh" size={14} />}>
+            {t('common.loading')}
+          </InlineEmpty>
+        )}
+        {!isLoading && events.length === 0 && (
+          <InlineEmpty size="sm" icon={<TlnIcon name="clock" size={14} />}>
+            {t('detail.timeline.empty')}
+          </InlineEmpty>
+        )}
+        {!isLoading && events.length > 0 && (
+          <div className="prov-timeline">
+            {events.map(e => {
+              const secAgo = Math.round(Date.now() / 1000 - e.at);
+              // 事件名走 event.* 字典,未命中回退原始 event_type。
+              const label  = t('event.' + e.event_type, e.event_type);
+              const ok     = e.outcome === 'ok';
+              return (
+                <div key={e.id} className="prov-tl-item">
+                  <span className={'prov-tl-dot' + (ok ? '' : ' err')} />
+                  <span className="prov-tl-label">{label}</span>
+                  <span className="prov-tl-when">{relTime(secAgo, t)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 }
@@ -163,6 +297,13 @@ export function TabOverview({ s }: { s: SandboxDTO }) {
           )}
         </CardContent>
       </Card>
+
+      {/* 来源信息 + 事件时间线 —— 2 列并排。
+       * 左:谁/哪把 key/什么 IP/UA/渠道;右:生命周期事件流。 */}
+      <div className="sbx-2col">
+        <ProvenanceCard s={s} />
+        <TimelineCard sandboxId={s.id} />
+      </div>
 
       {/* detail.age、profile、ttl 均通过 i18n key 输出，不硬编码英文标签 */}
       <div style={{ fontSize: 11, color: 'var(--fg-3)', fontFamily: 'var(--font-mono)' }}>

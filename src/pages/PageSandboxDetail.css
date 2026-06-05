@@ -9,6 +9,25 @@
 }
 .sbx-detail-head .head-main { min-width: 0; flex: 1; }
 
+/* 返回列表入口 —— 沿用 TerminalChrome .term-back 的「ghost 回退」样式,
+ * 但放在标题行上方作为一条独立的、低权重的导航线,不与 H1/状态徽标争位。
+ * 负向左缩进让「←」与下方标题左缘大致对齐。 */
+.sbx-detail-head .sbx-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--fg-3);
+  cursor: pointer;
+  padding: 2px 6px;
+  margin: 0 0 4px -6px;
+  border-radius: var(--r-2);
+  font-family: inherit;
+  font-size: 12px;
+}
+.sbx-detail-head .sbx-back:hover { color: var(--fg-0); background: var(--bg-hover); }
+
 .sbx-detail-head .title-row {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   margin-bottom: 6px;
@@ -100,6 +119,55 @@
 .file-tree .frow.active { background: var(--acc-soft); color: var(--acc-strong); }
 .file-tree .frow .fic { color: var(--fg-3); }
 .file-tree .frow.dir .fic { color: var(--acc-strong); }
+
+/* ── Provenance（来源信息卡）──────────────────────────────────────────────── */
+.prov-grid { display: flex; flex-direction: column; gap: 0; }
+.prov-row {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 8px 0;
+  font-size: 12px;
+}
+.prov-row + .prov-row { border-top: 1px solid var(--line-soft); }
+.prov-k {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+  padding-top: 2px;
+}
+.prov-v { color: var(--fg-1); min-width: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.prov-v.mono { font-family: var(--font-mono); font-size: 11.5px; word-break: break-all; }
+.prov-tag {
+  display: inline-flex; align-items: center;
+  font-family: var(--font-mono); font-size: 9.5px;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--fg-3); background: var(--bg-3);
+  padding: 1px 6px; border-radius: 3px;
+}
+.prov-ua { line-height: 1.5; color: var(--fg-2); }
+
+/* ── 事件时间线 ───────────────────────────────────────────────────────────── */
+.prov-timeline { display: flex; flex-direction: column; }
+.prov-tl-item {
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 12px;
+}
+.prov-tl-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--ok); box-shadow: 0 0 0 2px var(--ok-soft);
+  justify-self: center;
+}
+.prov-tl-dot.err { background: var(--err); box-shadow: 0 0 0 2px var(--err-soft); }
+.prov-tl-label { color: var(--fg-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prov-tl-when { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-3); white-space: nowrap; }
 
 .det-audit-row { grid-template-columns: 110px 1fr 1.2fr 1.4fr 100px; }
 .det-audit-row .when  { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); }

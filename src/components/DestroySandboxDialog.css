@@ -1,0 +1,113 @@
+/* DestroySandboxDialog — visual tuning over the library Dialog.
+ *
+ * 复用 ConfirmDialog 的"filled danger"取舍(销毁是唯一的肯定答案,必须与取消
+ * 一眼区分),并额外排版两个区块:数据导出 + type-to-confirm。
+ * 所有间距/颜色走 design-token CSS 变量,跟随主题。
+ */
+
+/* 标题:问题 + 单行 mono id,避免 CJK/ASCII 混排折行 */
+.destroy-dialog-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.destroy-dialog-id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--fg-3);
+}
+
+/* 永久删除警告:比普通 desc 更醒目(正文色 + 略大),但不喧宾夺主 */
+.destroy-dialog-warn {
+  margin: 0;
+  padding: 0 20px 4px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg-2);
+}
+
+/* ── 数据导出区 ─────────────────────────────────────────────── */
+.destroy-export {
+  margin: 12px 20px 0;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-2, rgba(127, 127, 127, 0.06));
+  border: 1px solid var(--border, rgba(127, 127, 127, 0.18));
+  border-radius: 8px;
+}
+.destroy-export-text {
+  flex: 1;
+  min-width: 0;
+}
+.destroy-export-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-1);
+}
+.destroy-export-desc {
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fg-3);
+}
+.destroy-export-status {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.destroy-export-status.ok {
+  color: var(--ok, #16a34a);
+}
+.destroy-export-status.err {
+  color: var(--err, #dc2626);
+}
+
+/* ── type-to-confirm 区 ────────────────────────────────────── */
+.destroy-confirm {
+  margin: 14px 20px 4px;
+}
+.destroy-confirm-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg-1);
+}
+.destroy-confirm-hint {
+  margin-top: 2px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fg-3);
+}
+.destroy-confirm-input {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+.destroy-confirm-mismatch {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--err, #dc2626);
+}
+
+/* Filled danger —— 与 ConfirmDialog 同款逃逸,只在本对话框内提权 */
+.tln-btn.tln-btn-danger.destroy-dialog-danger:not(:disabled) {
+  background: var(--err);
+  border-color: var(--err);
+  color: #fff;
+}
+.tln-btn.tln-btn-danger.destroy-dialog-danger:not(:disabled):hover {
+  background: var(--err-strong, var(--err));
+  border-color: var(--err-strong, var(--err));
+  color: #fff;
+  filter: brightness(0.95);
+}
