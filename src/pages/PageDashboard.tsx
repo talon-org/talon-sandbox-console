@@ -36,6 +36,7 @@ const STATE_COLORS: Partial<Record<string, string>> = {
   running: 'var(--ok)',
   idle: 'var(--fg-3)',
   paused: 'var(--magenta)',
+  stopped: 'var(--fg-4)',
   provisioning: 'var(--warn)',
   'pulling-image': 'var(--warn)',
   created: 'var(--info)',
@@ -43,8 +44,12 @@ const STATE_COLORS: Partial<Record<string, string>> = {
   failed: 'var(--err)',
   evicted: 'var(--fg-4)',
 };
+// 展示顺序。必须覆盖后端 states_by_count 可能返回的全部 state，否则某状态的
+// sandbox 会被算进 total 却没有格子渲染（stopped 漏配过：停止 16 个 → 总数 16
+// 但所有格子全 0）。未在此列出的后端新状态由渲染层兜底追加，不再静默丢弃。
 const STATE_ORDER = [
-  'running', 'pulling-image', 'provisioning', 'created', 'idle', 'paused', 'terminating', 'failed', 'evicted',
+  'running', 'pulling-image', 'provisioning', 'created', 'idle',
+  'paused', 'stopped', 'terminating', 'failed', 'evicted',
 ];
 
 function relTime(secAgo: number): string {
@@ -96,6 +101,12 @@ export function PageDashboard() {
   const sandboxes = data?.running_sandboxes ?? [];   // 后端已扩为「所有非终态 sandbox」
   const stateMap = data?.states_by_count ?? {};
   const total = Object.values(stateMap).reduce((a, b) => a + b, 0);
+  // 展示顺序 = STATE_ORDER + stateMap 里出现但未列入的后端新状态(兜底追加,
+  // 保证任何有计数的 state 都有格子,不再像 stopped 那样被算进 total 却不显示)。
+  const displayStates = [
+    ...STATE_ORDER,
+    ...Object.keys(stateMap).filter((k) => stateMap[k] > 0 && !STATE_ORDER.includes(k)),
+  ];
 
   const activeSeries = summary?.active_sandboxes.series.map(p => p.value) ?? [];
   const cpuSeries    = summary?.vcpu.series.map(p => p.value) ?? [];
@@ -264,7 +275,7 @@ export function PageDashboard() {
                 <>
                   {/* 堆叠条:1:1 原型(inline，非 SandboxStateBar——后者强制带英文 legend) */}
                   <div className="dash-state-bar" role="img" aria-label="sandbox state distribution">
-                    {STATE_ORDER.map((k) => {
+                    {displayStates.map((k) => {
                       const n = stateMap[k] ?? 0;
                       if (!n) return null;
                       return <div key={k} style={{ flex: n, background: STATE_COLORS[k] ?? 'var(--fg-3)' }} title={`${t(`state.${k}`)} · ${n}`} />;
@@ -272,7 +283,7 @@ export function PageDashboard() {
                   </div>
                   {/* legend:每格 StatusPill(统一状态徽章) + 大号数字 */}
                   <Grid cols={4} gap="sm" style={{ marginTop: 16 }}>
-                    {STATE_ORDER.map((k) => (
+                    {displayStates.map((k) => (
                       <div key={k} className="dash-legend-cell">
                         <StatusPill state={k as SandboxState} />
                         <div className={'dlc-num' + ((stateMap[k] ?? 0) === 0 ? ' zero' : '')}>{stateMap[k] ?? 0}</div>

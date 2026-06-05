@@ -9,25 +9,6 @@
 }
 .sbx-detail-head .head-main { min-width: 0; flex: 1; }
 
-/* 返回列表入口 —— 沿用 TerminalChrome .term-back 的「ghost 回退」样式,
- * 但放在标题行上方作为一条独立的、低权重的导航线,不与 H1/状态徽标争位。
- * 负向左缩进让「←」与下方标题左缘大致对齐。 */
-.sbx-detail-head .sbx-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 0;
-  background: transparent;
-  color: var(--fg-3);
-  cursor: pointer;
-  padding: 2px 6px;
-  margin: 0 0 4px -6px;
-  border-radius: var(--r-2);
-  font-family: inherit;
-  font-size: 12px;
-}
-.sbx-detail-head .sbx-back:hover { color: var(--fg-0); background: var(--bg-hover); }
-
 .sbx-detail-head .title-row {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   margin-bottom: 6px;

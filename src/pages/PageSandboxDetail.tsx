@@ -124,10 +124,8 @@ export function PageSandboxDetail() {
       {/* Header — task as H1 + state badge, secondary mono row for identity. */}
       <div className="sbx-detail-head">
         <div className="head-main">
-          {/* 返回列表入口:沿用 TerminalChrome 的「← 文案」回退样式,点击回到 sandbox 列表 */}
-          <button type="button" className="sbx-back" onClick={() => nav('/sandboxes')}>
-            ← {t('detail.backToList')}
-          </button>
+          {/* 返回列表由 Shell 顶部面包屑(沙箱 > sbx_xxx)承担,这里不再重复一个
+           * 「← 沙箱」入口,避免与面包屑功能重叠。 */}
           <div className="title-row">
             <h1 className="title" title={typeof displayName === 'string' ? displayName : undefined}>
               {displayName}

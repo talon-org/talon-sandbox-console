@@ -158,7 +158,6 @@ export const sandboxes = {
 
   // Detail header — 头部信息架构（按业务高频问题排序）
   // 返回列表入口：详情头标题行左侧，回到 /sandboxes 列表
-  'detail.backToList':       { en: 'Sandboxes', zh: '沙箱' },
   'detail.untitled':         { en: 'Untitled sandbox', zh: '未命名 sandbox' },
   'detail.quota':            { en: 'Quota', zh: '配额' },
   'detail.ttlNone':          { en: 'no auto-expire', zh: '不自动过期' },
