@@ -17,6 +17,20 @@ export const sandboxes = {
   'sbx.colResources':      { en: 'Resources', zh: '资源' },
   'sbx.colStatus':         { en: 'Status', zh: '状态' },
   'sbx.searchPlaceholder': { en: 'Filter by id / name / image…', zh: '按 id / 名称 / 镜像 过滤…' },
+  // ── 批量操作工具栏（多选后浮出）──
+  'sbx.batch.selected':    { en: '{n} selected', zh: '已选 {n} 项' },
+  'sbx.batch.start':       { en: 'Start', zh: '启动' },
+  'sbx.batch.stop':        { en: 'Stop', zh: '停止' },
+  'sbx.batch.pause':       { en: 'Pause', zh: '暂停' },
+  'sbx.batch.destroy':     { en: 'Delete', zh: '删除' },
+  'sbx.batch.clear':       { en: 'Clear', zh: '清空选择' },
+  // 批量删除二次确认
+  'sbx.batch.confirmTitle':   { en: 'Delete {n} sandboxes?', zh: '删除 {n} 个 sandbox?' },
+  'sbx.batch.confirmDesc':    { en: 'This permanently destroys the selected sandboxes and their data. This cannot be undone.', zh: '将永久销毁选中的 sandbox 及其数据,不可恢复。' },
+  // 结果汇总 toast（部分成功语义）
+  'sbx.batch.resultOk':       { en: 'All {n} succeeded', zh: '全部 {n} 项成功' },
+  'sbx.batch.resultSummary':  { en: '{ok} succeeded · {skipped} skipped · {failed} failed', zh: '成功 {ok} · 跳过 {skipped} · 失败 {failed}' },
+  'sbx.batch.allFailed':      { en: 'All {n} operations failed', zh: '{n} 项全部失败' },
   // create drawer
   'sbx.create.title':      { en: 'New sandbox', zh: '新建 sandbox' },
   'sbx.create.launch':     { en: 'Launch', zh: '启动' },

@@ -171,6 +171,29 @@ export interface SandboxListResponse {
   sandboxes: SandboxDTO[];
 }
 
+/** 批量生命周期操作（启动/停止/暂停/销毁）—— 与后端 dto.BatchSandbox* 对齐。 */
+export type BatchAction = 'start' | 'stop' | 'pause' | 'destroy';
+
+/** 单条结果状态：ok=已执行，skipped=幂等吸收（目标态已达成），failed=真实失败。 */
+export type BatchItemStatus = 'ok' | 'skipped' | 'failed';
+
+export interface BatchSandboxResult {
+  id: string;
+  status: BatchItemStatus;
+  /** failed 时为对应 HTTP 状态码；ok/skipped 省略。 */
+  code?: number;
+  /** failed 时的人类可读原因。 */
+  reason?: string;
+}
+
+/** POST /v1/sandboxes/batch/{action} 响应体。HTTP 恒 200（部分成功语义）。 */
+export interface BatchSandboxResponse {
+  results: BatchSandboxResult[];
+  ok: number;
+  skipped: number;
+  failed: number;
+}
+
 /** POST /v1/sandboxes request body (v2 style) */
 export interface CreateSandboxRequest {
   profile?: string;

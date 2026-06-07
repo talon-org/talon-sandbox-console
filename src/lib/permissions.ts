@@ -64,3 +64,15 @@ export function canManageBilling(role: Role): boolean {
 export function canManageWorkspace(role: Role): boolean {
   return role === 'owner';
 }
+
+/**
+ * 仅 owner 可批量销毁 sandbox。后端 POST /v1/sandboxes/batch/destroy 走 chainOwner。
+ *
+ * 这是与「单条删除（developer 即可，DELETE /v1/sandboxes/{id}）」刻意的权限不一致：
+ * 批量销毁一次抹掉多个、不可逆、破坏面大，产品上收紧成超管能力。start/stop/pause 的
+ * 批量操作仍是 developer+（canWrite 恒 true），不受此限。前端按此隐藏「批量删除」按钮，
+ * 后端 403 兜底。
+ */
+export function canBatchDestroySandboxes(role: Role): boolean {
+  return role === 'owner';
+}

@@ -3,6 +3,7 @@ import { apiGet, apiPost, apiDelete, apiGetBlob, triggerBrowserDownload, API_BAS
 import { useApp } from '../store';
 import type {
   SandboxDTO, SandboxListResponse, CreateSandboxRequest, SandboxOrigin,
+  BatchAction, BatchSandboxResponse,
 } from './types';
 
 export async function listSandboxes(signal?: AbortSignal): Promise<SandboxListResponse> {
@@ -101,6 +102,21 @@ export async function stopSandbox(id: string, signal?: AbortSignal): Promise<San
 /** POST /v1/sandboxes/{id}/pause — 暂停运行中的 sandbox。 */
 export async function pauseSandbox(id: string, signal?: AbortSignal): Promise<SandboxDTO> {
   return apiPost<SandboxDTO>(`/v1/sandboxes/${id}/pause`, {}, signal);
+}
+
+/**
+ * 批量生命周期操作 —— POST /v1/sandboxes/batch/{action}，body { ids }。
+ *
+ * 后端是部分成功语义：HTTP 恒 200，每条结局在 results 里（ok/skipped/failed）。
+ * destroy 后端走 chainOwner（owner 专属），developer 调用会 403——调用方应先按角色
+ * 隐藏入口（canBatchDestroySandboxes），这里不重复判，403 由 apiPost 的 check 抛出。
+ */
+export async function batchSandboxAction(
+  action: BatchAction,
+  ids: string[],
+  signal?: AbortSignal,
+): Promise<BatchSandboxResponse> {
+  return apiPost<BatchSandboxResponse>(`/v1/sandboxes/batch/${action}`, { ids }, signal);
 }
 
 /** WebSocket URL for PTY connection.

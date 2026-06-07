@@ -32,6 +32,29 @@
 .sbx-row { grid-template-columns: 1.6fr 1.2fr 1fr 0.7fr 1.1fr 0.9fr 60px; }
 /* 含"来源"列时切到 7 列(在 Tenant 与 Age 之间插一列 1fr)。 */
 .sbx-row--origin { grid-template-columns: 1.6fr 1.2fr 1fr 1fr 0.7fr 1.1fr 0.9fr 60px; }
+/* 批量多选:在所有模板最前面前插一列 32px 放 checkbox。--sel 与 --origin 可叠加。 */
+.sbx-row--sel { grid-template-columns: 32px 1.6fr 1.2fr 1fr 0.7fr 1.1fr 0.9fr 60px; }
+.sbx-row--sel.sbx-row--origin { grid-template-columns: 32px 1.6fr 1.2fr 1fr 1fr 0.7fr 1.1fr 0.9fr 60px; }
+.sbx-row .sel-cell { display: flex; align-items: center; justify-content: center; }
+.sbx-row .sel-cell input,
+.tln-tbl-head .sel-cell input { cursor: pointer; accent-color: var(--acc); margin: 0; }
+.sbx-row.is-selected { background: var(--acc-soft, var(--bg-3)); }
+
+/* 批量操作工具栏 —— 浮在筛选行与表格之间,选中项 > 0 时出现。 */
+.sbx-batchbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 12px; margin-bottom: 10px;
+  border: 1px solid var(--line-strong, var(--line));
+  border-radius: var(--r-2);
+  background: var(--bg-2);
+}
+.sbx-batchbar .count {
+  font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-1);
+  white-space: nowrap;
+}
+.sbx-batchbar .acts { display: flex; gap: 4px; flex-wrap: wrap; }
+.sbx-batchbar .danger { color: var(--err); }
+.sbx-batchbar .danger:hover { background: var(--err-soft, var(--bg-hover)); }
 .sbx-row .origin-cell { display: flex; align-items: center; min-width: 0; }
 .sbx-row .origin-cell .mono { color: var(--fg-3); }
 .sbx-row .pull { display: flex; align-items: center; gap: 6px; }

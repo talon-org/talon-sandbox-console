@@ -2,10 +2,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   listSandboxes, listAdminSandboxes, createSandbox, deleteSandbox,
-  startSandbox, stopSandbox, pauseSandbox,
+  startSandbox, stopSandbox, pauseSandbox, batchSandboxAction,
 } from '../api/sandboxes';
 import { useIsAdmin } from '../store';
-import type { CreateSandboxRequest, SandboxListResponse } from '../api/types';
+import type {
+  CreateSandboxRequest, SandboxListResponse, BatchAction, BatchSandboxResponse,
+} from '../api/types';
 
 // 普通租户 queryKey
 export const SANDBOXES_KEY = ['sandboxes'] as const;
@@ -57,6 +59,24 @@ function useSandboxLifecycle(
 export const useStartSandbox = () => useSandboxLifecycle(startSandbox);
 export const useStopSandbox  = () => useSandboxLifecycle(stopSandbox);
 export const usePauseSandbox = () => useSandboxLifecycle(pauseSandbox);
+
+/**
+ * 批量生命周期操作 mutation（启动/停止/暂停/销毁）。
+ * 与单条 lifecycle 一致：后端 effectiveTenant 已支持超管跨租户代行，故普通/超管路径
+ * 共用；成功后刷新列表两个 key，让列表立即反映新状态。
+ * 入参 action 决定打哪个 batch 端点，返回逐条结果交由调用方汇总展示。
+ */
+export function useBatchSandboxAction() {
+  const isAdmin = useIsAdmin();
+  const qc = useQueryClient();
+  return useMutation<BatchSandboxResponse, Error, { action: BatchAction; ids: string[] }>({
+    mutationFn: ({ action, ids }) => batchSandboxAction(action, ids),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SANDBOXES_KEY });
+      if (isAdmin) qc.invalidateQueries({ queryKey: ADMIN_SANDBOXES_KEY });
+    },
+  });
+}
 
 export function useDeleteSandbox() {
   const isAdmin = useIsAdmin();
