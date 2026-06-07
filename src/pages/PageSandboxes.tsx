@@ -13,6 +13,7 @@ import { useSandboxes, useBatchSandboxAction } from '../hooks';
 import { useRole, canBatchDestroySandboxes } from '../lib/permissions';
 import type { SandboxState, SandboxDTO, BatchAction, BatchSandboxResponse } from '../api/types';
 import { CreateSandboxDrawer } from './_sandboxes/CreateSandboxDrawer';
+import { SandboxRowMenu } from './_sandboxes/SandboxRowMenu';
 
 import './PageSandboxes.css';
 
@@ -108,9 +109,7 @@ function SandboxRow({
         <StatusPill state={s.state} />
       </div>
       <div className="actions" onClick={e => e.stopPropagation()}>
-        <Button variant="ghost" size="sm" iconOnly aria-label="More">
-          <TlnIcon name="more" size={14} />
-        </Button>
+        <SandboxRowMenu s={s} />
       </div>
     </div>
   );

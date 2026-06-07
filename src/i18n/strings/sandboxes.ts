@@ -31,6 +31,10 @@ export const sandboxes = {
   'sbx.batch.resultOk':       { en: 'All {n} succeeded', zh: '全部 {n} 项成功' },
   'sbx.batch.resultSummary':  { en: '{ok} succeeded · {skipped} skipped · {failed} failed', zh: '成功 {ok} · 跳过 {skipped} · 失败 {failed}' },
   'sbx.batch.allFailed':      { en: 'All {n} operations failed', zh: '{n} 项全部失败' },
+  // ── 行内操作菜单(...）──
+  'sbx.row.actions':       { en: 'Actions', zh: '操作' },
+  'sbx.row.view':          { en: 'View details', zh: '查看详情' },
+  'sbx.row.deleted':       { en: 'Sandbox deleted', zh: 'Sandbox 已删除' },
   // create drawer
   'sbx.create.title':      { en: 'New sandbox', zh: '新建 sandbox' },
   'sbx.create.launch':     { en: 'Launch', zh: '启动' },
