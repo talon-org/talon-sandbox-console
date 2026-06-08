@@ -72,4 +72,25 @@ export const billing = {
 
   // 页脚
   'billing.ownerOnly':        { en: 'Only the workspace admin can change the plan.', zh: '仅工作区管理员可变更套餐。' },
+
+  // ── 按终端用户用量 ──────────────────────────────────────────────────────────
+  'billing.byLabel.title':         { en: 'Usage by End User', zh: '按终端用户用量' },
+  'billing.byLabel.desc':          { en: 'Resource usage grouped by label. Useful for billing end users in your integration.', zh: '按标签（label）归因的资源用量，适合对你的集成用户进行二次计费分账。' },
+  'billing.byLabel.labelKey':      { en: 'Split dimension', zh: '拆分维度' },
+  'billing.byLabel.labelKeyValue': { en: 'Current key: {key}', zh: '当前维度：{key}' },
+  'billing.byLabel.noKey':         { en: 'No split dimension configured', zh: '未配置拆分维度' },
+  'billing.byLabel.noKeyDesc':     { en: 'Set a label key (e.g. end_user_id) to see per-user usage. Only workspace owner can configure.', zh: '设置一个 label key（如 end_user_id）后，此处将按终端用户展示资源用量。仅工作区拥有者可配置。' },
+  'billing.byLabel.configure':     { en: 'Configure split dimension', zh: '配置拆分维度' },
+  'billing.byLabel.keyPlaceholder':{ en: 'e.g. end_user_id', zh: '如 end_user_id' },
+  'billing.byLabel.save':          { en: 'Save', zh: '保存' },
+  'billing.byLabel.saveSuccess':   { en: 'Split dimension saved', zh: '拆分维度已保存' },
+  'billing.byLabel.saveFailed':    { en: 'Failed to save split dimension', zh: '拆分维度保存失败' },
+  'billing.byLabel.colUser':       { en: 'End user', zh: '终端用户' },
+  'billing.byLabel.colCpu':        { en: 'CPU (core·s)', zh: 'CPU（核·秒）' },
+  'billing.byLabel.colMemory':     { en: 'Memory (GB·s)', zh: '内存（GB·秒）' },
+  'billing.byLabel.colDisk':       { en: 'Disk (GB·s)', zh: '磁盘（GB·秒）' },
+  'billing.byLabel.colSandbox':    { en: 'Sandbox (s)', zh: '沙箱（秒）' },
+  'billing.byLabel.empty':         { en: 'No usage data for this period', zh: '当前时段暂无用量数据' },
+  'billing.byLabel.dateRange':     { en: 'Date range', zh: '日期范围' },
+  'billing.byLabel.disable':       { en: 'Disable (empty key)', zh: '关闭（清空 key）' },
 } as const;

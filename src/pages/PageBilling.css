@@ -128,3 +128,66 @@
   .bill-current { grid-template-columns: 1fr; gap: 22px; }
   .bill-meters { flex-wrap: wrap; }
 }
+
+/* ── 按终端用户用量 ── */
+.bill-by-label {
+  margin-top: 28px;
+}
+
+.bill-label-desc {
+  font-size: 12.5px;
+  color: var(--fg-2);
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+
+.bill-label-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.bill-label-key {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--fg-1);
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-1);
+  padding: 3px 9px;
+}
+.bill-label-key .ic { color: var(--fg-3); }
+.bill-label-key.muted { color: var(--fg-3); }
+
+.bill-label-config {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: var(--bg-3);
+  margin-bottom: 14px;
+}
+
+.bill-label-config-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bill-label-range {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--fg-3);
+  margin-bottom: 14px;
+}
+.bill-label-range .ic { color: var(--fg-4); }

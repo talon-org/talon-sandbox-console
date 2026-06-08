@@ -705,6 +705,28 @@ export interface UpgradePlanResponse {
   plan_code: string;
 }
 
+/** GET /v1/usage/by-label 单条分组 */
+export interface UsageByLabelGroup {
+  label_value: string;
+  cpu_milli_seconds: number;
+  memory_byte_seconds: number;
+  disk_byte_seconds: number;
+  sandbox_seconds: number;
+}
+
+/** GET /v1/usage/by-label 响应体 */
+export interface UsageByLabelResponse {
+  since: string;             // YYYY-MM-DD
+  until: string;             // YYYY-MM-DD
+  label_key: string;         // 当前拆分维度（如 "end_user_id"）；未配置时为空串
+  groups: UsageByLabelGroup[];
+}
+
+/** PUT /v1/billing/metering-label-key 请求体（owner 专属） */
+export interface SetMeteringLabelKeyRequest {
+  key: string;               // 拆分维度；空串 = 关闭
+}
+
 // ── Members & Invitations (自助团队成员管理) ────────────────────────────────────
 // 与 sandbox-api 的 /v1/tenants/{tenant_id}/members、/invitations 契约对齐。
 // 注意：这是租户内自助端点，区别于超管的 /v1/admin/tenants/{id}（后者 members 内嵌在 detail）。
