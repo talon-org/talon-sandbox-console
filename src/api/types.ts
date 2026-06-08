@@ -707,6 +707,16 @@ export interface UpgradePlanResponse {
 
 export type MemberRole = 'owner' | 'admin' | 'developer';
 
+/** GET /v1/users/{id} —— 按 user id 解析的最小公开档案。
+ *  用于把 sandbox.created_by 等 user id 在 UI 上显示成用户名/邮箱。
+ *  email = 登录邮箱(后端 username);name 为显示名,空则展示侧回退 email。 */
+export interface UserProfile {
+  id: string;
+  email: string;
+  name?: string;
+  tenant_id: string;
+}
+
 /** 单个成员（GET /v1/tenants/{id}/members） */
 export interface MemberDTO {
   id: string;

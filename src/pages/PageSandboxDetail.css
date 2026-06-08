@@ -131,6 +131,12 @@
 }
 .prov-ua { line-height: 1.5; color: var(--fg-2); }
 
+/* 创建者:主行人名/邮箱 + tag,次行灰显原始 user id。 */
+.prov-creator { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.prov-creator-main { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.prov-creator-name { color: var(--fg-1); font-size: 12.5px; word-break: break-all; }
+.prov-creator-id { color: var(--fg-3); font-size: 10.5px; word-break: break-all; }
+
 /* ── 事件时间线 ───────────────────────────────────────────────────────────── */
 .prov-timeline { display: flex; flex-direction: column; }
 .prov-tl-item {

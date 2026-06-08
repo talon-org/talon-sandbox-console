@@ -16,3 +16,4 @@ export * from './usePlans';
 export * from './useMembers';
 export * from './useBilling';
 export * from './useWorkspace';
+export * from './useUser';

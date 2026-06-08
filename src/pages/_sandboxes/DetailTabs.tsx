@@ -21,6 +21,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useSandboxProcesses } from '../../hooks/useSandboxProcesses';
 import { useSandboxPorts, useExposePort, useUnexposePort } from '../../hooks/useSandboxPorts';
 import { useAuditEvents } from '../../hooks/useAudit';
+import { useUser } from '../../hooks/useUser';
 import { FileBrowser } from './FileBrowser';
 import type { SandboxDTO, AuditEventDTO } from '../../api/types';
 
@@ -92,6 +93,28 @@ function PortsPreviewCard({ sandboxId }: { sandboxId: string }) {
 // ── 来源信息卡（Provenance）──────────────────────────────────────────────────
 // 回答"谁、哪把 key、什么 IP、什么 UA、什么渠道创建了这个 sandbox"。
 // 所有字段后端 omitempty,缺失时整张卡显示空态而非一排"—"。
+// CreatorValue 把 created_by(user id)解析成「用户名/邮箱(主) + id(次)」。
+//
+// created_by 始终是 user id(JWT 路径=登录用户;API Key 路径=key 的归属用户),
+// 故两种类型都能解析。解析走 useUser → GET /v1/users/{id}:
+//   - 成功:主行显示 name(无则 email),次行灰显完整 user id;
+//   - 加载中 / 查不到 / 无权(超管之外跨租户):回退只显 id(与改动前一致,不退化)。
+// byTypeLabel(用户登录态 / API Key)始终作为 tag 挂在主行右侧。
+function CreatorValue({ userId, byTypeLabel }: { userId: string; byTypeLabel?: string }) {
+  const { data: user } = useUser(userId);
+  const display = user?.name || user?.email;
+  return (
+    <span className="prov-creator">
+      <span className="prov-creator-main">
+        <span className="prov-creator-name">{display || userId}</span>
+        {byTypeLabel && <span className="prov-tag">{byTypeLabel}</span>}
+      </span>
+      {/* 解析到了人名/邮箱时,把原始 user id 作为次要信息留底,方便核对/复制。 */}
+      {display && <span className="prov-creator-id mono">{userId}</span>}
+    </span>
+  );
+}
+
 function ProvenanceCard({ s }: { s: SandboxDTO }) {
   const t = useT();
   // 任一来源字段有值即认为有可展示内容。
@@ -127,13 +150,12 @@ function ProvenanceCard({ s }: { s: SandboxDTO }) {
                 <span className="prov-v"><OriginPill origin={s.created_from} size="md" /></span>
               </div>
             )}
-            {/* 创建者:created_by + 类型(用户登录态 / API Key) */}
+            {/* 创建者:created_by 解析成用户名/邮箱 + 类型(用户登录态 / API Key) */}
             {s.created_by && (
               <div className="prov-row">
                 <span className="prov-k">{t('detail.origin.createdBy')}</span>
-                <span className="prov-v mono">
-                  {s.created_by}
-                  {byTypeLabel && <span className="prov-tag">{byTypeLabel}</span>}
+                <span className="prov-v">
+                  <CreatorValue userId={s.created_by} byTypeLabel={byTypeLabel} />
                 </span>
               </div>
             )}
