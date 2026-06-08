@@ -187,6 +187,37 @@ function ProvenanceCard({ s }: { s: SandboxDTO }) {
   );
 }
 
+// ── 自定义标签卡（labels，调用方元数据）─────────────────────────────────────────
+// 与 ProvenanceCard(平台来源归因)分开:labels 是调用方自己附带的业务元数据,
+// 典型是 SaaS 集成方标注其终端用户(end_user_id 等)。平台 created_by 永远是工作区
+// 统一账户,识别集成方的终端用户靠这里。空则整卡不渲染(避免噪音)。
+function LabelsCard({ s }: { s: SandboxDTO }) {
+  const t = useT();
+  const labels = s.labels ?? {};
+  const keys = Object.keys(labels);
+  if (keys.length === 0) return null;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <TlnIcon name="tag" size={14} />
+          {t('detail.labels.title', 'Labels')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="prov-grid">
+          {keys.sort().map(k => (
+            <div className="prov-row" key={k}>
+              <span className="prov-k" title={k}>{k}</span>
+              <span className="prov-v mono" style={{ wordBreak: 'break-all' }}>{labels[k]}</span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── 事件时间线卡（生命周期审计事件流）──────────────────────────────────────────
 // 按 target=sandbox_id 查 audit 事件,与详情页 Audit tab 共享 react-query key,
 // 不会重复请求。展示创建/启动/停止/暂停/恢复/销毁等生命周期事件流。
@@ -326,6 +357,9 @@ export function TabOverview({ s }: { s: SandboxDTO }) {
         <ProvenanceCard s={s} />
         <TimelineCard sandboxId={s.id} />
       </div>
+
+      {/* 自定义标签(labels)—— 有才渲染。调用方附带的业务元数据,常用于标终端用户。 */}
+      <LabelsCard s={s} />
 
       {/* detail.age、profile、ttl 均通过 i18n key 输出，不硬编码英文标签 */}
       <div style={{ fontSize: 11, color: 'var(--fg-3)', fontFamily: 'var(--font-mono)' }}>

@@ -158,6 +158,10 @@ export interface SandboxDTO {
   created_from?: SandboxOrigin;        // 创建渠道：web-console / sdk-* / cli / api
   remote_ip?: string;                  // 创建请求来源 IP
   user_agent?: string;                 // 创建请求 User-Agent（SDK 自报 / 浏览器 UA）
+  // labels(v45)：创建时调用方附带的自定义 KV 元数据,创建后不可改。
+  // 典型用途:SaaS 集成方标注其终端用户(end_user_id 等),按终端用户归因。
+  // 纯控制面,不注入容器。本租户可见自己的;超管跨租户可见。
+  labels?: Record<string, string>;
 }
 
 /** sandbox 创建渠道枚举（created_from）。后端取值固定如下，未知值前端兜底展示原串。 */

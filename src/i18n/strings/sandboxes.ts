@@ -213,6 +213,7 @@ export const sandboxes = {
   'detail.origin.userAgent': { en: 'User agent', zh: 'User Agent' },
   'detail.origin.empty':     { en: 'No provenance recorded for this sandbox.', zh: '该 sandbox 未记录创建来源信息。' },
   // 详情页"事件时间线"区
+  'detail.labels.title':     { en: 'Labels', zh: '自定义标签' },
   'detail.timeline.title':   { en: 'Event timeline', zh: '事件时间线' },
   'detail.timeline.empty':   { en: 'No lifecycle events recorded yet.', zh: '暂无生命周期事件记录。' },
 } as const;
